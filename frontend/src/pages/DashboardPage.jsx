@@ -777,79 +777,88 @@ const DashboardPage = () => {
               )
             )}
 
-            {/* List View - Detailed cards per channel */}
+            {/* List View - All orders in a single unified grid */}
             {showListView && (
-              <>
-                {/* Dine In Orders */}
-                {activeChannels.includes("dineIn") && (
-                  <div>
-                    <div className="flex items-center gap-2 mb-4 text-sm" style={{ color: COLORS.grayText }}>
-                      <span className="font-medium" style={{ color: COLORS.darkText }}>Dine In Orders</span>
-                    </div>
-                    <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
-                      {allTablesList
-                        .filter(t => !["available", "reserved"].includes(t.status))
-                        .filter(t => matchingTableIds === null || matchingTableIds.has(t.id))
-                        .map((table) => {
-                          // Resolve the full order data for this table entry
-                          const order = table.isWalkIn
-                            ? walkInOrders.find(o => o.orderId === table.walkInOrderId)
-                            : getOrderByTableId(table.tableId);
-                          if (!order) return null;
-                          return (
-                            <OrderCard
-                              key={table.id}
-                              order={order}
-                              orderType="dineIn"
-                              tableLabel={table.label}
-                              isSnoozed={snoozedOrders.has(table.id)}
-                              onToggleSnooze={toggleSnooze}
-                              onEdit={() => handleTableClick(table)}
-                              onMarkReady={() => handleMarkReady({ ...table, orderId: order.orderId, tableId: table.tableId || 0 })}
-                              onMarkServed={() => handleMarkServed({ ...table, orderId: order.orderId, tableId: table.tableId || 0 })}
-                              onBillClick={() => handleBillClick(table)}
-                            />
-                          );
-                        })
+              <div>
+                <div className="flex items-center gap-2 mb-4 text-sm" style={{ color: COLORS.grayText }}>
+                  <span className="font-medium" style={{ color: COLORS.darkText }}>All Orders</span>
+                  <span style={{ color: COLORS.borderGray }}>|</span>
+                  <span>
+                    {(() => {
+                      let count = 0;
+                      if (activeChannels.includes("dineIn")) {
+                        count += allTablesList.filter(t => !["available", "reserved"].includes(t.status)).length;
                       }
-                    </div>
-                  </div>
-                )}
-
-                {/* Delivery Orders */}
-                {activeChannels.includes("delivery") && (
-                  <OrderListSection
-                    title="Delivery Orders"
-                    orders={deliveryOrders}
-                    orderType="delivery"
-                    matchingIds={matchingDeliveryIds}
-                    snoozedOrders={snoozedOrders}
-                    onToggleSnooze={toggleSnooze}
-                    onEdit={(order) => handleTableClick({ id: `del-${order.orderId}`, orderId: order.orderId, orderType: 'delivery' })}
-                    onMarkReady={handleMarkReady}
-                    onMarkServed={handleMarkServed}
-                    onBillClick={(order) => handleBillClick({ id: `del-${order.orderId}`, orderId: order.orderId, orderType: 'delivery' })}
-                    className={activeChannels.includes("dineIn") ? "mt-6 pt-6 border-t" : ""}
-                  />
-                )}
-
-                {/* TakeAway Orders */}
-                {activeChannels.includes("takeAway") && (
-                  <OrderListSection
-                    title="TakeAway Orders"
-                    orders={takeAwayOrders}
-                    orderType="takeAway"
-                    matchingIds={matchingTakeAwayIds}
-                    snoozedOrders={snoozedOrders}
-                    onToggleSnooze={toggleSnooze}
-                    onEdit={(order) => handleTableClick({ id: `ta-${order.orderId}`, orderId: order.orderId, orderType: 'takeAway' })}
-                    onMarkReady={handleMarkReady}
-                    onMarkServed={handleMarkServed}
-                    onBillClick={(order) => handleBillClick({ id: `ta-${order.orderId}`, orderId: order.orderId, orderType: 'takeAway' })}
-                    className={activeChannels.includes("dineIn") || activeChannels.includes("delivery") ? "mt-6 pt-6 border-t" : ""}
-                  />
-                )}
-              </>
+                      if (activeChannels.includes("delivery")) count += deliveryOrders.length;
+                      if (activeChannels.includes("takeAway")) count += takeAwayOrders.length;
+                      return `${count} Orders`;
+                    })()}
+                  </span>
+                </div>
+                <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+                  {/* Dine In Orders */}
+                  {activeChannels.includes("dineIn") && allTablesList
+                    .filter(t => !["available", "reserved"].includes(t.status))
+                    .filter(t => matchingTableIds === null || matchingTableIds.has(t.id))
+                    .map((table) => {
+                      const order = table.isWalkIn
+                        ? walkInOrders.find(o => o.orderId === table.walkInOrderId)
+                        : getOrderByTableId(table.tableId);
+                      if (!order) return null;
+                      return (
+                        <OrderCard
+                          key={table.id}
+                          order={order}
+                          orderType="dineIn"
+                          tableLabel={table.label}
+                          isSnoozed={snoozedOrders.has(table.id)}
+                          onToggleSnooze={toggleSnooze}
+                          onEdit={() => handleTableClick(table)}
+                          onMarkReady={() => handleMarkReady({ ...table, orderId: order.orderId, tableId: table.tableId || 0 })}
+                          onMarkServed={() => handleMarkServed({ ...table, orderId: order.orderId, tableId: table.tableId || 0 })}
+                          onBillClick={() => handleBillClick(table)}
+                        />
+                      );
+                    })
+                  }
+                  
+                  {/* Delivery Orders */}
+                  {activeChannels.includes("delivery") && deliveryOrders
+                    .filter(order => matchingDeliveryIds === null || matchingDeliveryIds.has(String(order.orderId)))
+                    .map((order) => (
+                      <OrderCard
+                        key={`del-${order.orderId}`}
+                        order={order}
+                        orderType="delivery"
+                        isSnoozed={snoozedOrders.has(String(order.orderId))}
+                        onToggleSnooze={toggleSnooze}
+                        onEdit={() => handleTableClick({ id: `del-${order.orderId}`, orderId: order.orderId, orderType: 'delivery' })}
+                        onMarkReady={() => handleMarkReady({ orderId: order.orderId, tableId: 0 })}
+                        onMarkServed={() => handleMarkServed({ orderId: order.orderId, tableId: 0 })}
+                        onBillClick={() => handleBillClick({ id: `del-${order.orderId}`, orderId: order.orderId, orderType: 'delivery' })}
+                      />
+                    ))
+                  }
+                  
+                  {/* TakeAway Orders */}
+                  {activeChannels.includes("takeAway") && takeAwayOrders
+                    .filter(order => matchingTakeAwayIds === null || matchingTakeAwayIds.has(String(order.orderId)))
+                    .map((order) => (
+                      <OrderCard
+                        key={`ta-${order.orderId}`}
+                        order={order}
+                        orderType="takeAway"
+                        isSnoozed={snoozedOrders.has(String(order.orderId))}
+                        onToggleSnooze={toggleSnooze}
+                        onEdit={() => handleTableClick({ id: `ta-${order.orderId}`, orderId: order.orderId, orderType: 'takeAway' })}
+                        onMarkReady={() => handleMarkReady({ orderId: order.orderId, tableId: 0 })}
+                        onMarkServed={() => handleMarkServed({ orderId: order.orderId, tableId: 0 })}
+                        onBillClick={() => handleBillClick({ id: `ta-${order.orderId}`, orderId: order.orderId, orderType: 'takeAway' })}
+                      />
+                    ))
+                  }
+                </div>
+              </div>
             )}
 
             {/* Room View - Rooms now render in the unified grid above */}
