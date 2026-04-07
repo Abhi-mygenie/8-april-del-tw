@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { User, X, ChevronDown, ChevronUp, MapPin, Clock, Printer, ShoppingBag, Bike } from "lucide-react";
+import { User, X, ChevronDown, ChevronUp, MapPin, Clock, Printer, ShoppingBag, Bike, Circle, CheckCircle2, Check } from "lucide-react";
 import { COLORS, SOURCE_COLORS } from "../../constants";
 
 /**
@@ -111,10 +111,12 @@ const OrderCard = ({
     return COLORS.grayText;
   };
 
-  // Get item action button config based on item status
+  // Get item action icon config based on item status
+  // ○ Empty circle (orange) = Preparing → tap to mark Ready
+  // ◉ Filled circle (green) = Ready → tap to mark Serve
   const getItemActionConfig = (item) => {
-    if (item.status === 'preparing') return { label: 'Ready', color: COLORS.primaryOrange };
-    if (item.status === 'ready') return { label: 'Serve', color: COLORS.primaryGreen };
+    if (item.status === 'preparing') return { action: 'ready', color: COLORS.primaryOrange, icon: 'empty' };
+    if (item.status === 'ready') return { action: 'serve', color: COLORS.primaryGreen, icon: 'filled' };
     return null;
   };
 
@@ -227,7 +229,7 @@ const OrderCard = ({
         </div>
       )}
 
-      {/* ── ITEMS SECTION — With item-level Ready/Serve buttons (44px touch targets) ── */}
+      {/* ── ITEMS SECTION — With item-level tick icons (44px touch targets) ── */}
       <div className="px-3 py-2 border-b" style={{ borderColor: COLORS.borderGray }}>
         {activeItems.length > 0 ? (
           activeItems.map((item) => {
@@ -243,21 +245,22 @@ const OrderCard = ({
                 <span className="flex-1 text-sm truncate" style={{ color: COLORS.darkText }}>
                   {item.name} ({item.qty})
                 </span>
-                {/* Item-level action button (44px touch target) */}
+                {/* Item-level tick icon (44px touch target) */}
                 {actionConfig && (
                   <button
                     data-testid={`item-action-btn-${item.id}`}
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleItemAction(item, actionConfig.label);
+                      handleItemAction(item, actionConfig.action);
                     }}
-                    className="px-4 text-xs font-semibold rounded-lg min-h-[44px] min-w-[70px]"
-                    style={{ 
-                      backgroundColor: actionConfig.color, 
-                      color: 'white'
-                    }}
+                    className="min-h-[44px] min-w-[44px] rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors"
+                    title={actionConfig.action === 'ready' ? 'Mark Ready' : 'Mark Served'}
                   >
-                    {actionConfig.label}
+                    {actionConfig.icon === 'empty' ? (
+                      <Circle className="w-7 h-7" style={{ color: actionConfig.color }} strokeWidth={2.5} />
+                    ) : (
+                      <CheckCircle2 className="w-7 h-7" style={{ color: actionConfig.color }} strokeWidth={2.5} />
+                    )}
                   </button>
                 )}
               </div>
@@ -294,9 +297,13 @@ const OrderCard = ({
                     className="w-2 h-2 rounded-full flex-shrink-0"
                     style={{ backgroundColor: COLORS.primaryGreen }}
                   />
-                  <span className="text-sm" style={{ color: COLORS.grayText }}>
+                  <span className="flex-1 text-sm" style={{ color: COLORS.grayText }}>
                     {item.name} ({item.qty})
                   </span>
+                  {/* Served checkmark (no action) */}
+                  <div className="min-h-[44px] min-w-[44px] flex items-center justify-center">
+                    <Check className="w-6 h-6" style={{ color: COLORS.grayText }} strokeWidth={2.5} />
+                  </div>
                 </div>
               ))}
             </div>
