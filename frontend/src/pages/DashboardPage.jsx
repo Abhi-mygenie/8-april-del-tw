@@ -62,7 +62,7 @@ const EmptyTableState = () => (
 );
 
 // Reusable order list section (Delivery/TakeAway) — now uses OrderCard
-const OrderListSection = ({ title, orders, orderType, matchingIds, snoozedOrders, onToggleSnooze, onEdit, onMarkReady, onMarkServed, onBillClick, onCancelOrder, onItemStatusChange, canCancelOrder, className }) => (
+const OrderListSection = ({ title, orders, orderType, matchingIds, snoozedOrders, onToggleSnooze, onEdit, onMarkReady, onMarkServed, onBillClick, onCancelOrder, onItemStatusChange, canCancelOrder, cancellation, className }) => (
   <div className={className}>
     <div className="flex items-center gap-2 mb-4 text-sm" style={{ color: COLORS.grayText }}>
       <span className="font-medium" style={{ color: COLORS.darkText }}>{title}</span>
@@ -83,6 +83,7 @@ const OrderListSection = ({ title, orders, orderType, matchingIds, snoozedOrders
               canMergeOrder={false}
               canShiftTable={false}
               canFoodTransfer={false}
+              cancellation={cancellation}
               onToggleSnooze={onToggleSnooze}
               onEdit={onEdit}
               onMarkReady={() => onMarkReady?.({ orderId: order.orderId, tableId: 0 })}
@@ -102,7 +103,7 @@ const OrderListSection = ({ title, orders, orderType, matchingIds, snoozedOrders
 // Main Home/Dashboard Component
 const DashboardPage = () => {
   const navigate = useNavigate();
-  const { isLoaded: restaurantLoaded, currencySymbol } = useRestaurant();
+  const { isLoaded: restaurantLoaded, currencySymbol, cancellation } = useRestaurant();
   const { tables: apiTables, isLoaded: tablesLoaded } = useTables();
   const { user, hasPermission } = useAuth();
   const { getOrderCancellationReasons } = useSettings();
@@ -854,6 +855,7 @@ const DashboardPage = () => {
                           canMergeOrder={hasPermission('merge_table')}
                           canShiftTable={hasPermission('transfer_table')}
                           canFoodTransfer={hasPermission('food_transfer')}
+                          cancellation={cancellation}
                           onToggleSnooze={toggleSnooze}
                           onEdit={() => handleTableClick(table)}
                           onMarkReady={() => handleMarkReady({ ...table, orderId: order.orderId, tableId: table.tableId || 0 })}
@@ -883,6 +885,7 @@ const DashboardPage = () => {
                         canMergeOrder={false}
                         canShiftTable={false}
                         canFoodTransfer={false}
+                        cancellation={cancellation}
                         onToggleSnooze={toggleSnooze}
                         onEdit={() => handleTableClick({ id: `del-${order.orderId}`, orderId: order.orderId, orderType: 'delivery' })}
                         onMarkReady={() => handleMarkReady({ orderId: order.orderId, tableId: 0 })}
@@ -908,6 +911,7 @@ const DashboardPage = () => {
                         canMergeOrder={false}
                         canShiftTable={false}
                         canFoodTransfer={false}
+                        cancellation={cancellation}
                         onToggleSnooze={toggleSnooze}
                         onEdit={() => handleTableClick({ id: `ta-${order.orderId}`, orderId: order.orderId, orderType: 'takeAway' })}
                         onMarkReady={() => handleMarkReady({ orderId: order.orderId, tableId: 0 })}

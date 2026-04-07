@@ -85,7 +85,7 @@
 - ~~P0: Update `profileTransform.js` to map cancellation settings~~ DONE
 - ~~P0: Wire up onCancelOrder handler~~ DONE
 - ~~P0: Wire up onItemStatusChange handler~~ DONE
-- P0: Add `cancel_order_time` elapsed check for Cancel button in OrderCard
+- ~~P0: Add cancellation time window + post-ready logic in OrderCard~~ DONE
 - P1: Fix critical bugs from BUGS.md (BUG-210, BUG-212, BUG-216, BUG-221)
 - P1: Gate permissions in OrderEntry.jsx (Cancel, Shift, Merge, Transfer modals)
 - P1: Gate permissions in Sidebar.jsx (Menu, Reports, Settings)

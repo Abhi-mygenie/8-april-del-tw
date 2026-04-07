@@ -22,6 +22,8 @@ const OrderCard = ({
   canMergeOrder = true,
   canShiftTable = true,
   canFoodTransfer = true,
+  // Cancellation settings (restaurant-level)
+  cancellation = null,
   onToggleSnooze,
   onEdit,
   onMarkReady,
@@ -56,6 +58,28 @@ const OrderCard = ({
   const servedItems = items.filter(i => i.status === "served");
 
   const isYetToConfirm = order.status === "yetToConfirm" || order.status === "pending";
+
+  // ── Cancellation Logic ──
+  // Pre-Ready: time window applies (cancel_order_time / cancel_food_timings)
+  // Post-Ready: cancle_post_serve flag applies (no time check)
+  const hasAnyItemReady = items.some(i => i.status === 'ready' || i.status === 'served');
+
+  // Check if order cancel is allowed based on restaurant settings
+  const isOrderCancelAllowed = (() => {
+    if (!canCancelOrder) return false;
+    if (!cancellation) return true; // No settings = allow (backward compat)
+
+    if (hasAnyItemReady) {
+      // Post-Ready: check restaurant flag only, no time window
+      return cancellation.allowPostServeCancel && cancellation.allowPostServeCancel2;
+    }
+    // Pre-Ready: check time window
+    const windowMin = cancellation.orderCancelWindowMinutes;
+    if (!windowMin || windowMin === 0) return true; // 0 = unlimited
+    if (!order.createdAt) return true; // No timestamp = allow
+    const elapsed = (Date.now() - new Date(order.createdAt).getTime()) / 60000;
+    return elapsed <= windowMin;
+  })();
 
   // Header background color based on order type (matching TableCard)
   const getHeaderBgColor = () => {
@@ -516,8 +540,8 @@ const OrderCard = ({
                 <Printer className="w-5 h-5" />
               </button>
 
-              {/* Cancel Order Button - permission-gated */}
-              {canCancelOrder && (
+              {/* Cancel Order Button - permission + restaurant settings gated */}
+              {isOrderCancelAllowed && (
               <button
                 data-testid={`cancel-order-btn-${orderId}`}
                 onClick={() => onCancelOrder?.(order)}
