@@ -348,11 +348,6 @@ const OrderCard = ({
                       <CornerRightUp className="w-4 h-4" style={{ color: COLORS.grayText }} />
                     </button>
                   )}
-                  {/* Status dot */}
-                  <div
-                    className="w-2 h-2 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: getItemDotColor(item) }}
-                  />
                   {/* Item name + qty + details inline */}
                   <div className="flex-1 min-w-0">
                     <span className="text-xs" style={{ color: COLORS.darkText }}>
