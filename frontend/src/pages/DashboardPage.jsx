@@ -62,7 +62,7 @@ const EmptyTableState = () => (
 );
 
 // Reusable order list section (Delivery/TakeAway) — now uses OrderCard
-const OrderListSection = ({ title, orders, orderType, matchingIds, snoozedOrders, onToggleSnooze, onEdit, onMarkReady, onMarkServed, onBillClick, onCancelOrder, onItemStatusChange, canCancelOrder, cancellation, className }) => (
+const OrderListSection = ({ title, orders, orderType, matchingIds, snoozedOrders, onToggleSnooze, onEdit, onMarkReady, onMarkServed, onBillClick, onCancelOrder, onItemStatusChange, canCancelOrder, canPrintBill, canBill, className }) => (
   <div className={className}>
     <div className="flex items-center gap-2 mb-4 text-sm" style={{ color: COLORS.grayText }}>
       <span className="font-medium" style={{ color: COLORS.darkText }}>{title}</span>
@@ -83,7 +83,8 @@ const OrderListSection = ({ title, orders, orderType, matchingIds, snoozedOrders
               canMergeOrder={false}
               canShiftTable={false}
               canFoodTransfer={false}
-              cancellation={cancellation}
+              canPrintBill={canPrintBill}
+              canBill={canBill}
               onToggleSnooze={onToggleSnooze}
               onEdit={onEdit}
               onMarkReady={() => onMarkReady?.({ orderId: order.orderId, tableId: 0 })}
@@ -865,7 +866,8 @@ const DashboardPage = () => {
                           canMergeOrder={hasPermission('merge_table')}
                           canShiftTable={hasPermission('transfer_table')}
                           canFoodTransfer={hasPermission('food_transfer')}
-                          cancellation={cancellation}
+                          canPrintBill={hasPermission('print_icon')}
+                          canBill={hasPermission('bill')}
                           onToggleSnooze={toggleSnooze}
                           onEdit={() => handleTableClick(table)}
                           onMarkReady={() => handleMarkReady({ ...table, orderId: order.orderId, tableId: table.tableId || 0 })}
@@ -895,7 +897,8 @@ const DashboardPage = () => {
                         canMergeOrder={false}
                         canShiftTable={false}
                         canFoodTransfer={false}
-                        cancellation={cancellation}
+                        canPrintBill={hasPermission('print_icon')}
+                        canBill={hasPermission('bill')}
                         onToggleSnooze={toggleSnooze}
                         onEdit={() => handleTableClick({ id: `del-${order.orderId}`, orderId: order.orderId, orderType: 'delivery' })}
                         onMarkReady={() => handleMarkReady({ orderId: order.orderId, tableId: 0 })}
@@ -921,7 +924,8 @@ const DashboardPage = () => {
                         canMergeOrder={false}
                         canShiftTable={false}
                         canFoodTransfer={false}
-                        cancellation={cancellation}
+                        canPrintBill={hasPermission('print_icon')}
+                        canBill={hasPermission('bill')}
                         onToggleSnooze={toggleSnooze}
                         onEdit={() => handleTableClick({ id: `ta-${order.orderId}`, orderId: order.orderId, orderType: 'takeAway' })}
                         onMarkReady={() => handleMarkReady({ orderId: order.orderId, tableId: 0 })}

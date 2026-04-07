@@ -107,37 +107,17 @@ const OrderEntry = ({ table, onClose, orderData, orderType = "delivery", onOrder
   const canCustomerManage = hasPermission('customer_management');
   const canBill = hasPermission('bill');
   const canDiscount = hasPermission('discount');
+  const canPrintBill = hasPermission('print_icon');
 
-  // ── Cancellation settings check (same logic as OrderCard) ──
-  const isOrderCancelAllowed = useMemo(() => {
-    if (!canCancelOrder) return false;
-    if (!cancellation) return true;
-    const placedItems = cartItems.filter(i => i.placed && i.status !== 'cancelled');
-    const hasAnyReady = placedItems.some(i => i.status === 'ready' || i.status === 'served');
-    if (hasAnyReady) {
-      return cancellation.allowPostServeCancel && cancellation.allowPostServeCancel2;
-    }
-    const windowMin = cancellation.orderCancelWindowMinutes;
-    if (!windowMin || windowMin === 0) return true;
-    if (!orderData?.createdAt) return true;
-    const elapsed = (Date.now() - new Date(orderData.createdAt).getTime()) / 60000;
-    return elapsed <= windowMin;
-  }, [canCancelOrder, cancellation, cartItems, orderData?.createdAt]);
+  // ── Permission-only checks ──
+  // Order Card shows action if user has permission; restaurant settings validation removed
+  // Actual business rules should be enforced by backend API
+  const isOrderCancelAllowed = canCancelOrder;
 
-  // Item-level cancel check: pre-ready → time window, post-ready → restaurant flag
+  // Item-level cancel: permission only
   const isItemCancelAllowed = useCallback((item) => {
-    if (!canCancelItem) return false;
-    if (!cancellation) return true;
-    if (item.status === 'ready' || item.status === 'served') {
-      return cancellation.allowPostServeCancel && cancellation.allowPostServeCancel2;
-    }
-    const windowMin = cancellation.itemCancelWindowMinutes;
-    if (!windowMin || windowMin === 0) return true;
-    const addedAt = item.addedAt || item.createdAt;
-    if (!addedAt) return true;
-    const elapsed = (Date.now() - new Date(addedAt).getTime()) / 60000;
-    return elapsed <= windowMin;
-  }, [canCancelItem, cancellation]);
+    return canCancelItem;
+  }, [canCancelItem]);
 
   // Dietary filter states
   const [primaryFilter, setPrimaryFilter] = useState(null); // "veg" | "egg" | "nonveg" | null
@@ -983,6 +963,7 @@ const OrderEntry = ({ table, onClose, orderData, orderType = "delivery", onOrder
                 canCancelItem={canCancelItem}
                 canFoodTransfer={canFoodTransfer}
                 canBill={canBill}
+                canPrintBill={canPrintBill}
                 isItemCancelAllowed={isItemCancelAllowed}
               />
             </>

@@ -22,8 +22,8 @@ const OrderCard = ({
   canMergeOrder = true,
   canShiftTable = true,
   canFoodTransfer = true,
-  // Cancellation settings (restaurant-level)
-  cancellation = null,
+  canPrintBill = true,  // print_icon permission
+  canBill = true,       // bill permission
   onToggleSnooze,
   onEdit,
   onMarkReady,
@@ -60,51 +60,9 @@ const OrderCard = ({
   const isYetToConfirm = order.status === "yetToConfirm" || order.status === "pending";
 
   // ── Cancellation Logic ──
-  // Pre-Ready: time window applies (cancel_order_time / cancel_food_timings)
-  // Post-Ready: cancle_post_serve flag applies (no time check)
-  const hasAnyItemReady = items.some(i => i.status === 'ready' || i.status === 'served');
-
-  // Check if order cancel is allowed based on restaurant settings
-  const isOrderCancelAllowed = (() => {
-    if (!canCancelOrder) {
-      console.log(`[OrderCard ${orderId}] Cancel BLOCKED: No permission (canCancelOrder=false)`);
-      return false;
-    }
-    if (!cancellation) {
-      console.log(`[OrderCard ${orderId}] Cancel ALLOWED: No cancellation settings`);
-      return true; // No settings = allow (backward compat)
-    }
-
-    if (hasAnyItemReady) {
-      // Post-Ready: check restaurant flag only, no time window
-      const allowed = cancellation.allowPostServeCancel && cancellation.allowPostServeCancel2;
-      console.log(`[OrderCard ${orderId}] Post-Ready Cancel Check:`, {
-        hasAnyItemReady,
-        allowPostServeCancel: cancellation.allowPostServeCancel,
-        allowPostServeCancel2: cancellation.allowPostServeCancel2,
-        result: allowed ? 'ALLOWED' : 'BLOCKED'
-      });
-      return allowed;
-    }
-    // Pre-Ready: check time window
-    const windowMin = cancellation.orderCancelWindowMinutes;
-    if (!windowMin || windowMin === 0) {
-      console.log(`[OrderCard ${orderId}] Pre-Ready Cancel ALLOWED: No time window (windowMin=${windowMin})`);
-      return true; // 0 = unlimited
-    }
-    if (!order.createdAt) {
-      console.log(`[OrderCard ${orderId}] Pre-Ready Cancel ALLOWED: No createdAt timestamp`);
-      return true; // No timestamp = allow
-    }
-    const elapsed = (Date.now() - new Date(order.createdAt).getTime()) / 60000;
-    const allowed = elapsed <= windowMin;
-    console.log(`[OrderCard ${orderId}] Pre-Ready Cancel Check:`, {
-      windowMin,
-      elapsedMin: elapsed.toFixed(1),
-      result: allowed ? 'ALLOWED' : 'BLOCKED (time exceeded)'
-    });
-    return allowed;
-  })();
+  // Permission-only check: Restaurant settings are validated on Order Entry page
+  // Order Card shows action if user has permission; actual validation happens on action
+  const isOrderCancelAllowed = canCancelOrder;
 
   // Header background color based on order type (matching TableCard)
   const getHeaderBgColor = () => {
@@ -552,20 +510,22 @@ const OrderCard = ({
         ) : (
           /* Normal flow: [KOT] [Cancel] ... [Ready/Serve/Bill] for ALL order types */
           <div className="flex items-center w-full">
-            {/* Left: KOT + Cancel */}
+            {/* Left: Print + Cancel */}
             <div className="flex items-center gap-3">
-              {/* KOT button - always visible */}
+              {/* Print Bill button - permission gated (print_icon) */}
+              {canPrintBill && (
               <button
-                data-testid={`kot-btn-${orderId}`}
+                data-testid={`print-bill-btn-${orderId}`}
                 className="min-h-[44px] min-w-[44px] rounded-lg border flex items-center justify-center opacity-70 cursor-not-allowed"
                 style={{ borderColor: COLORS.borderGray, color: COLORS.darkText }}
-                title="KOT print coming in next phase"
+                title="Print bill coming in next phase"
                 onClick={(e) => e.stopPropagation()}
               >
                 <Printer className="w-5 h-5" />
               </button>
+              )}
 
-              {/* Cancel Order Button - permission + restaurant settings gated */}
+              {/* Cancel Order Button - permission gated (order_cancel) */}
               {isOrderCancelAllowed && (
               <button
                 data-testid={`cancel-order-btn-${orderId}`}
@@ -603,13 +563,13 @@ const OrderCard = ({
                 Serve
               </button>
             )}
-            {fOrderStatus === 5 && (
+            {fOrderStatus === 5 && canBill && (
               <button
                 data-testid={`bill-btn-${orderId}`}
-                className="min-h-[44px] px-6 text-sm font-bold rounded-lg opacity-70 cursor-not-allowed"
+                className="min-h-[44px] px-6 text-sm font-bold rounded-lg"
                 style={{ backgroundColor: COLORS.primaryGreen, color: "white" }}
-                onClick={(e) => e.stopPropagation()}
-                title="Bill print coming in next phase"
+                onClick={() => onBillClick?.(order)}
+                title="Collect Bill"
               >
                 Bill
               </button>

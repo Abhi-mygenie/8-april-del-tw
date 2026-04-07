@@ -259,6 +259,7 @@ const CartPanel = ({
   canCancelItem = true,
   canFoodTransfer = true,
   canBill = true,
+  canPrintBill = true,
   isItemCancelAllowed,
 }) => {
   const newItemCount = cartItems.filter(i => !i.placed).length;
@@ -497,7 +498,7 @@ const CartPanel = ({
 
             return (
               <div key={`${item.id}-${index}`}>
-                {showKotSeparator && (
+                {showKotSeparator && canPrintBill && (
                   <div className="px-4 py-2" style={{ borderBottom: `1px solid ${COLORS.borderGray}` }}>
                     <RePrintButton />
                   </div>
@@ -531,8 +532,8 @@ const CartPanel = ({
           })
         )}
 
-        {/* Re-Print at end of placed items */}
-        {cartItems.some(i => i.placed) && (
+        {/* Re-Print at end of placed items - permission gated */}
+        {canPrintBill && cartItems.some(i => i.placed) && (
           <div className="px-4 py-3">
             <RePrintButton />
           </div>
