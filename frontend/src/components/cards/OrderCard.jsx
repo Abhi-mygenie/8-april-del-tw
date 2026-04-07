@@ -155,13 +155,15 @@ const OrderCard = ({
         {/* Logo */}
         {renderLogo()}
 
-        {/* Order Type Icon + Label */}
-        <div className="flex items-center gap-1 flex-shrink-0">
-          {renderOrderTypeIcon()}
-          <span className="text-xs font-semibold" style={{ color: COLORS.darkText }}>
-            {getOrderTypeLabel()}
-          </span>
-        </div>
+        {/* Order Type Icon + Label (skip for Dine-In since table number is enough) */}
+        {!isDineIn && (
+          <div className="flex items-center gap-1 flex-shrink-0">
+            {renderOrderTypeIcon()}
+            <span className="text-xs font-semibold" style={{ color: COLORS.darkText }}>
+              {getOrderTypeLabel()}
+            </span>
+          </div>
+        )}
 
         {/* Customer/Table Name + Time */}
         <div className="flex-1 min-w-0 flex items-center gap-1">
