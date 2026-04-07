@@ -201,6 +201,36 @@ const OrderCard = ({
             </button>
           )}
 
+          {/* Merge Order Button - Dine-In only */}
+          {isDineIn && !isYetToConfirm && (
+            <button
+              data-testid={`merge-btn-${orderId}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onMergeOrder?.(order);
+              }}
+              className="min-h-[44px] min-w-[44px] hover:bg-white/50 rounded-lg flex items-center justify-center"
+              title="Merge Order"
+            >
+              <GitMerge className="w-5 h-5" style={{ color: COLORS.grayText }} />
+            </button>
+          )}
+
+          {/* Table Shift Button - Dine-In only */}
+          {isDineIn && !isYetToConfirm && (
+            <button
+              data-testid={`shift-btn-${orderId}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onTableShift?.(order);
+              }}
+              className="min-h-[44px] min-w-[44px] hover:bg-white/50 rounded-lg flex items-center justify-center"
+              title="Table Shift"
+            >
+              <ArrowLeftRight className="w-5 h-5" style={{ color: COLORS.grayText }} />
+            </button>
+          )}
+
           {/* Address toggle for own delivery */}
           {isDelivery && isOwn && (
             <button
