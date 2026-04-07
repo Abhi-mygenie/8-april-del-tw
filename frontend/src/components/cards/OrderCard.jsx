@@ -353,9 +353,9 @@ const OrderCard = ({
                     <span className="text-[11px]" style={{ color: COLORS.grayText }}>
                       {item.name} ({item.qty})
                     </span>
-                    {/* Variants/Addons inline */}
+                    {/* Variants/Addons inline - Gray italic (subtle) */}
                     {detailsStr && (
-                      <div className="text-[9px] leading-tight" style={{ color: COLORS.primaryOrange }}>
+                      <div className="text-[9px] leading-tight italic" style={{ color: COLORS.grayText }}>
                         {detailsStr}
                       </div>
                     )}
