@@ -120,17 +120,33 @@ export const fromAPI = {
     const user = api.user || {};
     const isRoom = table.rtype === 'RM' || api.order_in === 'RM';
     const isWalkIn = !api.table_id || api.table_id === 0;
+    const orderType = normalizeOrderType(api.order_type);
 
     // Build customer display name
     let customer = api.user_name || '';
     if (!customer && user.f_name) {
       customer = [user.f_name, user.l_name].filter(Boolean).join(' ');
     }
+    
+    // Default customer label based on order type (only if no actual customer name)
+    let customerLabel = customer;
+    if (!customer) {
+      switch (orderType) {
+        case 'takeAway':
+          customerLabel = 'TA';
+          break;
+        case 'delivery':
+          customerLabel = 'Del';
+          break;
+        default:
+          customerLabel = isWalkIn ? 'WC' : '';
+      }
+    }
 
     return {
       orderId: api.id,
       orderNumber: api.restaurant_order_id || '',
-      orderType: normalizeOrderType(api.order_type),
+      orderType,
       rawOrderType: api.order_type,
       orderIn: api.order_in,
       status: mapOrderStatus(api.f_order_status),
@@ -146,7 +162,7 @@ export const fromAPI = {
       isRoom,
 
       // Customer
-      customer: isWalkIn ? (customer || 'WC') : (customer || ''),
+      customer: customerLabel,
       phone: user.phone || '',
 
       // Financials (Phase 1: Enhanced with new API fields)
