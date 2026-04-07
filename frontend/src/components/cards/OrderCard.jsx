@@ -290,8 +290,8 @@ const OrderCard = ({
         </div>
       )}
 
-      {/* ── ITEMS SECTION — With variants, addons, notes ── */}
-      <div className="px-3 py-1.5 border-b" style={{ borderColor: COLORS.borderGray }}>
+      {/* ── ITEMS SECTION — Compact for Delivery/TakeAway, normal for DineIn ── */}
+      <div className={`px-3 border-b ${isDineIn ? 'py-1.5' : 'py-1'}`} style={{ borderColor: COLORS.borderGray }}>
         {activeItems.length > 0 ? (
           activeItems.map((item) => {
             const actionConfig = getItemActionConfig(item);
@@ -331,7 +331,7 @@ const OrderCard = ({
             const showItemAction = isDineIn && actionConfig;
             
             return (
-              <div key={item.id} className="py-1">
+              <div key={item.id} className={isDineIn ? "py-1" : "py-0.5"}>
                 {/* Main item row */}
                 <div className="flex items-center gap-2">
                   {/* Food Transfer icon on LEFT - Dine-In only */}
