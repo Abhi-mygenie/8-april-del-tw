@@ -102,7 +102,7 @@ const DashboardPage = () => {
     orderItemsByTableId, getOrderByTableId, removeOrder, waitForOrderRemoval,
   } = useOrders();
   const refreshAllData = useRefreshAllData();
-  const { updateTableStatus, isTableEngaged } = useTables();
+  const { updateTableStatus, isTableEngaged, setTableEngaged } = useTables();
 
   // Socket events - subscribe to real-time updates
   const { isConnected: socketConnected } = useSocketEvents();
@@ -602,24 +602,40 @@ const DashboardPage = () => {
   // Handler for marking order as ready
   const handleMarkReady = useCallback(async (tableEntry) => {
     if (!tableEntry?.orderId) return;
+    
+    const tableId = Number(tableEntry.tableId);
+    
     try {
+      // Lock table before API call
+      if (tableId) setTableEngaged(tableId, true);
+      
       await updateOrderStatus(tableEntry.orderId, user?.roleName || 'Manager', 'ready');
-      // Socket will handle UI update via update-order-status event
+      // Socket handler will release lock via update-order-status event
     } catch (error) {
+      // Release lock on error
+      if (tableId) setTableEngaged(tableId, false);
       console.error('[handleMarkReady] Error:', error);
     }
-  }, [user?.roleName]);
+  }, [user?.roleName, setTableEngaged]);
 
   // Handler for marking order as served
   const handleMarkServed = useCallback(async (tableEntry) => {
     if (!tableEntry?.orderId) return;
+    
+    const tableId = Number(tableEntry.tableId);
+    
     try {
+      // Lock table before API call
+      if (tableId) setTableEngaged(tableId, true);
+      
       await updateOrderStatus(tableEntry.orderId, user?.roleName || 'Manager', 'serve');
-      // Socket will handle UI update via update-order-status event
+      // Socket handler will release lock via update-order-status event
     } catch (error) {
+      // Release lock on error
+      if (tableId) setTableEngaged(tableId, false);
       console.error('[handleMarkServed] Error:', error);
     }
-  }, [user?.roleName]);
+  }, [user?.roleName, setTableEngaged]);
 
   const handleUpdateTableStatus = useCallback((tableStringId, newStatus) => {
     // Update through TableContext — useMemo derivation picks up the change
