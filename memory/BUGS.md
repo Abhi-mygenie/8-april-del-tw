@@ -1,6 +1,44 @@
 # POS Frontend - Bug Tracker & Audit Document
 
-**Last Updated:** Feb 2026
+**Last Updated:** April 7, 2026
+
+---
+
+## Quick Summary Table
+
+| S.No | Bug ID | Title | Priority | Status |
+|------|--------|-------|----------|--------|
+| 1 | NOTE-200 | `addOrder` Console Log Appears Twice (React StrictMode) | P3 | ℹ️ No Action |
+| 2 | BUG-201 | Duplicate API Calls on Update Order | P0 | ✅ FIXED |
+| 3 | BUG-202 | Duplicate API Calls on Cancel Item | P0 | ✅ FIXED |
+| 4 | BUG-203 | Redundant Table Socket Handling | P1 | ✅ FIXED |
+| 5 | BUG-204 | `order_sub_total_without_tax` Returns 0 | P1 | ⏳ BLOCKED (Backend) |
+| 6 | BUG-205 | Cancel Order Race Condition | P0 | ✅ FIXED |
+| 7 | BUG-206 | Partial Cancel Cancels All Items | P0 | ✅ FIXED |
+| 8 | BUG-207 | Place Order Payload Format | P0 | ✅ FIXED |
+| 9 | BUG-208 | Socket Missing Variations/Addons | P0 | ✅ FIXED |
+| 10 | BUG-209 | Placed Item Prices Double-Multiplied | P0 | ✅ FIXED |
+| 11 | BUG-210 | No Table Engage Check (Multi-Device Race) | P0 | ❌ OPEN |
+| 12 | BUG-211 | No `update-table engage` for New Orders | P1 | ⚠️ Workaround |
+| 13 | BUG-212 | Addon Names Mismatch Between APIs | P0 | ❌ OPEN (Backend) |
+| 14 | BUG-213 | Collect Bill Shows Only Placed Items | P0 | ✅ FIXED |
+| 15 | BUG-214 | Collect Bill on Existing Order | P0 | ✅ FIXED (V2 Endpoint) |
+| 16 | BUG-215 | Full Order Cancel Treated as Partial | P0 | ✅ FIXED |
+| 17 | BUG-216 | Missing Table Engage, Incorrect Free | P0 | ❌ OPEN (Backend) |
+| 18 | BUG-221 | Merge Order - Source Table Locked | P0 | ❌ OPEN |
+
+### Status Legend
+- ✅ FIXED - Issue resolved and verified
+- ❌ OPEN - Needs fix (frontend or backend)
+- ⏳ BLOCKED - Waiting on backend fix
+- ⚠️ Workaround - Temporary fix in place
+- ℹ️ No Action - Informational only
+
+### Priority Legend
+- **P0** - Critical/Blocking
+- **P1** - High Priority
+- **P2** - Medium Priority
+- **P3** - Low Priority
 
 ---
 

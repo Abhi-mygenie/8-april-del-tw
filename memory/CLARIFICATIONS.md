@@ -5,6 +5,56 @@
 
 ---
 
+## Quick Summary Table
+
+| S.No | ID | Title | Priority | Status |
+|------|-----|-------|----------|--------|
+| 1 | CLARIFICATION-001 | Order type values for different modes | P0 | ✅ RESOLVED |
+| 2 | CLARIFICATION-002 | How frontend knows order type selection | P1 | ❓ OPEN |
+| 3 | CLARIFICATION-003 | No `update-table engage` for new orders | P1 | ❓ OPEN |
+| 4 | CLARIFICATION-004 | Backend sends `free` without prior `engage` | P1 | ❓ OPEN |
+| 5 | CLARIFICATION-005 | Socket `new-order` missing 16 financial fields | P1 | ❓ OPEN |
+| 6 | CLARIFICATION-006 | Multi-device race (two orders same table) | P0 | ❓ OPEN |
+| 7 | CLARIFICATION-007 | Race condition multiple socket events | P2 | ❓ OPEN |
+| 8 | CLARIFICATION-008 | `order_sub_total_without_tax` returns 0 | P1 | ❓ OPEN (Backend) |
+| 9 | CLARIFICATION-009 | Financial field differences | P2 | ❓ OPEN |
+| 10 | CLARIFICATION-010 | Cancel item `cancel_type` values | P2 | ❓ OPEN |
+| 11 | CLARIFICATION-011 | `f_order_status` transition diagram | P1 | ❓ OPEN |
+| 12 | CLARIFICATION-012 | Hardcoded `order_type: 'pos'` | P0 | ✅ RESOLVED |
+| 13 | CLARIFICATION-013 | Hardcoded `auto_dispatch` | P3 | ❓ OPEN |
+| 14 | CLARIFICATION-014 | Hardcoded `scheduled` fields | P3 | ❓ OPEN |
+| 15 | CLARIFICATION-015 | Hardcoded financial fields | P3 | ❓ OPEN |
+| 16 | CLARIFICATION-016 | Hardcoded room fields | P3 | ❓ OPEN |
+| 17 | CLARIFICATION-017 | Partial payments (split pay) spec | P2 | ❓ OPEN |
+| 18 | CLARIFICATION-018 | Audio file attachment purpose | P3 | ❓ OPEN |
+| 19 | CLARIFICATION-019 | Member/loyalty discounts | P3 | ❓ OPEN |
+| 20 | CLARIFICATION-020 | Edit placed item endpoint | P2 | ❓ OPEN |
+| 21 | CLARIFICATION-021 | Is `update-table` channel necessary? | P2 | ❓ OPEN |
+| 22 | CLARIFICATION-022 | Socket event payload differences | P2 | ❓ OPEN |
+| 23 | CLARIFICATION-023 | Addon names differ between APIs | P0 | ❓ OPEN (Backend) |
+| 24 | CLARIFICATION-024 | Cancelled order with non-cancelled items | P2 | ❓ OPEN |
+| 25 | CLARIFICATION-025 | Walk-In UX flow | P2 | ❓ OPEN |
+| 26 | CLARIFICATION-026 | Order type visual differentiation | P1 | ✅ RESOLVED |
+| 27 | CLARIFICATION-027 | Status border colors removed | P2 | ✅ RESOLVED |
+| 28 | CLARIFICATION-028 | 403 Forbidden on "served" status | P0 | ❌ BLOCKING |
+| 29 | CLARIFICATION-029 | Single-table availability check endpoint | P3 | ❓ OPEN |
+| 30 | CLARIFICATION-030 | TBD endpoints in constants.js | P3 | ❓ OPEN |
+| 31 | CLARIFICATION-031 | Correct endpoint versions (v1/v2) | P3 | ❓ OPEN |
+
+### Status Legend
+- ✅ RESOLVED - Question answered, fix applied
+- ❓ OPEN - Awaiting answer from team
+- ❌ BLOCKING - Critical blocker for functionality
+- ⏳ IN PROGRESS - Being investigated
+
+### Priority Legend
+- **P0** - Critical/Blocking
+- **P1** - High Priority
+- **P2** - Medium Priority
+- **P3** - Low Priority (Documentation)
+
+---
+
 ## Table of Contents
 1. [Critical - Order Type Differentiation](#1-critical---order-type-differentiation)
 2. [Critical - Socket Events Inconsistency](#2-critical---socket-events-inconsistency)
