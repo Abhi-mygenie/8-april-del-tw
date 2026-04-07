@@ -795,7 +795,7 @@ const DashboardPage = () => {
                     })()}
                   </span>
                 </div>
-                <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', alignItems: 'start' }}>
+                <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', alignItems: 'start' }}>
                   {/* Dine In Orders */}
                   {activeChannels.includes("dineIn") && allTablesList
                     .filter(t => !["available", "reserved"].includes(t.status))
