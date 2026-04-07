@@ -446,7 +446,7 @@ const OrderCard = ({
           </>
         ) : (
           /* Normal flow: [KOT] + [Cancel] + [Ready/Serve/Bill] for ALL order types */
-          <>
+          <div className="flex items-center gap-3 w-full">
             {/* KOT button - always visible */}
             <button
               data-testid={`kot-btn-${orderId}`}
@@ -473,7 +473,7 @@ const OrderCard = ({
               /* Preparing → Ready button (orange) */
               <button
                 data-testid={`ready-btn-${orderId}`}
-                className="min-h-[44px] flex-1 px-4 text-sm font-bold rounded-lg"
+                className="min-h-[44px] px-6 text-sm font-bold rounded-lg"
                 style={{ backgroundColor: COLORS.primaryOrange, color: "white" }}
                 onClick={() => onMarkReady?.(order)}
               >
@@ -484,7 +484,7 @@ const OrderCard = ({
               /* Ready → Serve button (green) */
               <button
                 data-testid={`serve-btn-${orderId}`}
-                className="min-h-[44px] flex-1 px-4 text-sm font-bold rounded-lg"
+                className="min-h-[44px] px-6 text-sm font-bold rounded-lg"
                 style={{ backgroundColor: COLORS.primaryGreen, color: "white" }}
                 onClick={() => onMarkServed?.(order)}
               >
@@ -495,14 +495,14 @@ const OrderCard = ({
               /* Served → Bill button (green) */
               <button
                 data-testid={`bill-btn-${orderId}`}
-                className="min-h-[44px] flex-1 px-4 text-sm font-bold rounded-lg"
+                className="min-h-[44px] px-6 text-sm font-bold rounded-lg"
                 style={{ backgroundColor: COLORS.primaryGreen, color: "white" }}
                 onClick={() => onBillClick?.(order)}
               >
                 Bill
               </button>
             )}
-          </>
+          </div>
         )}
       </div>
     </div>
