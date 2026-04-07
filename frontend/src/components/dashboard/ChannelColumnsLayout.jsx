@@ -3,12 +3,10 @@ import { COLORS } from '../../constants';
 import ChannelColumn from './ChannelColumn';
 import ResizeHandle from './ResizeHandle';
 
-// Default max columns per channel
-const DEFAULT_MAX_COLUMNS = {
-  dineIn: 1,
-  takeAway: 1,
-  delivery: 1,
-  room: 1,
+// Default max columns per view type
+const getDefaultMaxColumns = (viewType) => {
+  const cols = viewType === 'table' ? 2 : 1;
+  return { dineIn: cols, takeAway: cols, delivery: cols, room: cols };
 };
 
 // Channel order for arrow navigation
@@ -54,8 +52,13 @@ const ChannelColumnsLayout = ({
 }) => {
   const containerRef = useRef(null);
   
-  // Reset to default on every mount (no persistence across sessions)
-  const [maxColumns, setMaxColumns] = useState(DEFAULT_MAX_COLUMNS);
+  // Reset to view-type default on every mount and when viewType changes
+  const [maxColumns, setMaxColumns] = useState(() => getDefaultMaxColumns(viewType));
+
+  // Reset columns when switching between table/order view
+  useEffect(() => {
+    setMaxColumns(getDefaultMaxColumns(viewType));
+  }, [viewType]);
 
   // Clean up stale localStorage from previous implementation
   useEffect(() => {
@@ -71,9 +74,9 @@ const ChannelColumnsLayout = ({
   const getActualColumns = useCallback((channelId, orderCount) => {
     if (orderCount === 0) return 0; // Auto-hide when no orders
     
-    const max = maxColumns[channelId] ?? 1;
+    const max = maxColumns[channelId] ?? (viewType === 'table' ? 2 : 1);
     return Math.min(orderCount, max);
-  }, [maxColumns]);
+  }, [maxColumns, viewType]);
 
   // Arrow click handler
   // `<` = DECREASE this channel by 1 (min 1)
@@ -161,7 +164,7 @@ const ChannelColumnsLayout = ({
     
     enabledChannels.forEach((channel, index) => {
       const actualColumns = getActualColumns(channel.id, channel.items?.length || 0);
-      const channelMax = maxColumns[channel.id] ?? 1;
+      const channelMax = maxColumns[channel.id] ?? (viewType === 'table' ? 2 : 1);
       
       // Skip channels with 0 actual columns (no orders)
       if (actualColumns === 0) return;
