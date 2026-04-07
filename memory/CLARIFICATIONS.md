@@ -36,7 +36,7 @@
 | 25 | CLARIFICATION-025 | Walk-In UX flow | P2 | ❓ OPEN |
 | 26 | CLARIFICATION-026 | Order type visual differentiation | P1 | ✅ RESOLVED |
 | 27 | CLARIFICATION-027 | Status border colors removed | P2 | ✅ RESOLVED |
-| 28 | CLARIFICATION-028 | 403 Forbidden on "served" status | P0 | ❌ BLOCKING |
+| 28 | CLARIFICATION-028 | 403 Forbidden on "served" status | P0 | ✅ RESOLVED |
 | 29 | CLARIFICATION-029 | Single-table availability check endpoint | P3 | ❓ OPEN |
 | 30 | CLARIFICATION-030 | TBD endpoints in constants.js | P3 | ❓ OPEN |
 | 31 | CLARIFICATION-031 | Correct endpoint versions (v1/v2) | P3 | ❓ OPEN |
@@ -454,35 +454,26 @@ User reports: "I am not able to choose walk in while ordering, it selects first 
 
 ## 10. Endpoint Clarifications
 
-### CLARIFICATION-028: 403 Forbidden on "served" status update (NEW - April 7, 2026)
+### CLARIFICATION-028: 403 Forbidden on "served" status update
 
-**Status:** ❌ OPEN - Blocking Serve button functionality
+**Status:** ✅ RESOLVED (April 7, 2026)
 
 **Issue:**
-- `PUT /api/v2/vendoremployee/order-status-update` with `order_status: "ready"` → ✅ Works
 - `PUT /api/v2/vendoremployee/order-status-update` with `order_status: "served"` → ❌ 403 Forbidden
 
-**Error:**
-```
-[handleMarkServed] Error: AxiosError: Request failed with status code 403
-```
-
-**Payload Sent:**
+**Resolution:**
+Correct value is `"serve"` (not `"served"`):
 ```json
 {
   "order_id": "730537",
   "role_name": "Owner",
-  "order_status": "served"
+  "order_status": "serve"
 }
 ```
 
-**Questions:**
-1. What permission/role is required to mark order as "served"?
-2. Is the correct status value `"served"` or something else (e.g., `"serve"`, `"completed"`, `"delivered"`)?
-3. Is there a workflow restriction (e.g., must go through KDS/kitchen first)?
-4. Does the role "Owner" have this permission?
-
-**Impact:** Serve button on TableCard is non-functional until resolved.
+**Fix Applied:**
+- Updated `handleMarkServed()` in `DashboardPage.jsx` to use `"serve"`
+- Updated `API_DOCUMENT_V2.md` with correct value
 
 ---
 
@@ -522,7 +513,7 @@ Can you provide authoritative list of correct endpoint versions for each action?
 1. ~~**CLARIFICATION-001** - Order type hardcoding (all orders show as WC)~~ ✅ RESOLVED
 2. **CLARIFICATION-006** - Multi-device race condition (two orders on same table)
 3. **CLARIFICATION-023** - Addon name mismatch (confuses kitchen/customer)
-4. **CLARIFICATION-028** - 403 Forbidden on "served" status (Serve button broken) 🆕
+4. ~~**CLARIFICATION-028** - 403 Forbidden on "served" status (Serve button broken)~~ ✅ RESOLVED
 
 ### P1 - High Priority
 5. CLARIFICATION-003/004 - Socket engage/free inconsistency

@@ -43,7 +43,7 @@
 {
   "order_id": "730522",
   "role_name": "Manager",
-  "order_status": "served"
+  "order_status": "serve"
 }
 ```
 
@@ -65,7 +65,7 @@
 |-------|------|----------|-------------|
 | `order_id` | string | ✅ | Order ID |
 | `role_name` | string | ✅ | User's role (e.g., "Manager", "Owner", "Waiter") |
-| `order_status` | string | ✅ | New status: `"ready"`, `"served"`, `"cancelled"` |
+| `order_status` | string | ✅ | New status: `"ready"`, `"serve"`, `"cancelled"` |
 | `cancellation_reason` | string | Only for cancelled | Reason for cancellation |
 | `cancellation_note` | string | Only for cancelled | Additional notes |
 
@@ -74,7 +74,7 @@
 | API `order_status` | DB `f_order_status` | UI Display |
 |--------------------|---------------------|------------|
 | `"ready"` | 2 | Ready |
-| `"served"` | 5 | Served |
+| `"serve"` | 5 | Served |
 | `"cancelled"` | 3 | Cancelled |
 
 ### Frontend Implementation

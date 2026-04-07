@@ -614,7 +614,7 @@ const DashboardPage = () => {
   const handleMarkServed = useCallback(async (tableEntry) => {
     if (!tableEntry?.orderId) return;
     try {
-      await updateOrderStatus(tableEntry.orderId, user?.roleName || 'Manager', 'served');
+      await updateOrderStatus(tableEntry.orderId, user?.roleName || 'Manager', 'serve');
       // Socket will handle UI update via update-order-status event
     } catch (error) {
       console.error('[handleMarkServed] Error:', error);
