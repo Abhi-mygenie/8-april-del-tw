@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { User, X, ChevronDown, ChevronUp, MapPin, Clock, Printer, ShoppingBag, Bike, Circle, CheckCircle2, Check } from "lucide-react";
+import { User, X, ChevronDown, ChevronUp, MapPin, Clock, Printer, ShoppingBag, Bike, Circle, CheckCircle2, Check, FileText } from "lucide-react";
 import { COLORS, SOURCE_COLORS } from "../../constants";
 
 /**
@@ -65,12 +65,23 @@ const OrderCard = ({
     return "";
   };
 
-  // Customer name display - fallback to "Walk-In" or "WC"
-  const getCustomerName = () => {
+  // Customer/Table display - For Dine-In show table number, else customer name
+  const getDisplayName = () => {
+    // For Dine-In: prioritize table label/number
+    if (isDineIn) {
+      if (tableLabel && tableLabel !== 'WC') return tableLabel;
+      if (order.tableNumber) return `T${order.tableNumber}`;
+      // Fallback to customer or WC
+      if (order.customer && order.customer.trim() && order.customer !== 'Walk-In') {
+        return order.customer;
+      }
+      return 'WC';
+    }
+    // For TakeAway/Delivery: show customer name
     if (order.customer && order.customer.trim()) {
       return order.customer;
     }
-    return isDineIn ? "WC" : "Walk-In";
+    return 'Walk-In';
   };
 
   // Source logo - MG text for own, letter for aggregators
@@ -152,10 +163,10 @@ const OrderCard = ({
           </span>
         </div>
 
-        {/* Customer Name + Time */}
+        {/* Customer/Table Name + Time */}
         <div className="flex-1 min-w-0 flex items-center gap-1">
           <span className="text-xs font-medium truncate" style={{ color: COLORS.darkText }}>
-            {getCustomerName()}
+            {getDisplayName()}
           </span>
           <span className="text-[10px] flex-shrink-0" style={{ color: COLORS.grayText }}>
             · {order.time || ''}
@@ -229,46 +240,92 @@ const OrderCard = ({
         </div>
       )}
 
-      {/* ── ITEMS SECTION — Compact with status label + tick icons ── */}
+      {/* ── ORDER-LEVEL NOTES ── */}
+      {order.orderNote && (
+        <div 
+          className="px-3 py-1.5 border-b flex items-start gap-1.5" 
+          style={{ borderColor: COLORS.borderGray, backgroundColor: '#FFFDE7' }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <FileText className="w-3 h-3 flex-shrink-0 mt-0.5" style={{ color: COLORS.primaryOrange }} />
+          <span className="text-[10px] italic" style={{ color: COLORS.darkText }}>
+            {order.orderNote}
+          </span>
+        </div>
+      )}
+
+      {/* ── ITEMS SECTION — With variants, addons, notes ── */}
       <div className="px-3 py-1.5 border-b" style={{ borderColor: COLORS.borderGray }}>
         {activeItems.length > 0 ? (
           activeItems.map((item) => {
             const actionConfig = getItemActionConfig(item);
             const statusLabel = item.status === 'preparing' ? 'Preparing' : item.status === 'ready' ? 'Ready' : '';
+            
+            // Build variants/addons display string
+            const variants = item.variation || [];
+            const addons = item.addOns || [];
+            const variantStr = variants.map(v => 
+              typeof v === 'string' ? v : `${v.name || v.variant_name}: ${v.value || v.option_label || v.label}`
+            ).join(', ');
+            const addonStr = addons.map(a => a.name || a.addon_name).join(', ');
+            const detailsStr = [variantStr, addonStr].filter(Boolean).join(', ');
+            
+            // Item-level notes
+            const itemNote = item.notes || '';
+            
             return (
-              <div key={item.id} className="flex items-center gap-2 py-1.5">
-                {/* Status dot */}
-                <div
-                  className="w-2 h-2 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: getItemDotColor(item) }}
-                />
-                {/* Item name + qty */}
-                <span className="flex-1 text-xs truncate" style={{ color: COLORS.darkText }}>
-                  {item.name} ({item.qty})
-                </span>
-                {/* Status label */}
-                {statusLabel && (
-                  <span className="text-[10px] flex-shrink-0" style={{ color: COLORS.grayText }}>
-                    {statusLabel}
+              <div key={item.id} className="py-1.5">
+                {/* Main item row */}
+                <div className="flex items-center gap-2">
+                  {/* Status dot */}
+                  <div
+                    className="w-2 h-2 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: getItemDotColor(item) }}
+                  />
+                  {/* Item name + qty */}
+                  <span className="flex-1 text-xs truncate" style={{ color: COLORS.darkText }}>
+                    {item.name} ({item.qty})
                   </span>
+                  {/* Status label + action icon as single tappable area */}
+                  {actionConfig && (
+                    <button
+                      data-testid={`item-action-btn-${item.id}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleItemAction(item, actionConfig.action);
+                      }}
+                      className="min-h-[44px] px-2 rounded-lg flex items-center gap-2 hover:bg-gray-100 transition-colors -mr-2"
+                      title={actionConfig.action === 'ready' ? 'Mark Ready' : 'Mark Served'}
+                    >
+                      <span className="text-[10px]" style={{ color: COLORS.grayText }}>
+                        {statusLabel}
+                      </span>
+                      {actionConfig.icon === 'empty' ? (
+                        <Circle className="w-5 h-5" style={{ color: actionConfig.color }} strokeWidth={2.5} />
+                      ) : (
+                        <CheckCircle2 className="w-5 h-5" style={{ color: actionConfig.color }} strokeWidth={2.5} />
+                      )}
+                    </button>
+                  )}
+                </div>
+                
+                {/* Variants/Addons row */}
+                {detailsStr && (
+                  <div className="ml-4 mt-0.5">
+                    <span className="text-[10px]" style={{ color: COLORS.primaryOrange }}>
+                      {detailsStr}
+                    </span>
+                  </div>
                 )}
-                {/* Item-level tick icon (44px touch target) */}
-                {actionConfig && (
-                  <button
-                    data-testid={`item-action-btn-${item.id}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleItemAction(item, actionConfig.action);
-                    }}
-                    className="min-h-[44px] min-w-[44px] rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors -mr-2"
-                    title={actionConfig.action === 'ready' ? 'Mark Ready' : 'Mark Served'}
-                  >
-                    {actionConfig.icon === 'empty' ? (
-                      <Circle className="w-5 h-5" style={{ color: actionConfig.color }} strokeWidth={2.5} />
-                    ) : (
-                      <CheckCircle2 className="w-5 h-5" style={{ color: actionConfig.color }} strokeWidth={2.5} />
-                    )}
-                  </button>
+                
+                {/* Item note row */}
+                {itemNote && (
+                  <div className="ml-4 mt-0.5 flex items-center gap-1">
+                    <FileText className="w-2.5 h-2.5" style={{ color: COLORS.grayText }} />
+                    <span className="text-[10px] italic" style={{ color: COLORS.grayText }}>
+                      {itemNote}
+                    </span>
+                  </div>
                 )}
               </div>
             );
