@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { COLORS } from '../../constants';
 import ChannelColumn from './ChannelColumn';
 import ResizeHandle from './ResizeHandle';
@@ -56,6 +56,11 @@ const ChannelColumnsLayout = ({
   
   // Reset to default on every mount (no persistence across sessions)
   const [maxColumns, setMaxColumns] = useState(DEFAULT_MAX_COLUMNS);
+
+  // Clean up stale localStorage from previous implementation
+  useEffect(() => {
+    try { window.localStorage.removeItem('mygenie_channel_max_columns'); } catch (_) {}
+  }, []);
 
   // Filter to only enabled channels
   const enabledChannels = useMemo(() => {
