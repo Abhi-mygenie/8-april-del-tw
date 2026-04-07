@@ -229,22 +229,29 @@ const OrderCard = ({
         </div>
       )}
 
-      {/* ── ITEMS SECTION — With item-level tick icons (44px touch targets) ── */}
-      <div className="px-3 py-2 border-b" style={{ borderColor: COLORS.borderGray }}>
+      {/* ── ITEMS SECTION — Compact with status label + tick icons ── */}
+      <div className="px-3 py-1.5 border-b" style={{ borderColor: COLORS.borderGray }}>
         {activeItems.length > 0 ? (
           activeItems.map((item) => {
             const actionConfig = getItemActionConfig(item);
+            const statusLabel = item.status === 'preparing' ? 'Preparing' : item.status === 'ready' ? 'Ready' : '';
             return (
-              <div key={item.id} className="flex items-center gap-3 py-2.5">
+              <div key={item.id} className="flex items-center gap-2 py-1.5">
                 {/* Status dot */}
                 <div
                   className="w-2 h-2 rounded-full flex-shrink-0"
                   style={{ backgroundColor: getItemDotColor(item) }}
                 />
                 {/* Item name + qty */}
-                <span className="flex-1 text-sm truncate" style={{ color: COLORS.darkText }}>
+                <span className="flex-1 text-xs truncate" style={{ color: COLORS.darkText }}>
                   {item.name} ({item.qty})
                 </span>
+                {/* Status label */}
+                {statusLabel && (
+                  <span className="text-[10px] flex-shrink-0" style={{ color: COLORS.grayText }}>
+                    {statusLabel}
+                  </span>
+                )}
                 {/* Item-level tick icon (44px touch target) */}
                 {actionConfig && (
                   <button
@@ -253,13 +260,13 @@ const OrderCard = ({
                       e.stopPropagation();
                       handleItemAction(item, actionConfig.action);
                     }}
-                    className="min-h-[44px] min-w-[44px] rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors"
+                    className="min-h-[44px] min-w-[44px] rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors -mr-2"
                     title={actionConfig.action === 'ready' ? 'Mark Ready' : 'Mark Served'}
                   >
                     {actionConfig.icon === 'empty' ? (
-                      <Circle className="w-7 h-7" style={{ color: actionConfig.color }} strokeWidth={2.5} />
+                      <Circle className="w-5 h-5" style={{ color: actionConfig.color }} strokeWidth={2.5} />
                     ) : (
-                      <CheckCircle2 className="w-7 h-7" style={{ color: actionConfig.color }} strokeWidth={2.5} />
+                      <CheckCircle2 className="w-5 h-5" style={{ color: actionConfig.color }} strokeWidth={2.5} />
                     )}
                   </button>
                 )}
@@ -267,7 +274,7 @@ const OrderCard = ({
             );
           })
         ) : (
-          <div className="py-2.5 text-sm" style={{ color: COLORS.grayText }}>
+          <div className="py-1.5 text-xs" style={{ color: COLORS.grayText }}>
             No active items
           </div>
         )}
@@ -278,7 +285,7 @@ const OrderCard = ({
         <div className="border-b" style={{ borderColor: COLORS.borderGray }}>
           <button
             data-testid={`served-toggle-${orderId}`}
-            className="w-full px-3 min-h-[44px] flex items-center justify-between text-sm hover:bg-gray-50"
+            className="w-full px-3 min-h-[40px] flex items-center justify-between text-xs hover:bg-gray-50"
             style={{ color: COLORS.grayText }}
             onClick={(e) => {
               e.stopPropagation();
@@ -292,17 +299,20 @@ const OrderCard = ({
           {showServed && (
             <div className="px-3 pb-2">
               {servedItems.map((item) => (
-                <div key={item.id} className="flex items-center gap-3 py-2">
+                <div key={item.id} className="flex items-center gap-2 py-1.5">
                   <div
                     className="w-2 h-2 rounded-full flex-shrink-0"
                     style={{ backgroundColor: COLORS.primaryGreen }}
                   />
-                  <span className="flex-1 text-sm" style={{ color: COLORS.grayText }}>
+                  <span className="flex-1 text-xs" style={{ color: COLORS.grayText }}>
                     {item.name} ({item.qty})
                   </span>
+                  <span className="text-[10px] flex-shrink-0" style={{ color: COLORS.grayText }}>
+                    Served
+                  </span>
                   {/* Served checkmark (no action) */}
-                  <div className="min-h-[44px] min-w-[44px] flex items-center justify-center">
-                    <Check className="w-6 h-6" style={{ color: COLORS.grayText }} strokeWidth={2.5} />
+                  <div className="min-h-[44px] min-w-[44px] flex items-center justify-center -mr-2">
+                    <Check className="w-5 h-5" style={{ color: COLORS.grayText }} strokeWidth={2.5} />
                   </div>
                 </div>
               ))}
