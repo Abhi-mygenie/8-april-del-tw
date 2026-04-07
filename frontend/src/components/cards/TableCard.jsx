@@ -26,14 +26,16 @@ const TableCard = ({ table, onClick, onOpenModal, onUpdateStatus, onBillClick, o
 
   const headerPillStyle = useMemo(() => {
     // Different background colors by order type
-    let bg = '#E5E7EB'; // Default gray for dine-in/walk-in
-    if (table.orderType === 'takeAway') bg = '#FFF3E0'; // Light amber
-    else if (table.orderType === 'delivery') bg = '#E3F2FD'; // Light blue
+    let bg = '#FFF9E6'; // Default yellow for Dine-In
+    if (table.orderType === 'takeAway') bg = '#C8E6C9';      // Green
+    else if (table.orderType === 'delivery') bg = '#FFEBEE'; // Pink
+    else if (table.orderType === 'walkIn') bg = '#FFF9E6';   // Yellow (same as Dine-In)
+    else if (table.isRoom) bg = '#E3F2FD';                   // Blue for Room
     return {
       backgroundColor: bg,
       color: COLORS.darkText,
     };
-  }, [table.orderType]);
+  }, [table.orderType, table.isRoom]);
 
   const handleCardClick = () => {
     if (hasOrders || isYetToConfirm) {
