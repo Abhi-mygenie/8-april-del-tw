@@ -10,47 +10,61 @@ Pull code from https://github.com/Abhi-mygenie/8-april-del-tw.git default branch
 - Socket.io client
 - React Router DOM
 
-## What's Been Implemented (Jan 2026)
-- ✅ Cloned repository from GitHub (v2 branch)
-- ✅ Installed all dependencies with yarn
-- ✅ Configured environment variables:
-  - REACT_APP_API_BASE_URL=https://preprod.mygenie.online/
-  - REACT_APP_SOCKET_URL=https://presocket.mygenie.online
-- ✅ App running successfully on port 3000
-
 ## Environment Configuration
 Frontend .env:
 - REACT_APP_API_BASE_URL=https://preprod.mygenie.online/
 - REACT_APP_SOCKET_URL=https://presocket.mygenie.online
 
+## What's Been Implemented
+
+### Initial Setup (Jan 2026)
+- Cloned repository from GitHub (v2 branch)
+- Installed all dependencies with yarn
+- Configured environment variables
+- App running successfully on port 3000
+
+### Permission-Based UI (Apr 2026)
+- Removed time-window/restaurant setting checks for UI Cancellations; now strictly permission-based
+- Added permission checks for `bill` and `print_icon`
+- Wired Food Transfer button to navigate to OrderEntry and open modal
+
+### Socket Workaround (Apr 2026)
+- Added frontend workaround for missing `update_table` socket event on item status changes
+
+### Channel-Based Layout Redesign (Apr 2026) - COMPLETED Phase A
+- Created `USE_CHANNEL_LAYOUT` feature flag (true)
+- Built `ChannelColumnsLayout.jsx` — main container for channel-based columns
+- Built `ChannelColumn.jsx` — individual channel column with arrows
+- Built `ResizeHandle.jsx` — drag handle between columns (Phase B - not wired yet)
+- **Arrow Functionality (Phase A) COMPLETE:**
+  - `<` (left arrow) = DECREASE this channel's column count (min 1)
+  - `>` (right arrow) = INCREASE this channel's column count (no max limit)
+  - Each channel is INDEPENDENT — arrows do NOT affect adjacent channels
+  - Layout state resets to default (2 columns each) on every mount (no localStorage)
+  - Horizontal scroll when total width exceeds viewport
+  - 0 orders = channel auto-hides
+- Fixed duplicate React key warning for walk-in orders in dineIn channel
+
 ## Current Status
-App is running and displaying login page for MyGenie Restaurant POS System.
+- Phase A (Arrow Functionality) — COMPLETE & TESTED (100% pass rate)
+- Phase B (Drag-to-Resize) — PARKED
+- Feature flag `USE_CHANNEL_LAYOUT = true`
 
----
+## Backlog (P0 → P2)
+### P0
+- Phase B: Drag-to-Resize via ResizeHandle between channels
+- Remove old channel filter buttons from Header.jsx
 
-## Channel-Based Layout Redesign (April 7, 2026)
+### P1
+- Verify Search & Status filter integration with channel layout
+- Clean up deprecated area-based components (TableSection.jsx) after full approval
 
-### Status: PLANNING (Document Created)
+### P2
+- Implement `clear_payment` functionality
+- Implement `serve` button functionality (API integration)
+- Fix backend table socket bug (frontend workaround in place)
 
-### Key Decisions:
-1. Replace area-based grouping (Default, out, in, Walk-In) with **channel-based columns** (Dine-In, TakeAway, Delivery, Room)
-2. Each channel = 1 column with single-card width
-3. Columns resizable via drag separator
-4. Columns can be fully collapsed
-5. Widths persist to localStorage
-6. **Channel filter buttons REMOVED** from Header (channels are now visible as columns)
-7. Same layout applies to BOTH Table View and List View
-
-### Documentation:
-- Full specification: `/app/docs/CHANNEL_BASED_LAYOUT_REDESIGN.md`
-
-### Identified Risks:
-- Breaking existing area-based functionality
-- Header channel filter removal
-- Active orders toggle interaction
-- Performance with many orders
-
-### Migration Strategy:
-- Feature flag approach for safe rollout
-- Keep old code until new layout is verified
-
+## Key Architectural Decisions
+- Permissions: UI is a "dumb" display layer. No frontend logic for time windows or restaurant settings. Rely on AuthContext permissions array.
+- Channel columns: maxColumns controlled per-channel via useState (not localStorage). actualColumns = min(orderCount, maxColumns).
+- Feature flag for safe rollout: USE_CHANNEL_LAYOUT toggle in /app/frontend/src/constants/featureFlags.js

@@ -380,7 +380,7 @@ const DashboardPage = () => {
         id: 'dineIn',
         name: 'Dine-In',
         items: [
-          ...allTablesList.filter(t => !t.isRoom).map(enrichTable),
+          ...allTablesList.filter(t => !t.isRoom && !t.isWalkIn).map(enrichTable),
           ...walkInOrders.map(adaptWalkIn),
         ],
         enabled: features.dineIn !== false,
