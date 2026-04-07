@@ -145,8 +145,8 @@ const OrderCard = ({
   return (
     <div
       data-testid={`order-card-${orderId}`}
-      className={`rounded-lg shadow-sm overflow-hidden ${isSnoozed ? "opacity-60" : ""}`}
-      style={{ backgroundColor: COLORS.lightBg, border: `1px solid ${COLORS.borderGray}` }}
+      className={`rounded-lg shadow-sm overflow-hidden mb-2 ${isSnoozed ? "opacity-60" : ""}`}
+      style={{ backgroundColor: COLORS.lightBg, border: `1px solid ${COLORS.borderGray}`, breakInside: 'avoid' }}
       onClick={() => onEdit?.()}
     >
       {/* ── HEADER — [Logo][Name][Time] [Amount] [Merge][Shift][Cancel] ── */}
