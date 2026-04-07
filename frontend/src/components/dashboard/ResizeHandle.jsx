@@ -1,97 +1,104 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect } from 'react';
 import { COLORS } from '../../constants';
 
 /**
  * ResizeHandle - Draggable vertical bar for resizing adjacent columns
+ * Using vanilla JS approach for reliability
  */
 const ResizeHandle = ({ onDrag, onDragStart, onDragEnd }) => {
-  const [isDragging, setIsDragging] = useState(false);
-  const startXRef = useRef(0);
-  const onDragRef = useRef(onDrag);
-  
-  // Keep ref updated with latest onDrag
+  const handleRef = useRef(null);
+  const dragStateRef = useRef({ isDragging: false, startX: 0 });
+  const callbacksRef = useRef({ onDrag, onDragStart, onDragEnd });
+
+  // Keep callbacks ref updated
   useEffect(() => {
-    onDragRef.current = onDrag;
-  }, [onDrag]);
+    callbacksRef.current = { onDrag, onDragStart, onDragEnd };
+  }, [onDrag, onDragStart, onDragEnd]);
 
-  const handleMouseDown = useCallback((e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log('[ResizeHandle] Mouse down at X:', e.clientX);
-    startXRef.current = e.clientX;
-    setIsDragging(true);
-    
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-    
-    onDragStart?.();
-  }, [onDragStart]);
-
-  // Handle mouse move and mouse up when dragging
   useEffect(() => {
-    if (!isDragging) return;
+    const handle = handleRef.current;
+    if (!handle) return;
 
-    const handleMouseMove = (e) => {
-      const deltaX = e.clientX - startXRef.current;
-      startXRef.current = e.clientX;
+    const onMouseDown = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      dragStateRef.current.isDragging = true;
+      dragStateRef.current.startX = e.clientX;
+      
+      console.log('[ResizeHandle] MOUSEDOWN at', e.clientX);
+      
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      
+      callbacksRef.current.onDragStart?.();
+    };
+
+    const onMouseMove = (e) => {
+      if (!dragStateRef.current.isDragging) return;
+      
+      const deltaX = e.clientX - dragStateRef.current.startX;
+      dragStateRef.current.startX = e.clientX;
+      
+      console.log('[ResizeHandle] MOUSEMOVE deltaX:', deltaX);
       
       if (deltaX !== 0) {
-        console.log('[ResizeHandle] Dragging, deltaX:', deltaX);
-        onDragRef.current?.(deltaX);
+        callbacksRef.current.onDrag?.(deltaX);
       }
     };
 
-    const handleMouseUp = () => {
-      console.log('[ResizeHandle] Mouse up, stopping drag');
-      setIsDragging(false);
+    const onMouseUp = () => {
+      if (!dragStateRef.current.isDragging) return;
+      
+      console.log('[ResizeHandle] MOUSEUP');
+      
+      dragStateRef.current.isDragging = false;
       
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
       
-      onDragEnd?.();
+      callbacksRef.current.onDragEnd?.();
     };
 
-    console.log('[ResizeHandle] Adding drag listeners');
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    // Attach mousedown to the handle element
+    handle.addEventListener('mousedown', onMouseDown);
+    // Attach mousemove and mouseup to document for smooth dragging
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
 
     return () => {
-      console.log('[ResizeHandle] Removing drag listeners');
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      handle.removeEventListener('mousedown', onMouseDown);
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
     };
-  }, [isDragging, onDragEnd]);
+  }, []);
 
   return (
     <div
+      ref={handleRef}
       data-testid="resize-handle"
-      className="resize-handle flex-shrink-0 flex items-center justify-center"
       style={{
-        width: '20px',
+        width: '24px',
         cursor: 'col-resize',
-        zIndex: 50,
-        position: 'relative',
-        backgroundColor: isDragging ? 'rgba(249, 115, 22, 0.2)' : 'transparent',
+        zIndex: 100,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
       }}
-      onMouseDown={handleMouseDown}
     >
       {/* Visual indicator */}
       <div
         style={{
-          width: '6px',
+          width: '8px',
           height: '100%',
-          backgroundColor: isDragging ? COLORS.primaryOrange : '#E5E5E5',
-          borderRadius: '3px',
-          transition: 'background-color 0.15s',
+          backgroundColor: '#D1D5DB',
+          borderRadius: '4px',
+          transition: 'all 0.15s',
         }}
+        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = COLORS.primaryOrange}
+        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#D1D5DB'}
       />
-      
-      {/* Hover styles */}
-      <style>{`
-        .resize-handle:hover > div {
-          background-color: ${COLORS.primaryOrange} !important;
-        }
-      `}</style>
     </div>
   );
 };
