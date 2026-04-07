@@ -1,63 +1,67 @@
-import { useCallback, useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { COLORS } from '../../constants';
 
 /**
  * ResizeHandle - Draggable vertical bar for resizing adjacent columns
- * 
- * Features:
- * - Visual feedback on hover and drag
- * - Smooth drag tracking
- * - Reports delta movement to parent
  */
 const ResizeHandle = ({ onDrag, onDragStart, onDragEnd }) => {
   const isDragging = useRef(false);
   const startX = useRef(0);
+  const handleRef = useRef(null);
 
-  const handleMouseMove = useCallback((e) => {
-    if (!isDragging.current) return;
-    
-    const deltaX = e.clientX - startX.current;
-    startX.current = e.clientX;
-    
-    console.log('[ResizeHandle] Dragging, deltaX:', deltaX);
-    onDrag?.(deltaX);
-  }, [onDrag]);
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!isDragging.current) return;
+      
+      const deltaX = e.clientX - startX.current;
+      startX.current = e.clientX;
+      
+      if (deltaX !== 0) {
+        console.log('[ResizeHandle] Dragging, deltaX:', deltaX);
+        onDrag?.(deltaX);
+      }
+    };
 
-  const handleMouseUp = useCallback(() => {
-    console.log('[ResizeHandle] Mouse up, stopping drag');
-    isDragging.current = false;
-    
-    // Remove document-level listeners
-    document.removeEventListener('mousemove', handleMouseMove);
-    document.removeEventListener('mouseup', handleMouseUp);
-    
-    // Reset body styles
-    document.body.style.cursor = '';
-    document.body.style.userSelect = '';
-    
-    onDragEnd?.();
-  }, [onDragEnd, handleMouseMove]);
+    const handleMouseUp = () => {
+      if (!isDragging.current) return;
+      
+      console.log('[ResizeHandle] Mouse up, stopping drag');
+      isDragging.current = false;
+      
+      // Reset body styles
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      
+      onDragEnd?.();
+    };
 
-  const handleMouseDown = useCallback((e) => {
+    // Add listeners at mount
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [onDrag, onDragEnd]);
+
+  const handleMouseDown = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('[ResizeHandle] Mouse down, starting drag');
+    console.log('[ResizeHandle] Mouse down, starting drag at X:', e.clientX);
     isDragging.current = true;
     startX.current = e.clientX;
     
-    onDragStart?.();
-    
-    // Add document-level listeners for smooth dragging
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-    
-    // Add dragging class to body for cursor
+    // Add dragging styles to body
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
-  }, [onDragStart, handleMouseMove, handleMouseUp]);
+    
+    onDragStart?.();
+  };
 
   return (
     <div
+      ref={handleRef}
       data-testid="resize-handle"
       className="resize-handle flex-shrink-0 flex items-center justify-center"
       style={{
