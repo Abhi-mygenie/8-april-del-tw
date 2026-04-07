@@ -86,8 +86,8 @@
 - ~~P0: Wire up onCancelOrder handler~~ DONE
 - ~~P0: Wire up onItemStatusChange handler~~ DONE
 - ~~P0: Add cancellation time window + post-ready logic in OrderCard~~ DONE
+- ~~P1: Gate permissions in OrderEntry.jsx~~ DONE (Cancel Order, Cancel Item, Transfer, Shift, Merge, Customer, Collect Bill)
 - P1: Fix critical bugs from BUGS.md (BUG-210, BUG-212, BUG-216, BUG-221)
-- P1: Gate permissions in OrderEntry.jsx (Cancel, Shift, Merge, Transfer modals)
 - P1: Gate permissions in Sidebar.jsx (Menu, Reports, Settings)
 - P1: Add profile setting for card height (dynamic/fixed)
 - P1: Test on tablet device

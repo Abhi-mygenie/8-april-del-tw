@@ -35,8 +35,8 @@ const OrderEntry = ({ table, onClose, orderData, orderType = "delivery", onOrder
   const { categories, products, popularFood } = useMenu();
   const { orders, refreshOrders, removeOrder, waitForOrderRemoval } = useOrders();
   const { getItemCancellationReasons, getOrderCancellationReasons } = useSettings();
-  const { restaurant } = useRestaurant();
-  const { user } = useAuth();
+  const { restaurant, cancellation } = useRestaurant();
+  const { user, hasPermission } = useAuth();
   const { updateTableStatus, setTableEngaged, waitForTableEngaged } = useTables();
   const { toast } = useToast();
 
@@ -97,6 +97,47 @@ const OrderEntry = ({ table, onClose, orderData, orderType = "delivery", onOrder
   const effectiveTable = { ...table, orderId: placedOrderId || table?.orderId };
   const cartKeyRef = useRef(null); // tracks previous table key for save-on-switch
   const typeDropdownRef = useRef(null);
+
+  // ── Permission flags ──
+  const canCancelOrder = hasPermission('order_cancel');
+  const canCancelItem = hasPermission('food');
+  const canShiftTable = hasPermission('transfer_table');
+  const canMergeOrder = hasPermission('merge_table');
+  const canFoodTransfer = hasPermission('food_transfer');
+  const canCustomerManage = hasPermission('customer_management');
+  const canBill = hasPermission('bill');
+  const canDiscount = hasPermission('discount');
+
+  // ── Cancellation settings check (same logic as OrderCard) ──
+  const isOrderCancelAllowed = useMemo(() => {
+    if (!canCancelOrder) return false;
+    if (!cancellation) return true;
+    const placedItems = cartItems.filter(i => i.placed && i.status !== 'cancelled');
+    const hasAnyReady = placedItems.some(i => i.status === 'ready' || i.status === 'served');
+    if (hasAnyReady) {
+      return cancellation.allowPostServeCancel && cancellation.allowPostServeCancel2;
+    }
+    const windowMin = cancellation.orderCancelWindowMinutes;
+    if (!windowMin || windowMin === 0) return true;
+    if (!orderData?.createdAt) return true;
+    const elapsed = (Date.now() - new Date(orderData.createdAt).getTime()) / 60000;
+    return elapsed <= windowMin;
+  }, [canCancelOrder, cancellation, cartItems, orderData?.createdAt]);
+
+  // Item-level cancel check: pre-ready → time window, post-ready → restaurant flag
+  const isItemCancelAllowed = useCallback((item) => {
+    if (!canCancelItem) return false;
+    if (!cancellation) return true;
+    if (item.status === 'ready' || item.status === 'served') {
+      return cancellation.allowPostServeCancel && cancellation.allowPostServeCancel2;
+    }
+    const windowMin = cancellation.itemCancelWindowMinutes;
+    if (!windowMin || windowMin === 0) return true;
+    const addedAt = item.addedAt || item.createdAt;
+    if (!addedAt) return true;
+    const elapsed = (Date.now() - new Date(addedAt).getTime()) / 60000;
+    return elapsed <= windowMin;
+  }, [canCancelItem, cancellation]);
 
   // Dietary filter states
   const [primaryFilter, setPrimaryFilter] = useState(null); // "veg" | "egg" | "nonveg" | null
@@ -537,6 +578,8 @@ const OrderEntry = ({ table, onClose, orderData, orderType = "delivery", onOrder
           onMergeTable={() => setShowMergeModal(true)}
           onBack={onClose}
           categories={categories}
+          canShiftTable={canShiftTable}
+          canMergeOrder={canMergeOrder}
         />
 
         {/* MIDDLE PANEL - Menu Items */}
@@ -843,7 +886,8 @@ const OrderEntry = ({ table, onClose, orderData, orderType = "delivery", onOrder
                   )}
                 </div>
 
-                {/* Customer Info */}
+                {/* Customer Info — permission-gated */}
+                {canCustomerManage && (
                 <button 
                   className="p-2 hover:bg-gray-100 rounded-lg transition-colors relative" 
                   title="Customer Info"
@@ -852,6 +896,7 @@ const OrderEntry = ({ table, onClose, orderData, orderType = "delivery", onOrder
                 >
                   <UserPlus className="w-5 h-5" style={{ color: customer ? COLORS.primaryGreen : COLORS.grayText }} />
                 </button>
+                )}
 
                 {/* Order Notes */}
                 <button
@@ -873,11 +918,13 @@ const OrderEntry = ({ table, onClose, orderData, orderType = "delivery", onOrder
 
                 {/* Trash icon — context-aware:
                     unplaced items exist → Clear unplaced items (local)
-                    all items placed → Cancel Order (API) */}
+                    all items placed → Cancel Order (API) — permission + cancellation gated */}
                 {(() => {
                   const hasUnplaced = cartItems.some(i => !i.placed);
                   const hasPlaced = cartItems.some(i => i.placed && i.status !== 'cancelled');
                   if (!hasUnplaced && !hasPlaced) return null;
+                  // For cancel order (all placed): check permission + cancellation settings
+                  if (!hasUnplaced && hasPlaced && !isOrderCancelAllowed) return null;
                   return (
                     <button
                       onClick={() => hasUnplaced
@@ -933,6 +980,10 @@ const OrderEntry = ({ table, onClose, orderData, orderType = "delivery", onOrder
                 })}
                 orderNotes={orderNotes}
                 onEditOrderNotes={() => setShowNotesModal(true)}
+                canCancelItem={canCancelItem}
+                canFoodTransfer={canFoodTransfer}
+                canBill={canBill}
+                isItemCancelAllowed={isItemCancelAllowed}
               />
             </>
           )}

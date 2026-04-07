@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { ChevronRight, ChevronLeft, ArrowRightLeft, GitMerge, Search, ChevronDown } from "lucide-react";
 import { COLORS } from "../../constants";
 
-const CategoryPanel = ({ activeCategory, onCategoryChange, onShiftTable, onMergeTable, onBack, categories = [] }) => {
+const CategoryPanel = ({ activeCategory, onCategoryChange, onShiftTable, onMergeTable, onBack, categories = [], canShiftTable = true, canMergeOrder = true }) => {
   const [searchQuery, setSearchQuery] = useState("");
 
   // Build full category list: All + Popular + real categories from API
@@ -48,8 +48,9 @@ const CategoryPanel = ({ activeCategory, onCategoryChange, onShiftTable, onMerge
           <ChevronLeft className="w-5 h-5" style={{ color: COLORS.primaryOrange }} />
         </button>
         
-        {/* Shift & Merge buttons */}
+        {/* Shift & Merge buttons — permission-gated */}
         <div className="flex items-center gap-3">
+          {canShiftTable && (
           <button
             onClick={onShiftTable}
             className="p-3 hover:bg-gray-100 rounded-lg transition-colors"
@@ -58,6 +59,8 @@ const CategoryPanel = ({ activeCategory, onCategoryChange, onShiftTable, onMerge
           >
             <ArrowRightLeft className="w-4 h-4" style={{ color: COLORS.grayText }} />
           </button>
+          )}
+          {canMergeOrder && (
           <button
             onClick={onMergeTable}
             className="p-3 hover:bg-gray-100 rounded-lg transition-colors"
@@ -66,6 +69,7 @@ const CategoryPanel = ({ activeCategory, onCategoryChange, onShiftTable, onMerge
           >
             <GitMerge className="w-4 h-4" style={{ color: COLORS.grayText }} />
           </button>
+          )}
         </div>
       </div>
 

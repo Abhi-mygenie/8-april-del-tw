@@ -27,9 +27,11 @@ const getTimeAgo = (isoString) => {
 };
 
 // Placed item row (sent to kitchen)
-const PlacedItemRow = ({ item, setCancelItem, setTransferItem, editingQtyItemId, setEditingQtyItemId, updateQuantity }) => {
+const PlacedItemRow = ({ item, setCancelItem, setTransferItem, editingQtyItemId, setEditingQtyItemId, updateQuantity, canCancelItem = true, canFoodTransfer = true, isItemCancelAllowed }) => {
   const { Icon: StatusIcon, color: statusColor, bg: statusBg } = getItemStatusIcon(item.status);
   const isCancelled = item.status === 'cancelled';
+  const showCancelBtn = !isCancelled && canCancelItem && (!isItemCancelAllowed || isItemCancelAllowed(item));
+  const showTransferBtn = !isCancelled && canFoodTransfer;
 
   return (
     <div
@@ -41,8 +43,8 @@ const PlacedItemRow = ({ item, setCancelItem, setTransferItem, editingQtyItemId,
         <StatusIcon className="w-4 h-4" style={{ color: statusColor }} />
       </div>
 
-      {/* Cancel button — hidden for cancelled items */}
-      {!isCancelled && (
+      {/* Cancel button — hidden for cancelled items and permission/cancellation-gated */}
+      {showCancelBtn && (
         <button onClick={() => setCancelItem(item)} className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 hover:bg-gray-100" style={{ backgroundColor: COLORS.sectionBg }} data-testid={`cancel-item-btn-${item.id}`}>
           <XCircle className="w-4 h-4" style={{ color: COLORS.grayText }} />
         </button>
@@ -106,8 +108,8 @@ const PlacedItemRow = ({ item, setCancelItem, setTransferItem, editingQtyItemId,
           <span className="text-xs" style={{ color: COLORS.grayText }}>
             {item.addedAt || item.createdAt ? getTimeAgo(item.addedAt || item.createdAt) : ''}
           </span>
-          {/* Transfer button — pill with icon, hidden for cancelled items */}
-          {!isCancelled && (
+          {/* Transfer button — pill with icon, hidden for cancelled items and permission-gated */}
+          {showTransferBtn && (
             <button
               onClick={() => setTransferItem(item)}
               className="flex items-center gap-1 px-2 py-1 text-xs rounded-full transition-colors whitespace-nowrap hover:opacity-80"
@@ -254,6 +256,10 @@ const CartPanel = ({
   associatedOrders = [],
   orderNotes = [],
   onEditOrderNotes,
+  canCancelItem = true,
+  canFoodTransfer = true,
+  canBill = true,
+  isItemCancelAllowed,
 }) => {
   const newItemCount = cartItems.filter(i => !i.placed).length;
   const [customerName, setCustomerName] = useState(customer?.name || "");
@@ -504,6 +510,9 @@ const CartPanel = ({
                     editingQtyItemId={editingQtyItemId}
                     setEditingQtyItemId={setEditingQtyItemId}
                     updateQuantity={updateQuantity}
+                    canCancelItem={canCancelItem}
+                    canFoodTransfer={canFoodTransfer}
+                    isItemCancelAllowed={isItemCancelAllowed}
                   />
                 ) : (
                   <div style={{ opacity: isPlacingOrder ? 0.5 : 1, pointerEvents: isPlacingOrder ? 'none' : 'auto' }}>
@@ -625,6 +634,7 @@ const CartPanel = ({
             <>Place Order{newItemCount > 0 ? ` (${newItemCount})` : ""}</>
           )}
         </button>
+        {canBill && (
         <button
           data-testid="collect-bill-btn"
           onClick={() => setShowPaymentPanel(true)}
@@ -635,6 +645,7 @@ const CartPanel = ({
           <span>{isRoom ? 'Checkout' : 'Collect Bill'}</span>
           <span>₹{total.toLocaleString()}</span>
         </button>
+        )}
       </div>
     </>
   );

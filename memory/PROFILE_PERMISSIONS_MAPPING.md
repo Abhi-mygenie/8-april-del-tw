@@ -375,15 +375,15 @@ This is the master reference for which UI actions need which permission checks a
 | UI Element | Permission Required | Additional Condition | Status |
 |------------|---------------------|---------------------|--------|
 | Add items to cart | `order_edit` | — | **MISSING** |
-| Cancel food item | `food` | `cancel_food_timings` not expired | **MISSING** |
-| Cancel full order | `order_cancel` | `cancel_order_time` not expired | **MISSING** |
-| Shift table | `transfer_table` | Dine-In only | **MISSING** |
-| Merge order | `merge_table` | Dine-In only | **MISSING** |
-| Transfer food | `food_transfer` | Dine-In only | **MISSING** |
-| Collect payment | `bill` | Order must be placed | **MISSING** |
-| Apply discount | `discount` | — | **MISSING** |
+| Cancel food item | `food` | Pre-ready: `cancel_food_timings` window. Post-ready: `cancle_post_serve` flag | **MAPPED** — `canCancelItem` + `isItemCancelAllowed()` in CartPanel → PlacedItemRow |
+| Cancel full order | `order_cancel` | Pre-ready: `cancel_order_time` window. Post-ready: `cancle_post_serve` flag | **MAPPED** — `isOrderCancelAllowed` gates Trash icon in OrderEntry header |
+| Shift table | `transfer_table` | Dine-In only | **MAPPED** — `canShiftTable` prop in CategoryPanel |
+| Merge order | `merge_table` | Dine-In only | **MAPPED** — `canMergeOrder` prop in CategoryPanel |
+| Transfer food | `food_transfer` | Dine-In only | **MAPPED** — `canFoodTransfer` in CartPanel → PlacedItemRow |
+| Collect payment | `bill` | Order must be placed | **MAPPED** — `canBill` gates Collect Bill button in CartPanel |
+| Apply discount | `discount` | — | **MISSING** — Flag computed but not gated in UI |
 | Complementary item | `complementary` (TBD — not in Owner role) | — | **MISSING** |
-| Customer search | `customer_management` | — | **MISSING** |
+| Customer search | `customer_management` | — | **MAPPED** — `canCustomerManage` gates UserPlus button in OrderEntry header |
 
 ### Sidebar / Navigation
 
@@ -408,9 +408,16 @@ This is the master reference for which UI actions need which permission checks a
 - [x] **DashboardPage.jsx**: Wire `onItemStatusChange` handler → `FOOD_STATUS_UPDATE` API
 - [x] **Permission strings verified** against actual API response (Feb 2026)
 - [ ] **OrderCard.jsx**: Add `cancel_order_time` elapsed check for Cancel button
+- [x] **OrderEntry.jsx**: Gate Cancel Order (trash icon) with `order_cancel` + cancellation time/post-ready logic
+- [x] **OrderEntry.jsx**: Gate Customer button with `customer_management`
+- [x] **CategoryPanel.jsx**: Gate Shift Table with `transfer_table`
+- [x] **CategoryPanel.jsx**: Gate Merge Table with `merge_table`
+- [x] **CartPanel.jsx**: Gate Cancel Item with `food` + `isItemCancelAllowed()` (time window + post-ready)
+- [x] **CartPanel.jsx**: Gate Transfer Food with `food_transfer`
+- [x] **CartPanel.jsx**: Gate Collect Bill with `bill`
 - [ ] **OrderCard.jsx**: Gate Ready button with `hasPermission('Ready')` (capital R)
 - [ ] **OrderCard.jsx**: Gate Serve button with `hasPermission('serve')`
-- [ ] **OrderEntry.jsx**: Add permission gates to modal triggers (food cancel, shift, merge, transfer)
+- [ ] **OrderEntry.jsx**: Gate Add items with `order_edit` permission
 - [ ] **Sidebar.jsx**: Add permission gates to navigation links (`menu`, `report`, `restaurant_settings`, `employee`)
 - [ ] **OrderCard.jsx**: Gate `onEdit` (card tap) with `order_edit` permission
 - [ ] **OrderCard.jsx**: Gate Bill button with `bill` permission (after Phase 2)
