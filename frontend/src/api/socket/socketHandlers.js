@@ -240,8 +240,20 @@ export const handleUpdateOrder = async (message, { updateOrder, updateTableStatu
  * Handle update-food-status event
  * Message: [update-food-status, order_id, restaurant_id, f_order_status]
  * Action: Fetch order from API, UPDATE in OrderContext
+ * 
+ * ============================================================================
+ * WORKAROUND: Table socket not firing for update-food-status
+ * ----------------------------------------------------------------------------
+ * Backend does not emit update-table socket for item-level status changes
+ * (Ready/Serve). As a temporary fix, we manually engage/lock the table when
+ * this event is received, and release it after the context update completes.
+ *
+ * TODO: Remove this workaround when backend emits table socket for item
+ * status changes. The engage/free logic below can be deleted once backend
+ * sends update-table events for update-food-status.
+ * ============================================================================
  */
-export const handleUpdateFoodStatus = async (message, { updateOrder, updateTableStatus, getOrderById }) => {
+export const handleUpdateFoodStatus = async (message, { updateOrder, updateTableStatus, getOrderById, setTableEngaged }) => {
   const parsed = parseMessage(message);
   
   if (!parsed) {
@@ -258,6 +270,16 @@ export const handleUpdateFoodStatus = async (message, { updateOrder, updateTable
     return;
   }
   
+  // WORKAROUND: Get tableId from existing order to engage table immediately
+  const existingOrder = getOrderById ? getOrderById(orderId) : null;
+  const tableId = existingOrder?.tableId;
+  
+  // WORKAROUND: Engage table before fetch (lock UI)
+  if (setTableEngaged && tableId && tableId !== 0) {
+    setTableEngaged(tableId, true);
+    log('INFO', `update-food-status: Table ${tableId} ENGAGED (workaround - no table socket)`);
+  }
+  
   const order = await fetchOrderWithRetry(orderId);
   if (order) {
     updateOrder(order.orderId, order);
@@ -265,6 +287,17 @@ export const handleUpdateFoodStatus = async (message, { updateOrder, updateTable
     log('INFO', `update-food-status: Updated order ${order.orderId}`);
   } else {
     log('WARN', `update-food-status: Could not fetch order ${orderId}, skipping`);
+  }
+  
+  // WORKAROUND: Release table after context update
+  const finalTableId = order?.tableId || tableId;
+  if (setTableEngaged && finalTableId && finalTableId !== 0) {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setTableEngaged(finalTableId, false);
+        log('INFO', `update-food-status: Table ${finalTableId} released from ENGAGED (workaround)`);
+      });
+    });
   }
 };
 
