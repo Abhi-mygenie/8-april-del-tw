@@ -12,8 +12,8 @@ const DEFAULT_WIDTHS = {
   room: 25,
 };
 
-// Minimum width in pixels for a column
-const MIN_COLUMN_WIDTH = 150;
+// Minimum width in pixels for a column (enough for 2 TableCards: 160*2 + gaps + padding)
+const MIN_COLUMN_WIDTH = 350;
 
 // localStorage keys
 const STORAGE_KEY_WIDTHS = 'mygenie_channel_widths';

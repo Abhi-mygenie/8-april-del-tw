@@ -18,7 +18,7 @@ import OrderCard from '../cards/OrderCard';
 const ChannelColumn = ({
   channel,           // { id, name, items, enabled }
   width,             // Percentage width
-  minWidth = 150,    // Minimum pixel width
+  minWidth = 350,    // Minimum pixel width (enough for 2 TableCards)
   isCollapsed,
   activeFirst,
   viewType,          // 'table' | 'order'
@@ -168,7 +168,7 @@ const ChannelColumn = ({
           <div 
             className={viewType === 'table' ? 'grid gap-3' : 'flex flex-col gap-3'}
             style={viewType === 'table' ? { 
-              gridTemplateColumns: 'repeat(auto-fill, 160px)',
+              gridTemplateColumns: 'repeat(2, 160px)',  // Force 2 cards per row in table view
               justifyContent: 'start',
             } : {}}
           >
