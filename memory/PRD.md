@@ -1,11 +1,9 @@
 # MyGenie Restaurant POS System - PRD
 
 ## Original Problem Statement
-1. Pull code from https://github.com/Abhi-mygenie/8-april-del-tw.git main branch (public repo)
+1. Pull code from https://github.com/Abhi-mygenie/8-april-del-tw.git main branch
 2. Run and build as-is - React app, no backend
-3. Add environment variables:
-   - REACT_APP_API_BASE_URL=https://preprod.mygenie.online/
-   - REACT_APP_SOCKET_URL=https://presocket.mygenie.online
+3. Add environment variables for API and Socket connections
 
 ## Architecture
 - **Frontend**: React 19 with CRACO build setup
@@ -19,39 +17,47 @@
 ### Jan 7, 2026 - Initial Setup
 - [x] Cloned repository from GitHub
 - [x] Set up React frontend with all dependencies
-- [x] Configured environment variables for API and Socket connections
-- [x] App running successfully with login page displaying
+- [x] Configured environment variables
 
-### Jan 7, 2026 - OrderCard UI Redesign
-- [x] Header: Added order type label (Dine In/Take Away/Delivery)
-- [x] Header: Show customer name instead of waiter
-- [x] Header: Snooze button only for Yet to Confirm orders
-- [x] Items: Removed item-level cancel [X] buttons
-- [x] Items: Removed item-level Ready/Serve buttons
-- [x] Items: Simplified to `● name (qty)` display
-- [x] Footer: 44px minimum touch targets for tablet compatibility
-- [x] Footer: Dynamic buttons by fOrderStatus (unchanged - already correct)
+### Jan 7, 2026 - OrderCard UI Redesign (Round 1)
+- Initial implementation based on ORDERCARD_SUGGESTIONS.md
 
-## Core Features (from existing codebase)
-- Restaurant POS system interface
-- User authentication (login/forgot password)
-- Table management with real-time socket updates
-- Order taking with cart, customizations, addons
-- Payment collection (cash, card, UPI)
-- Kitchen Display System (KDS) integration
+### Jan 7, 2026 - OrderCard UI Fixes (Round 2) 
+Based on user feedback with screenshots:
+- [x] Logo: Fixed broken image → "MG" text in green circle
+- [x] Header: Added colored backgrounds (Yellow/Green/Pink/Blue by order type)
+- [x] Items: RE-ADDED item-level Ready/Serve buttons
+- [x] Header: Added order-level cancel [X] button
+- [x] New props: onCancelOrder, onItemStatusChange
+
+## OrderCard Final Structure
+```
+┌─────────────────────────────────────────────────────────────┐
+│ [COLORED HEADER - Yellow/Green/Pink/Blue]                   │
+│ [MG] OrderType  Customer · Time         ₹Amount  [Snooze][X]│
+├─────────────────────────────────────────────────────────────┤
+│ ● Item Name (qty)                              [Ready/Serve]│
+│ ● Item Name (qty)                              [Ready/Serve]│
+├─────────────────────────────────────────────────────────────┤
+│ ▼ Served (count) - collapsible                              │
+├─────────────────────────────────────────────────────────────┤
+│ [🖨️ KOT]                              [Ready/Serve/Bill]    │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ## Key Documents
 - `/app/memory/ARCHITECTURE.md` - System architecture
 - `/app/memory/API_DOCUMENT_V2.md` - API reference
 - `/app/memory/BUGS.md` - Bug tracker
-- `/app/memory/ORDERCARD_SUGGESTIONS.md` - OrderCard design spec
+- `/app/memory/ORDERCARD_SUGGESTIONS.md` - Original design spec (partially revised)
 
 ## P0/P1/P2 Features Remaining
-- P1: Test OrderCard on tablet device
-- P1: Implement onAccept/onReject handlers for Yet to Confirm flow
-- P2: Phase 2 polish items from ORDERCARD_SUGGESTIONS.md
+- P0: Wire up onCancelOrder handler in DashboardPage
+- P0: Wire up onItemStatusChange handler for item-level actions
+- P1: Test all order types on tablet
+- P2: Additional polish items
 
 ## Next Tasks
-- Test all order status flows with real credentials
-- Verify 4 cards fit per row on tablet (280px min-width)
-- Test touch targets on actual tablet device
+- Connect item-level buttons to actual API calls
+- Connect order-level cancel to CancelOrderModal
+- Test on real device with live data

@@ -1,27 +1,15 @@
 import { useState } from "react";
-import { User, ChevronDown, ChevronUp, MapPin, Clock, Printer, X } from "lucide-react";
+import { User, X, ChevronDown, ChevronUp, MapPin, Clock, Printer, ShoppingBag, Bike } from "lucide-react";
 import { COLORS, SOURCE_COLORS } from "../../constants";
 
 /**
- * Unified Order Card - Handles Dine-In, TakeAway, and Delivery
+ * Unified Order Card - Handles Dine-In, TakeAway, Delivery, Room
  * Compact design for Order View (4 cards per row, 280px min-width)
  * 
- * REDESIGNED: April 2026 based on ORDERCARD_SUGGESTIONS.md
- * - Header: [Logo] [OrderType] [Customer] · [Time] [Amount] [Snooze?]
- * - Items: Simple display, no item-level buttons
+ * REDESIGNED: April 2026
+ * - Header: Colored background (Yellow/Green/Pink/Blue) + MG logo + Customer + Cancel
+ * - Items: Simple display WITH item-level Ready/Serve buttons
  * - Footer: Dynamic based on fOrderStatus, 44px touch targets
- * 
- * @param {object}  order      - Full canonical order object from OrderContext
- * @param {string}  orderType  - 'dineIn' | 'takeAway' | 'delivery'
- * @param {string}  tableLabel - Dine-in only: table label ("T1", "WC")
- * @param {boolean} isSnoozed
- * @param {func}    onToggleSnooze
- * @param {func}    onEdit     - Opens OrderEntry for this order
- * @param {func}    onMarkReady - Handler for Ready button
- * @param {func}    onMarkServed - Handler for Serve button
- * @param {func}    onBillClick - Handler for Bill button
- * @param {func}    onAccept   - Handler for Accept button (Yet to Confirm)
- * @param {func}    onReject   - Handler for Reject button (Yet to Confirm)
  */
 const OrderCard = ({
   order,
@@ -33,8 +21,11 @@ const OrderCard = ({
   onMarkReady,
   onMarkServed,
   onBillClick,
+  onCancelOrder,
+  onCancelItem,
   onAccept,
   onReject,
+  onItemStatusChange,
 }) => {
   const [showServed, setShowServed] = useState(false);
   const [showAddress, setShowAddress] = useState(false);
@@ -46,6 +37,7 @@ const OrderCard = ({
   const isDineIn = orderType === "dineIn";
   const isDelivery = orderType === "delivery";
   const isTakeAway = orderType === "takeAway";
+  const isRoom = orderType === "room" || order.isRoom;
   const orderId = order.orderId || order.id;
   const fOrderStatus = order.fOrderStatus || 1;
 
@@ -56,8 +48,17 @@ const OrderCard = ({
 
   const isYetToConfirm = order.status === "yetToConfirm" || order.status === "pending";
 
+  // Header background color based on order type (matching TableCard)
+  const getHeaderBgColor = () => {
+    if (isRoom) return '#E3F2FD';           // Blue for Room
+    if (isTakeAway) return '#C8E6C9';       // Green for Take Away
+    if (isDelivery) return '#FFEBEE';       // Pink for Delivery
+    return '#FFF9E6';                        // Yellow for Dine-In (default)
+  };
+
   // Order type label for header
   const getOrderTypeLabel = () => {
+    if (isRoom) return "Room";
     if (isDineIn) return "Dine In";
     if (isTakeAway) return "Take Away";
     if (isDelivery) return "Delivery";
@@ -72,15 +73,16 @@ const OrderCard = ({
     return isDineIn ? "WC" : "Walk-In";
   };
 
-  // Source logo
+  // Source logo - MG text for own, letter for aggregators
   const renderLogo = () => {
     if (isOwn) {
       return (
-        <img
-          src="/mygenie-logo.png"
-          alt="MG"
-          className="w-6 h-6 rounded flex-shrink-0 object-cover"
-        />
+        <div
+          className="w-6 h-6 rounded flex items-center justify-center font-bold text-white text-[10px] flex-shrink-0"
+          style={{ backgroundColor: COLORS.primaryGreen }}
+        >
+          MG
+        </div>
       );
     }
     const color = SOURCE_COLORS[source] || SOURCE_COLORS.own;
@@ -95,11 +97,33 @@ const OrderCard = ({
     );
   };
 
-  // Get status dot color for items
+  // Get order type icon
+  const renderOrderTypeIcon = () => {
+    if (isTakeAway) return <ShoppingBag className="w-3.5 h-3.5 flex-shrink-0" style={{ color: COLORS.primaryOrange }} />;
+    if (isDelivery) return <Bike className="w-3.5 h-3.5 flex-shrink-0" style={{ color: COLORS.primaryOrange }} />;
+    return null;
+  };
+
+  // Get item dot color based on status
   const getItemDotColor = (item) => {
     if (item.status === 'preparing') return COLORS.primaryOrange;
     if (item.status === 'ready') return COLORS.primaryGreen;
     return COLORS.grayText;
+  };
+
+  // Get item action button config based on item status
+  const getItemActionConfig = (item) => {
+    if (item.status === 'preparing') return { label: 'Ready', color: COLORS.primaryOrange };
+    if (item.status === 'ready') return { label: 'Serve', color: COLORS.primaryGreen };
+    return null;
+  };
+
+  // Handle item action (Ready/Serve)
+  const handleItemAction = (item, action) => {
+    console.log(`[OrderCard] ${action} item ${item.id} on order ${orderId}`);
+    if (onItemStatusChange) {
+      onItemStatusChange(order, item, action.toLowerCase());
+    }
   };
 
   return (
@@ -109,25 +133,22 @@ const OrderCard = ({
       style={{ backgroundColor: COLORS.lightBg, border: `1px solid ${COLORS.borderGray}` }}
       onClick={() => onEdit?.()}
     >
-      {/* ── HEADER — New layout: [Logo] [OrderType] [Customer] · [Time] [Amount] [Snooze?] ── */}
+      {/* ── HEADER — Colored background based on order type ── */}
       <div
-        className="px-3 py-2 flex items-center gap-2 border-b"
-        style={{ borderColor: COLORS.borderGray }}
+        className="px-3 py-2 flex items-center gap-2"
+        style={{ backgroundColor: getHeaderBgColor() }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Logo */}
         {renderLogo()}
 
-        {/* Order Type Label */}
-        <span 
-          className="text-[10px] font-semibold px-1.5 py-0.5 rounded flex-shrink-0"
-          style={{ 
-            backgroundColor: isDineIn ? '#FFF3E0' : isTakeAway ? '#E8F5E9' : '#FFEBEE',
-            color: isDineIn ? COLORS.primaryOrange : isTakeAway ? COLORS.primaryGreen : '#E53935'
-          }}
-        >
-          {getOrderTypeLabel()}
-        </span>
+        {/* Order Type Icon + Label */}
+        <div className="flex items-center gap-1 flex-shrink-0">
+          {renderOrderTypeIcon()}
+          <span className="text-xs font-semibold" style={{ color: COLORS.darkText }}>
+            {getOrderTypeLabel()}
+          </span>
+        </div>
 
         {/* Customer Name + Time */}
         <div className="flex-1 min-w-0 flex items-center gap-1">
@@ -152,10 +173,25 @@ const OrderCard = ({
               e.stopPropagation(); 
               onToggleSnooze(String(orderId)); 
             }}
-            className={`p-1.5 rounded flex-shrink-0 transition-colors ${isSnoozed ? "bg-orange-100" : "hover:bg-gray-100"}`}
+            className={`p-1.5 rounded flex-shrink-0 transition-colors ${isSnoozed ? "bg-orange-100" : "hover:bg-white/50"}`}
             title={isSnoozed ? "Unsnooze" : "Snooze"}
           >
             <Clock className="w-3.5 h-3.5" style={{ color: isSnoozed ? COLORS.primaryOrange : COLORS.grayText }} />
+          </button>
+        )}
+
+        {/* Order-level Cancel Button */}
+        {!isYetToConfirm && onCancelOrder && (
+          <button
+            data-testid={`cancel-order-btn-${orderId}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onCancelOrder(order);
+            }}
+            className="p-1.5 hover:bg-white/50 rounded flex-shrink-0"
+            title="Cancel Order"
+          >
+            <X className="w-4 h-4" style={{ color: COLORS.errorText }} />
           </button>
         )}
 
@@ -163,7 +199,7 @@ const OrderCard = ({
         {isDelivery && isOwn && (
           <button
             data-testid={`address-btn-${orderId}`}
-            className="p-1.5 hover:bg-gray-100 rounded flex-shrink-0"
+            className="p-1.5 hover:bg-white/50 rounded flex-shrink-0"
             onClick={(e) => {
               e.stopPropagation();
               setShowAddress(!showAddress);
@@ -191,20 +227,43 @@ const OrderCard = ({
         </div>
       )}
 
-      {/* ── ITEMS SECTION — Simplified: just ● name (qty) ── */}
+      {/* ── ITEMS SECTION — With item-level Ready/Serve buttons ── */}
       <div className="px-3 py-2 border-b" style={{ borderColor: COLORS.borderGray }}>
         {activeItems.length > 0 ? (
-          activeItems.map((item) => (
-            <div key={item.id} className="flex items-center gap-2 py-1.5">
-              <div
-                className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                style={{ backgroundColor: getItemDotColor(item) }}
-              />
-              <span className="text-xs" style={{ color: COLORS.darkText }}>
-                {item.name} ({item.qty})
-              </span>
-            </div>
-          ))
+          activeItems.map((item) => {
+            const actionConfig = getItemActionConfig(item);
+            return (
+              <div key={item.id} className="flex items-center gap-2 py-1.5">
+                {/* Status dot */}
+                <div
+                  className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: getItemDotColor(item) }}
+                />
+                {/* Item name + qty */}
+                <span className="flex-1 text-xs truncate" style={{ color: COLORS.darkText }}>
+                  {item.name} ({item.qty})
+                </span>
+                {/* Item-level action button */}
+                {actionConfig && (
+                  <button
+                    data-testid={`item-action-btn-${item.id}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleItemAction(item, actionConfig.label);
+                    }}
+                    className="px-2 py-1 text-[10px] font-semibold rounded min-h-[28px]"
+                    style={{ 
+                      backgroundColor: actionConfig.color, 
+                      color: 'white',
+                      minWidth: '50px'
+                    }}
+                  >
+                    {actionConfig.label}
+                  </button>
+                )}
+              </div>
+            );
+          })
         ) : (
           <div className="py-1.5 text-xs" style={{ color: COLORS.grayText }}>
             No active items
