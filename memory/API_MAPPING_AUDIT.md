@@ -1,6 +1,46 @@
 # POS Frontend - API Mapping Audit & Refactor Document
 
-**Last Updated:** April 4, 2026
+**Last Updated:** April 7, 2026
+
+---
+
+## 0. Recent Changes (April 7, 2026)
+
+### Order Type Mapping - FIXED
+**Problem:** All orders sent `order_type: 'pos'` regardless of actual type.
+
+**Solution:** Added `mapOrderTypeToAPI()` function in `orderTransform.js`
+
+| Frontend Selection | API `order_type` Value |
+|--------------------|------------------------|
+| Dine-In | `"dinein"` |
+| TakeAway | `"takeaway"` |
+| Delivery | `"delivery"` |
+
+**Files Changed:**
+- `api/constants.js` - `ORDER_TYPES.TAKE_AWAY` changed from `'take_away'` to `'takeaway'`
+- `api/transforms/orderTransform.js` - Added `mapOrderTypeToAPI()`, updated `normalizeOrderType()`
+
+### Customer Label Mapping - FIXED
+| Order Type | `customer` field default |
+|------------|--------------------------|
+| Dine-In (table) | `""` (empty) |
+| Walk-In | `"Walk-In"` |
+| TakeAway | `"TA"` |
+| Delivery | `"Del"` |
+
+### GridItems Field Mapping - UPDATED
+Added `waiter` field to TakeAway/Delivery/Walk-In virtual cards:
+
+```javascript
+// DashboardPage.jsx - gridItems builder
+{
+  id: `ta-${order.orderId}`,
+  label: order.customer || 'TA',
+  waiter: order.waiter || '',  // ← ADDED
+  // ...
+}
+```
 
 ---
 

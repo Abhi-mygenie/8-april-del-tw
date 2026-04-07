@@ -197,9 +197,14 @@ cancel_type: item.status === 'preparing' ? 'Pre-Serve' : 'Post-Serve'
 
 ### CLARIFICATION-012: Hardcoded `order_type: 'pos'`
 
-**Location:** `orderTransform.js` lines 413, 481, 533
+**Status: ✅ RESOLVED (April 7, 2026)**
 
-**Question:** Should this be dynamic based on user selection? (See CLARIFICATION-001)
+**Location:** `orderTransform.js` lines 431, 499, 551
+
+**Fix Applied:**
+- Added `mapOrderTypeToAPI(orderType)` function
+- All payload builders now use dynamic order type based on user selection
+- Values: `"dinein"`, `"takeaway"`, `"delivery"`
 
 ---
 
