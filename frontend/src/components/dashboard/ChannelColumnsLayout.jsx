@@ -3,7 +3,7 @@ import { COLORS } from '../../constants';
 import ChannelColumn from './ChannelColumn';
 import ResizeHandle from './ResizeHandle';
 
-// Default max columns per view type
+// Default max columns per view type (fallback before measurement)
 const getDefaultMaxColumns = (viewType) => {
   const cols = viewType === 'table' ? 2 : 1;
   return { dineIn: cols, takeAway: cols, delivery: cols, room: cols };
@@ -12,7 +12,13 @@ const getDefaultMaxColumns = (viewType) => {
 // Channel order for arrow navigation
 const CHANNEL_ORDER = ['dineIn', 'takeAway', 'delivery', 'room'];
 
-// Card widths
+// Card unit sizes (card width + gap)
+const TABLE_CARD_UNIT = 172; // 160px card + 12px gap
+const ORDER_CARD_UNIT = 312; // 300px card + 12px gap
+const CHANNEL_PADDING = 24;  // p-3 = 12px each side
+const RESIZE_HANDLE_WIDTH = 24;
+
+// Card widths (for pixel-based column sizing)
 const TABLE_CARD_WIDTH = 168; // 160px + gap
 const ORDER_CARD_WIDTH = 320; // Wider for order cards
 
@@ -52,11 +58,13 @@ const ChannelColumnsLayout = ({
 }) => {
   const containerRef = useRef(null);
   
-  // Reset to view-type default on every mount and when viewType changes
+  // Start with static fallback, smart defaults calculated after mount
   const [maxColumns, setMaxColumns] = useState(() => getDefaultMaxColumns(viewType));
+  const initializedForViewRef = useRef(null);
 
-  // Reset columns when switching between table/order view
+  // Reset initialization flag when viewType changes so it recalculates
   useEffect(() => {
+    initializedForViewRef.current = null;
     setMaxColumns(getDefaultMaxColumns(viewType));
   }, [viewType]);
 
@@ -69,6 +77,48 @@ const ChannelColumnsLayout = ({
   const enabledChannels = useMemo(() => {
     return channels.filter(c => c.enabled !== false);
   }, [channels]);
+
+  // Smart default calculation: measure container, distribute width among visible channels
+  // Placed AFTER enabledChannels declaration
+  useEffect(() => {
+    // Skip if already calculated for this viewType
+    if (initializedForViewRef.current === viewType) return;
+
+    const visibleChannels = enabledChannels.filter(c => (c.items?.length || 0) > 0);
+
+    // No channels with items yet — use static defaults
+    if (visibleChannels.length === 0) {
+      setMaxColumns(getDefaultMaxColumns(viewType));
+      initializedForViewRef.current = viewType;
+      return;
+    }
+
+    // Measure after DOM settles
+    const timer = setTimeout(() => {
+      const el = containerRef.current;
+      if (!el) return;
+
+      const containerWidth = el.clientWidth;
+      const visibleCount = visibleChannels.length;
+      const cardUnit = viewType === 'table' ? TABLE_CARD_UNIT : ORDER_CARD_UNIT;
+
+      const totalHandles = Math.max(0, visibleCount - 1) * RESIZE_HANDLE_WIDTH;
+      const totalPadding = visibleCount * CHANNEL_PADDING;
+      const available = containerWidth - totalHandles - totalPadding;
+      const perChannel = available / visibleCount;
+      const cols = Math.max(1, Math.floor(perChannel / cardUnit));
+
+      const defaults = {};
+      CHANNEL_ORDER.forEach(id => { defaults[id] = cols; });
+
+      console.log(`%c[SmartDefault] view=${viewType}, container=${containerWidth}px, channels=${visibleCount}, cols=${cols}`, 'color: #f59e0b; font-weight: bold;');
+
+      setMaxColumns(defaults);
+      initializedForViewRef.current = viewType;
+    }, 50);
+
+    return () => clearTimeout(timer);
+  }, [viewType, enabledChannels]);
 
   // Calculate actual columns for each channel based on order count
   const getActualColumns = useCallback((channelId, orderCount) => {
