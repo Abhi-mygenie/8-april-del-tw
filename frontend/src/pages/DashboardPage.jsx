@@ -105,7 +105,17 @@ const DashboardPage = () => {
   const navigate = useNavigate();
   const { isLoaded: restaurantLoaded, currencySymbol, cancellation } = useRestaurant();
   const { tables: apiTables, isLoaded: tablesLoaded } = useTables();
-  const { user, hasPermission } = useAuth();
+  const { user, hasPermission, permissions } = useAuth();
+  
+  // Debug: Log permissions on Dashboard load
+  useEffect(() => {
+    if (user && permissions) {
+      console.log('%c[Dashboard] USER PERMISSIONS', 'background: #22c55e; color: white; padding: 4px 8px; border-radius: 4px;');
+      console.log('User:', user?.firstName, user?.roleName);
+      console.log('Permissions Array:', permissions);
+      console.table(permissions.map((p, i) => ({ '#': i + 1, Permission: p })));
+    }
+  }, [user, permissions]);
   const { getOrderCancellationReasons } = useSettings();
   const {
     dineInOrders, takeAwayOrders, deliveryOrders, walkInOrders,
