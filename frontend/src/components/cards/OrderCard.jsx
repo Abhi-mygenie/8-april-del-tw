@@ -255,6 +255,20 @@ const OrderCard = ({
         </div>
       </div>
 
+      {/* ── HEADER ROW 2: Order Note (same background, part of header) ── */}
+      {order.orderNote && (
+        <div 
+          className="px-3 pb-2 flex items-start gap-1.5" 
+          style={{ backgroundColor: getHeaderBgColor() }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <FileText className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: COLORS.primaryOrange }} />
+          <span className="text-xs" style={{ color: COLORS.darkText }}>
+            {order.orderNote}
+          </span>
+        </div>
+      )}
+
       {/* ── ADDRESS POPUP (own delivery) ── */}
       {showAddress && isDelivery && isOwn && (
         <div 
@@ -268,20 +282,6 @@ const OrderCard = ({
               {order.deliveryAddress?.formatted || order.deliveryAddress?.address || "No address"}
             </span>
           </div>
-        </div>
-      )}
-
-      {/* ── ORDER-LEVEL NOTES ── */}
-      {order.orderNote && (
-        <div 
-          className="px-3 py-1.5 border-b flex items-start gap-1.5" 
-          style={{ borderColor: COLORS.borderGray, backgroundColor: '#FFFDE7' }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <FileText className="w-3 h-3 flex-shrink-0 mt-0.5" style={{ color: COLORS.primaryOrange }} />
-          <span className="text-[10px] italic" style={{ color: COLORS.darkText }}>
-            {order.orderNote}
-          </span>
         </div>
       )}
 
