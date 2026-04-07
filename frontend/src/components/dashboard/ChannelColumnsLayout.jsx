@@ -5,10 +5,10 @@ import ResizeHandle from './ResizeHandle';
 
 // Default max columns per channel
 const DEFAULT_MAX_COLUMNS = {
-  dineIn: 2,
-  takeAway: 2,
-  delivery: 2,
-  room: 2,
+  dineIn: 1,
+  takeAway: 1,
+  delivery: 1,
+  room: 1,
 };
 
 // Channel order for arrow navigation
@@ -71,9 +71,9 @@ const ChannelColumnsLayout = ({
   const getActualColumns = useCallback((channelId, orderCount) => {
     if (orderCount === 0) return 0; // Auto-hide when no orders
     
-    const max = maxColumns[channelId] ?? (viewType === 'table' ? 2 : 1);
+    const max = maxColumns[channelId] ?? 1;
     return Math.min(orderCount, max);
-  }, [maxColumns, viewType]);
+  }, [maxColumns]);
 
   // Arrow click handler
   // `<` = DECREASE this channel by 1 (min 1)
@@ -161,7 +161,7 @@ const ChannelColumnsLayout = ({
     
     enabledChannels.forEach((channel, index) => {
       const actualColumns = getActualColumns(channel.id, channel.items?.length || 0);
-      const channelMax = maxColumns[channel.id] ?? (viewType === 'table' ? 2 : 1);
+      const channelMax = maxColumns[channel.id] ?? 1;
       
       // Skip channels with 0 actual columns (no orders)
       if (actualColumns === 0) return;
