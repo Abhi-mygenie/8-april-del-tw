@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { RefreshCw } from "lucide-react";
-import { COLORS } from "../constants";
+import { COLORS, USE_CHANNEL_LAYOUT } from "../constants";
 import { Sidebar, Header } from "../components/layout";
 import { TableSection } from "../components/sections";
 import { DineInCard, DeliveryCard, OrderCard } from "../components/cards";
@@ -19,6 +19,7 @@ import api from "../api/axios";
 import { API_ENDPOINTS } from "../api/constants";
 import { toAPI as orderToAPI } from "../api/transforms/orderTransform";
 import { updateOrderStatus } from "../api/services/orderService";
+import { ChannelColumnsLayout } from "../components/dashboard";
 
 // Helper: search a list of items by id, customer/guest, and phone fields
 const searchItems = (items, query, getFields) => {
@@ -104,7 +105,7 @@ const OrderListSection = ({ title, orders, orderType, matchingIds, snoozedOrders
 // Main Home/Dashboard Component
 const DashboardPage = () => {
   const navigate = useNavigate();
-  const { isLoaded: restaurantLoaded, currencySymbol, cancellation } = useRestaurant();
+  const { isLoaded: restaurantLoaded, currencySymbol, cancellation, features } = useRestaurant();
   const { tables: apiTables, isLoaded: tablesLoaded } = useTables();
   const { user, hasPermission, permissions } = useAuth();
   
@@ -323,6 +324,87 @@ const DashboardPage = () => {
         };
       });
   }, [tablesLoaded, apiTables, getOrderByTableId]);
+
+  // === Channel-Based Layout Data (USE_CHANNEL_LAYOUT feature flag) ===
+  const channelData = useMemo(() => {
+    if (!USE_CHANNEL_LAYOUT) return null;
+    
+    // Helper to adapt walk-in orders as table-like entries
+    const adaptWalkIn = (order) => ({
+      id: `wc-${order.orderId}`,
+      label: order.customer || 'Walk-In',
+      status: order.tableStatus,
+      tableId: 0,
+      amount: order.amount,
+      time: order.time,
+      orderNumber: order.orderNumber,
+      isWalkIn: true,
+      walkInOrderId: order.orderId,
+      orderId: order.orderId,
+      orderType: 'walkIn',
+      fOrderStatus: order.fOrderStatus,
+      waiter: order.waiter || '',
+      order: order, // Keep full order for OrderCard
+    });
+
+    // Helper to adapt takeaway/delivery orders
+    const adaptOrder = (order, type) => ({
+      id: `${type}-${order.orderId}`,
+      label: order.customer || type.toUpperCase().slice(0, 3),
+      status: order.tableStatus,
+      tableId: 0,
+      amount: order.amount,
+      time: order.time,
+      orderNumber: order.orderNumber,
+      orderId: order.orderId,
+      orderType: type,
+      fOrderStatus: order.fOrderStatus,
+      waiter: order.waiter || '',
+      order: order, // Keep full order for OrderCard
+    });
+
+    // Helper to enrich dine-in tables with order data
+    const enrichTable = (table) => {
+      const order = getOrderByTableId(table.tableId);
+      if (order) {
+        return {
+          ...table,
+          order: order,
+        };
+      }
+      return table;
+    };
+
+    return {
+      dineIn: {
+        id: 'dineIn',
+        name: 'Dine-In',
+        items: [
+          ...allTablesList.filter(t => !t.isRoom).map(enrichTable),
+          ...walkInOrders.map(adaptWalkIn),
+        ],
+        enabled: features.dineIn !== false,
+      },
+      takeAway: {
+        id: 'takeAway',
+        name: 'TakeAway',
+        items: takeAwayOrders.map(o => adaptOrder(o, 'takeAway')),
+        enabled: features.takeaway !== false,
+      },
+      delivery: {
+        id: 'delivery',
+        name: 'Delivery',
+        items: deliveryOrders.map(o => adaptOrder(o, 'delivery')),
+        enabled: features.delivery !== false,
+      },
+      room: {
+        id: 'room',
+        name: 'Room',
+        items: allRoomsList,
+        enabled: features.room !== false,
+      },
+    };
+  }, [allTablesList, allRoomsList, takeAwayOrders, deliveryOrders, walkInOrders, features, getOrderByTableId]);
 
   // View conditions
   const isDineInOnly = activeChannels.length === 1 && activeChannels[0] === "dineIn";
@@ -770,6 +852,33 @@ const DashboardPage = () => {
             className="rounded-2xl shadow-sm p-6"
             style={{ backgroundColor: COLORS.lightBg }}
           >
+            {/* === NEW: Channel-Based Layout (Feature Flag) === */}
+            {USE_CHANNEL_LAYOUT && channelData && (
+              <ChannelColumnsLayout
+                channels={Object.values(channelData).filter(c => c.enabled)}
+                viewType={activeView === 'table' ? 'table' : 'order'}
+                activeFirst={activeFirst}
+                onItemClick={handleTableClick}
+                onMarkReady={handleMarkReady}
+                onMarkServed={handleMarkServed}
+                onBillClick={handleBillClick}
+                onCancelOrder={handleCancelOrderFromCard}
+                onItemStatusChange={handleItemStatusChange}
+                onToggleSnooze={toggleSnooze}
+                onConfirmOrder={handleConfirmOrder}
+                onUpdateStatus={handleUpdateTableStatus}
+                hasPermission={hasPermission}
+                snoozedOrders={snoozedOrders}
+                currencySymbol={currencySymbol}
+                isTableEngaged={isTableEngaged}
+                searchQuery={searchQuery}
+                matchingIds={matchingTableIds}
+              />
+            )}
+
+            {/* === OLD: Area-Based Layout (when feature flag is off) === */}
+            {!USE_CHANNEL_LAYOUT && (
+              <>
             {/* Grid View - Unified for all channels */}
             {showGridView && (
               isDineInOnly && hasAreas && !activeFirst ? (
@@ -951,6 +1060,8 @@ const DashboardPage = () => {
             )}
 
             {/* Room View - Rooms now render in the unified grid above */}
+              </>
+            )}
           </div>
         </main>
 
