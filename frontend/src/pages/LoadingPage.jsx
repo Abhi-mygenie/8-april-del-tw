@@ -99,6 +99,15 @@ const LoadingPage = () => {
     try {
       data.profile = await profileService.getProfile();
       if (ctrl.aborted) return;
+      
+      // Debug: Log permissions for analysis
+      console.log('[LoadingPage] User Profile:', {
+        user: data.profile.user,
+        roleName: data.profile.user?.roleName,
+        permissions: data.profile.permissions,
+      });
+      console.table(data.profile.permissions?.map((p, i) => ({ index: i, permission: p })) || []);
+      
       setUserData(data.profile.user, data.profile.permissions);
       setRestaurant(data.profile.restaurant);
       updateStatus('profile', LOADING_STATES.SUCCESS, null, 1, 1, { elapsed: ((Date.now() - t0) / 1000).toFixed(1), startedAt: null });
