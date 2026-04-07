@@ -81,11 +81,14 @@
 - `/app/memory/PROFILE_PERMISSIONS_MAPPING.md`
 
 ## P0/P1/P2 Remaining
-- P0: Implement permission checks in `OrderCard.jsx` (Cancel, Merge, Shift, Food Transfer) using `hasPermission()`
-- P0: Update `profileTransform.js` to map cancellation settings (`cancle_post_serve`, `cancel_order_time`, `cancel_food_timings`)
-- P0: Wire up onCancelOrder handler
-- P0: Wire up onItemStatusChange handler  
+- ~~P0: Implement permission checks in `OrderCard.jsx`~~ DONE
+- ~~P0: Update `profileTransform.js` to map cancellation settings~~ DONE
+- ~~P0: Wire up onCancelOrder handler~~ DONE
+- ~~P0: Wire up onItemStatusChange handler~~ DONE
+- P0: Add `cancel_order_time` elapsed check for Cancel button in OrderCard
 - P1: Fix critical bugs from BUGS.md (BUG-210, BUG-212, BUG-216, BUG-221)
+- P1: Gate permissions in OrderEntry.jsx (Cancel, Shift, Merge, Transfer modals)
+- P1: Gate permissions in Sidebar.jsx (Menu, Reports, Settings)
 - P1: Add profile setting for card height (dynamic/fixed)
 - P1: Test on tablet device
 - P2: KOT and Bill print functionalities (Phase 2)

@@ -17,6 +17,11 @@ const OrderCard = ({
   tableLabel,
   isSnoozed,
   isEngaged,
+  // Permission flags (passed from parent)
+  canCancelOrder = true,
+  canMergeOrder = true,
+  canShiftTable = true,
+  canFoodTransfer = true,
   onToggleSnooze,
   onEdit,
   onMarkReady,
@@ -213,8 +218,8 @@ const OrderCard = ({
             </button>
           )}
 
-          {/* Merge Order Button - Dine-In only */}
-          {isDineIn && !isYetToConfirm && (
+          {/* Merge Order Button - Dine-In only, permission-gated */}
+          {isDineIn && !isYetToConfirm && canMergeOrder && (
             <button
               data-testid={`merge-btn-${orderId}`}
               onClick={(e) => {
@@ -228,8 +233,8 @@ const OrderCard = ({
             </button>
           )}
 
-          {/* Table Shift Button - Dine-In only */}
-          {isDineIn && !isYetToConfirm && (
+          {/* Table Shift Button - Dine-In only, permission-gated */}
+          {isDineIn && !isYetToConfirm && canShiftTable && (
             <button
               data-testid={`shift-btn-${orderId}`}
               onClick={(e) => {
@@ -334,8 +339,8 @@ const OrderCard = ({
               <div key={item.id} className={isDineIn ? "py-1" : "py-0.5"}>
                 {/* Main item row */}
                 <div className="flex items-center gap-2">
-                  {/* Food Transfer icon on LEFT - Dine-In only */}
-                  {isDineIn && !isYetToConfirm && (
+                  {/* Food Transfer icon on LEFT - Dine-In only, permission-gated */}
+                  {isDineIn && !isYetToConfirm && canFoodTransfer && (
                     <button
                       data-testid={`food-transfer-btn-${item.id}`}
                       onClick={(e) => {
@@ -511,7 +516,8 @@ const OrderCard = ({
                 <Printer className="w-5 h-5" />
               </button>
 
-              {/* Cancel Order Button */}
+              {/* Cancel Order Button - permission-gated */}
+              {canCancelOrder && (
               <button
                 data-testid={`cancel-order-btn-${orderId}`}
                 onClick={() => onCancelOrder?.(order)}
@@ -521,6 +527,7 @@ const OrderCard = ({
               >
                 <X className="w-5 h-5" />
               </button>
+              )}
             </div>
 
             {/* Spacer */}

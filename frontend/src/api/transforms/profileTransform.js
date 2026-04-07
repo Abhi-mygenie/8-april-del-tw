@@ -107,6 +107,14 @@ export const fromAPI = {
       // Settings
       settings: fromAPI.settings(api.settings),
       
+      // Cancellation rules
+      cancellation: {
+        allowPostServeCancel: toBoolean(api.cancle_post_serve),
+        allowPostServeCancel2: toBoolean(api.allow_cancel_post_server),
+        orderCancelWindowMinutes: parseInt(api.cancel_order_time) || 0,
+        itemCancelWindowMinutes: parseInt(api.cancel_food_timings) || 0,
+      },
+
       // Search options
       searchOptions: api.search_by || ['order id', 'table no', 'user id'],
     };

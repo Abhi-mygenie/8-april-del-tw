@@ -35,6 +35,16 @@ export const RestaurantProvider = ({ children }) => {
     };
   }, [restaurant]);
 
+  // Get cancellation rules
+  const cancellation = useMemo(() => {
+    return restaurant?.cancellation || {
+      allowPostServeCancel: false,
+      allowPostServeCancel2: false,
+      orderCancelWindowMinutes: 0,
+      itemCancelWindowMinutes: 0,
+    };
+  }, [restaurant]);
+
   // Get payment types
   const paymentTypes = useMemo(() => {
     return restaurant?.paymentTypes || [];
@@ -59,6 +69,7 @@ export const RestaurantProvider = ({ children }) => {
     // Derived
     currencySymbol,
     features,
+    cancellation,
     paymentTypes,
     discountTypes,
     printers,
@@ -71,6 +82,7 @@ export const RestaurantProvider = ({ children }) => {
     isLoaded,
     currencySymbol,
     features,
+    cancellation,
     paymentTypes,
     discountTypes,
     printers,

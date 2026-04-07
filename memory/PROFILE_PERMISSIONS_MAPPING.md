@@ -1,6 +1,6 @@
 # Profile API — User Roles, Permissions & Restaurant Settings Mapping
 
-**Version:** 1.0
+**Version:** 2.0 (P0 Complete)
 **Last Updated:** February 2026
 **Source Endpoint:** `GET /api/v2/vendoremployee/vendor-profile/profile`
 
@@ -134,28 +134,28 @@ const isAdmin = hasAllPermissions(['settings_manage', 'employee_manage']);
 
 ## 4. Known Permission Strings & UI Mapping
 
-| Permission String | Description | UI Component(s) Affected | Visibility Rule |
-|-------------------|-------------|--------------------------|-----------------|
-| `order_cancel` | Cancel entire order | `OrderCard` → Cancel [X] button (footer) | Hide button if missing |
-| `food_cancel` | Cancel individual food item | `OrderCard` → Cancel item action (if present), `OrderEntry` → `CancelFoodModal` | Hide item cancel if missing |
-| `order_edit` | Edit/update an existing order (add items) | `OrderCard` → tap to open `OrderEntry`, `OrderEntry` → add items flow | Disable card tap or hide edit controls |
-| `order_view` | View orders on dashboard | `DashboardPage` → Order View tab | Hide Order View entirely if missing |
-| `table_shift` | Shift order to another table | `OrderCard` → Shift button (header), `OrderEntry` → `ShiftTableModal` | Hide shift button if missing |
-| `table_merge` | Merge orders from two tables | `OrderCard` → Merge button (header), `OrderEntry` → `MergeTableModal` | Hide merge button if missing |
-| `food_transfer` | Transfer item to another table's order | `OrderCard` → Food Transfer icon (item row), `OrderEntry` → `TransferFoodModal` | Hide transfer icon if missing |
-| `bill_collect` | Collect payment / settle bill | `OrderCard` → Bill button (footer), `OrderEntry` → `CollectPaymentPanel` | Hide bill button if missing |
-| `bill_print` | Print bill receipt | `OrderCard` → Bill print action (Phase 2) | Disable print if missing |
-| `kot_print` | Print Kitchen Order Ticket | `OrderCard` → KOT button (footer, Phase 2) | Disable KOT if missing |
-| `discount_apply` | Apply manual/coupon discounts | `OrderEntry` → Discount section | Hide discount controls if missing |
-| `complementary_apply` | Mark item as complementary | `OrderEntry` → Complementary toggle | Hide complementary option if missing |
-| `customer_manage` | Search/add customers | `OrderEntry` → `CustomerModal` | Disable customer button if missing |
-| `menu_manage` | Manage menu items | Sidebar → Menu Management | Hide menu management link if missing |
-| `report_view` | View reports/analytics | Sidebar → Reports, `AllOrdersReportPage` | Hide reports link if missing |
-| `settings_manage` | Access settings | Sidebar → Settings, `SettingsPanel` | Hide settings link if missing |
-| `employee_manage` | Manage employees | Sidebar → Employee section | Hide employee management if missing |
-| `table_manage` | Manage table layout | Sidebar → Table management | Hide table management if missing |
-| `room_manage` | Manage rooms | Sidebar → Room section | Hide room management if missing |
-| `printer_manage` | Manage printers | Settings → Printer config | Hide printer settings if missing |
+| Permission String | Description | UI Component(s) Affected | Visibility Rule | Status |
+|-------------------|-------------|--------------------------|-----------------|--------|
+| `order_cancel` | Cancel entire order | `OrderCard` → Cancel [X] button (footer) | Hide button if missing | **MAPPED** — `canCancelOrder` prop gated in `OrderCard.jsx`, passed from `DashboardPage.jsx` via `hasPermission('order_cancel')` |
+| `food_cancel` | Cancel individual food item | `OrderEntry` → `CancelFoodModal` | Hide item cancel if missing | **MISSING** — Not yet gated in `OrderEntry.jsx` |
+| `order_edit` | Edit/update an existing order (add items) | `OrderCard` → tap to open `OrderEntry`, `OrderEntry` → add items flow | Disable card tap or hide edit controls | **MISSING** — Card tap not gated |
+| `order_view` | View orders on dashboard | `DashboardPage` → Order View tab | Hide Order View entirely if missing | **MISSING** — Order View always visible |
+| `table_shift` | Shift order to another table | `OrderCard` → Shift button (header), `OrderEntry` → `ShiftTableModal` | Hide shift button if missing | **MAPPED** — `canShiftTable` prop gated in `OrderCard.jsx`, passed from `DashboardPage.jsx` via `hasPermission('table_shift')`. `OrderEntry.jsx` NOT yet gated |
+| `table_merge` | Merge orders from two tables | `OrderCard` → Merge button (header), `OrderEntry` → `MergeTableModal` | Hide merge button if missing | **MAPPED** — `canMergeOrder` prop gated in `OrderCard.jsx`, passed from `DashboardPage.jsx` via `hasPermission('table_merge')`. `OrderEntry.jsx` NOT yet gated |
+| `food_transfer` | Transfer item to another table's order | `OrderCard` → Food Transfer icon (item row), `OrderEntry` → `TransferFoodModal` | Hide transfer icon if missing | **MAPPED** — `canFoodTransfer` prop gated in `OrderCard.jsx`, passed from `DashboardPage.jsx` via `hasPermission('food_transfer')`. `OrderEntry.jsx` NOT yet gated |
+| `bill_collect` | Collect payment / settle bill | `OrderCard` → Bill button (footer), `OrderEntry` → `CollectPaymentPanel` | Hide bill button if missing | **MISSING** — Bill button not gated (currently disabled for Phase 2) |
+| `bill_print` | Print bill receipt | `OrderCard` → Bill print action (Phase 2) | Disable print if missing | **MISSING** — Phase 2 |
+| `kot_print` | Print Kitchen Order Ticket | `OrderCard` → KOT button (footer, Phase 2) | Disable KOT if missing | **MISSING** — Phase 2 |
+| `discount_apply` | Apply manual/coupon discounts | `OrderEntry` → Discount section | Hide discount controls if missing | **MISSING** — Not yet gated |
+| `complementary_apply` | Mark item as complementary | `OrderEntry` → Complementary toggle | Hide complementary option if missing | **MISSING** — Not implemented |
+| `customer_manage` | Search/add customers | `OrderEntry` → `CustomerModal` | Disable customer button if missing | **MISSING** — Not yet gated |
+| `menu_manage` | Manage menu items | Sidebar → Menu Management | Hide menu management link if missing | **MISSING** — Not yet gated |
+| `report_view` | View reports/analytics | Sidebar → Reports, `AllOrdersReportPage` | Hide reports link if missing | **MISSING** — Not yet gated |
+| `settings_manage` | Access settings | Sidebar → Settings, `SettingsPanel` | Hide settings link if missing | **MISSING** — Not yet gated |
+| `employee_manage` | Manage employees | Sidebar → Employee section | Hide employee management if missing | **MISSING** — Not yet gated |
+| `table_manage` | Manage table layout | Sidebar → Table management | Hide table management if missing | **MISSING** — Not yet gated |
+| `room_manage` | Manage rooms | Sidebar → Room section | Hide room management if missing | **MISSING** — Not yet gated |
+| `printer_manage` | Manage printers | Settings → Printer config | Hide printer settings if missing | **MISSING** — Not yet gated |
 
 ---
 
@@ -187,11 +187,10 @@ These fields are on the **restaurant object** (inside `restaurants[0]`) and cont
 | `cancel_food_timings` | number/string | Minutes (e.g., `15`) or `0` for unlimited | Time window after item was added within which individual item cancellation is allowed | If elapsed: disable/hide Cancel Item action |
 
 ### Current Transform Status
-**NOT YET MAPPED** in `profileTransform.js`. These fields exist in the raw API response but are not extracted by the `fromAPI.restaurant()` transform function.
+**MAPPED** in `profileTransform.js` → `fromAPI.restaurant()` as `cancellation` object. Exposed via `RestaurantContext.cancellation`.
 
-### Proposed Transform Addition
 ```javascript
-// In profileTransform.js → fromAPI.restaurant()
+// profileTransform.js → fromAPI.restaurant()
 cancellation: {
   allowPostServeCancel: toBoolean(api.cancle_post_serve),         // Note: API has typo "cancle"
   allowPostServeCancel2: toBoolean(api.allow_cancel_post_server), // Redundant gate
@@ -199,6 +198,8 @@ cancellation: {
   itemCancelWindowMinutes: parseInt(api.cancel_food_timings) || 0, // 0 = unlimited
 },
 ```
+
+**UI Consumption Status:** **MISSING** — The cancellation settings are mapped in the transform and exposed via `RestaurantContext.cancellation`, but the time-window checks are not yet enforced in `OrderCard.jsx` or `OrderEntry.jsx`. The `allowPostServeCancel` flag is not yet checked when rendering cancel actions for served items.
 
 ### Cancellation Decision Matrix
 
@@ -264,19 +265,33 @@ Nested under `restaurants[0].settings`:
 
 ## 10. Current Implementation Status
 
-| Area | Mapped in Transform? | Consumed in UI? | Notes |
-|------|---------------------|-----------------|-------|
-| User identity | YES | YES (Sidebar, Header) | Complete |
-| Role name (`role_name`) | YES | YES (sent in API calls) | Complete |
-| Permissions array (`role`) | YES (stored as flat array) | NO (not checked in components) | **Needs implementation** |
-| Restaurant features | YES | PARTIAL (dineIn/delivery/takeaway used in filtering) | |
-| Restaurant tax | YES | YES (order calculations) | Complete |
-| Payment methods | YES | YES (`CollectPaymentPanel`) | Complete |
-| Discount types | YES | PARTIAL | |
-| Printers | YES | NO (Phase 2 — KOT/Bill print) | |
-| Schedules | YES | NO (not displayed) | |
-| Settings | YES | PARTIAL | |
-| **Cancellation settings** | **NO** | **NO** | **Needs transform + UI** |
+| Area | Mapped in Transform? | Consumed in UI? | Status | Notes |
+|------|---------------------|-----------------|--------|-------|
+| User identity | YES | YES (Sidebar, Header) | **DONE** | Complete |
+| Role name (`role_name`) | YES | YES (sent in API calls) | **DONE** | Complete |
+| Permissions array (`role`) | YES (stored as flat array) | **PARTIAL** — OrderCard buttons gated | **IN PROGRESS** | `order_cancel`, `table_merge`, `table_shift`, `food_transfer` gated in OrderCard. OrderEntry & Sidebar NOT gated |
+| Restaurant features | YES | PARTIAL (dineIn/delivery/takeaway used in filtering) | **DONE** | |
+| Restaurant tax | YES | YES (order calculations) | **DONE** | Complete |
+| Payment methods | YES | YES (`CollectPaymentPanel`) | **DONE** | Complete |
+| Discount types | YES | PARTIAL | **PARTIAL** | |
+| Printers | YES | NO (Phase 2 — KOT/Bill print) | **MISSING** | Phase 2 |
+| Schedules | YES | NO (not displayed) | **MISSING** | Low priority |
+| Settings | YES | PARTIAL | **PARTIAL** | |
+| **Cancellation settings** | **YES** | **NO** | **PARTIAL** | Transform done, UI time-window checks missing |
+
+### Handler Wiring Status
+
+| Handler | Component | API Endpoint | Status |
+|---------|-----------|-------------|--------|
+| `onCancelOrder` | `OrderCard` → `DashboardPage` | `PUT /api/v2/vendoremployee/order-status-update` | **MAPPED** — Opens `CancelOrderModal`, calls API on confirm |
+| `onItemStatusChange` | `OrderCard` → `DashboardPage` | `PUT /api/v2/vendoremployee/food-status-update` | **MAPPED** — Calls food status update API directly |
+| `onMarkReady` | `OrderCard` → `DashboardPage` | `PUT /api/v2/vendoremployee/order-status-update` | **MAPPED** — Calls `updateOrderStatus(orderId, roleName, 'ready')` |
+| `onMarkServed` | `OrderCard` → `DashboardPage` | `PUT /api/v2/vendoremployee/order-status-update` | **MAPPED** — Calls `updateOrderStatus(orderId, roleName, 'serve')` |
+| `onMergeOrder` | `OrderCard` → `DashboardPage` | `POST /api/v1/vendoremployee/order/transfer-order` | **STUB** — Console.log only, modal not wired from list view |
+| `onTableShift` | `OrderCard` → `DashboardPage` | `POST /api/v1/vendoremployee/pos/order-table-room-switch` | **STUB** — Console.log only, modal not wired from list view |
+| `onFoodTransfer` | `OrderCard` → `DashboardPage` | `POST /api/v1/vendoremployee/order/transfer-food-item` | **STUB** — Console.log only, modal not wired from list view |
+| `onEdit` | `OrderCard` → `DashboardPage` | N/A (opens OrderEntry) | **MAPPED** — Opens `OrderEntry` via `handleTableClick` |
+| `onBillClick` | `OrderCard` → `DashboardPage` | N/A (opens OrderEntry with payment) | **MAPPED** — Opens `OrderEntry` via `handleBillClick` (disabled Phase 2) |
 
 ---
 
@@ -286,56 +301,60 @@ This is the master reference for which UI actions need which permission checks a
 
 ### OrderCard.jsx (Dashboard Cards)
 
-| UI Element | Location in Card | Permission Required | Additional Condition | Current State |
-|------------|-----------------|---------------------|---------------------|---------------|
-| **Cancel Order [X]** | Footer left | `order_cancel` | `cancel_order_time` not expired | Shows unconditionally |
-| **Merge Order** | Header right | `table_merge` | Dine-In only, not YetToConfirm | Shows for all Dine-In |
-| **Table Shift** | Header right | `table_shift` | Dine-In only, not YetToConfirm | Shows for all Dine-In |
-| **Food Transfer** | Item row left | `food_transfer` | Dine-In only, not YetToConfirm | Shows for all Dine-In |
-| **Card tap → Edit** | Entire card | `order_edit` | Not engaged | Always clickable |
-| **Ready button** | Footer right | `order_view` (implicit) | `fOrderStatus === 1` | Shows unconditionally |
-| **Serve button** | Footer right | `order_view` (implicit) | `fOrderStatus === 2` | Shows unconditionally |
-| **Bill button** | Footer right | `bill_collect` | `fOrderStatus === 5` | Shows but disabled (Phase 2) |
-| **KOT button** | Footer left | `kot_print` | Always present | Shows but disabled (Phase 2) |
-| **Item Ready/Serve toggle** | Item row right | `order_view` (implicit) | Dine-In only | Shows unconditionally |
+| UI Element | Location in Card | Permission Required | Additional Condition | Status |
+|------------|-----------------|---------------------|---------------------|--------|
+| **Cancel Order [X]** | Footer left | `order_cancel` | `cancel_order_time` not expired | **MAPPED** — Gated via `canCancelOrder` prop. Time-window check: **MISSING** |
+| **Merge Order** | Header right | `table_merge` | Dine-In only, not YetToConfirm | **MAPPED** — Gated via `canMergeOrder` prop |
+| **Table Shift** | Header right | `table_shift` | Dine-In only, not YetToConfirm | **MAPPED** — Gated via `canShiftTable` prop |
+| **Food Transfer** | Item row left | `food_transfer` | Dine-In only, not YetToConfirm | **MAPPED** — Gated via `canFoodTransfer` prop |
+| **Card tap → Edit** | Entire card | `order_edit` | Not engaged | **MISSING** — Always clickable |
+| **Ready button** | Footer right | `order_view` (implicit) | `fOrderStatus === 1` | **MAPPED** — Always visible (implicit permission) |
+| **Serve button** | Footer right | `order_view` (implicit) | `fOrderStatus === 2` | **MAPPED** — Always visible (implicit permission) |
+| **Bill button** | Footer right | `bill_collect` | `fOrderStatus === 5` | **MISSING** — Permission not gated (disabled for Phase 2) |
+| **KOT button** | Footer left | `kot_print` | Always present | **MISSING** — Permission not gated (disabled for Phase 2) |
+| **Item Ready/Serve toggle** | Item row right | `order_view` (implicit) | Dine-In only | **MAPPED** — Handler wired via `onItemStatusChange` |
 
 ### OrderEntry.jsx (Order Taking Panel)
 
-| UI Element | Permission Required | Additional Condition |
-|------------|---------------------|---------------------|
-| Add items to cart | `order_edit` | — |
-| Cancel food item | `food_cancel` | `cancel_food_timings` not expired |
-| Cancel full order | `order_cancel` | `cancel_order_time` not expired |
-| Shift table | `table_shift` | Dine-In only |
-| Merge order | `table_merge` | Dine-In only |
-| Transfer food | `food_transfer` | Dine-In only |
-| Collect payment | `bill_collect` | Order must be placed |
-| Apply discount | `discount_apply` | — |
-| Complementary item | `complementary_apply` | — |
-| Customer search | `customer_manage` | — |
+| UI Element | Permission Required | Additional Condition | Status |
+|------------|---------------------|---------------------|--------|
+| Add items to cart | `order_edit` | — | **MISSING** |
+| Cancel food item | `food_cancel` | `cancel_food_timings` not expired | **MISSING** |
+| Cancel full order | `order_cancel` | `cancel_order_time` not expired | **MISSING** |
+| Shift table | `table_shift` | Dine-In only | **MISSING** |
+| Merge order | `table_merge` | Dine-In only | **MISSING** |
+| Transfer food | `food_transfer` | Dine-In only | **MISSING** |
+| Collect payment | `bill_collect` | Order must be placed | **MISSING** |
+| Apply discount | `discount_apply` | — | **MISSING** |
+| Complementary item | `complementary_apply` | — | **MISSING** |
+| Customer search | `customer_manage` | — | **MISSING** |
 
 ### Sidebar / Navigation
 
-| UI Element | Permission Required |
-|------------|---------------------|
-| Menu Management | `menu_manage` |
-| Reports | `report_view` |
-| Settings | `settings_manage` |
-| Employee Management | `employee_manage` |
+| UI Element | Permission Required | Status |
+|------------|---------------------|--------|
+| Menu Management | `menu_manage` | **MISSING** |
+| Reports | `report_view` | **MISSING** |
+| Settings | `settings_manage` | **MISSING** |
+| Employee Management | `employee_manage` | **MISSING** |
 
 ---
 
 ## Quick Reference: Implementation Checklist
 
-- [ ] **Transform**: Add cancellation settings to `profileTransform.js` → `fromAPI.restaurant()`
-- [ ] **Transform**: Store cancellation config in `RestaurantContext` for UI access
-- [ ] **OrderCard.jsx**: Wrap Cancel button with `hasPermission('order_cancel')`
-- [ ] **OrderCard.jsx**: Wrap Merge button with `hasPermission('table_merge')`
-- [ ] **OrderCard.jsx**: Wrap Shift button with `hasPermission('table_shift')`
-- [ ] **OrderCard.jsx**: Wrap Food Transfer icon with `hasPermission('food_transfer')`
+- [x] **Transform**: Add cancellation settings to `profileTransform.js` → `fromAPI.restaurant()`
+- [x] **Transform**: Store cancellation config in `RestaurantContext` for UI access
+- [x] **OrderCard.jsx**: Wrap Cancel button with `hasPermission('order_cancel')` via `canCancelOrder` prop
+- [x] **OrderCard.jsx**: Wrap Merge button with `hasPermission('table_merge')` via `canMergeOrder` prop
+- [x] **OrderCard.jsx**: Wrap Shift button with `hasPermission('table_shift')` via `canShiftTable` prop
+- [x] **OrderCard.jsx**: Wrap Food Transfer icon with `hasPermission('food_transfer')` via `canFoodTransfer` prop
+- [x] **DashboardPage.jsx**: Wire `onCancelOrder` handler → `CancelOrderModal` → API
+- [x] **DashboardPage.jsx**: Wire `onItemStatusChange` handler → `FOOD_STATUS_UPDATE` API
 - [ ] **OrderCard.jsx**: Add `cancel_order_time` elapsed check for Cancel button
-- [ ] **OrderEntry.jsx**: Add permission gates to modal triggers
-- [ ] **Sidebar.jsx**: Add permission gates to navigation links
+- [ ] **OrderEntry.jsx**: Add permission gates to modal triggers (Cancel, Shift, Merge, Transfer)
+- [ ] **Sidebar.jsx**: Add permission gates to navigation links (Menu, Reports, Settings)
+- [ ] **OrderCard.jsx**: Gate `onEdit` (card tap) with `order_edit` permission
+- [ ] **OrderCard.jsx**: Gate Bill button with `bill_collect` permission (after Phase 2)
 
 ---
 
