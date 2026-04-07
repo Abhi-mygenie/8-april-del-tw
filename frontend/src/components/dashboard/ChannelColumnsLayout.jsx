@@ -87,6 +87,9 @@ const ChannelColumnsLayout = ({
   const handleArrowClick = useCallback((channelId, direction) => {
     const currentIndex = getChannelIndex(channelId);
     
+    console.log(`%c[Arrow] CLICKED ${direction.toUpperCase()} on "${channelId}" (index ${currentIndex})`, 'background: #3b82f6; color: white; padding: 2px 6px; border-radius: 3px;');
+    console.log(`[Arrow] Current maxColumns:`, { ...maxColumns });
+    
     if (direction === 'left' && currentIndex > 0) {
       let leftIndex = currentIndex - 1;
       while (leftIndex >= 0) {
@@ -95,12 +98,18 @@ const ChannelColumnsLayout = ({
         if (leftChannel) {
           setMaxColumns(prev => {
             const currentMax = prev[channelId] ?? 2;
-            if (currentMax <= 1) return prev; // Can't reduce below 1
-            return {
+            if (currentMax <= 1) {
+              console.log(`[Arrow] BLOCKED: "${channelId}" already at min (${currentMax})`);
+              return prev;
+            }
+            const newState = {
               ...prev,
               [channelId]: currentMax - 1,
               [leftChannelId]: (prev[leftChannelId] ?? 2) + 1,
             };
+            console.log(`%c[Arrow] TRANSFER: "${channelId}" ${currentMax}→${currentMax - 1}, "${leftChannelId}" ${prev[leftChannelId] ?? 2}→${(prev[leftChannelId] ?? 2) + 1}`, 'color: #22c55e; font-weight: bold;');
+            console.log(`[Arrow] New maxColumns:`, newState);
+            return newState;
           });
           break;
         }
@@ -116,19 +125,25 @@ const ChannelColumnsLayout = ({
         if (rightChannel) {
           setMaxColumns(prev => {
             const currentMax = prev[channelId] ?? 2;
-            if (currentMax <= 1) return prev; // Can't reduce below 1
-            return {
+            if (currentMax <= 1) {
+              console.log(`[Arrow] BLOCKED: "${channelId}" already at min (${currentMax})`);
+              return prev;
+            }
+            const newState = {
               ...prev,
               [channelId]: currentMax - 1,
               [rightChannelId]: (prev[rightChannelId] ?? 2) + 1,
             };
+            console.log(`%c[Arrow] TRANSFER: "${channelId}" ${currentMax}→${currentMax - 1}, "${rightChannelId}" ${prev[rightChannelId] ?? 2}→${(prev[rightChannelId] ?? 2) + 1}`, 'color: #22c55e; font-weight: bold;');
+            console.log(`[Arrow] New maxColumns:`, newState);
+            return newState;
           });
           break;
         }
         rightIndex++;
       }
     }
-  }, [getChannelIndex, enabledChannels]);
+  }, [getChannelIndex, enabledChannels, maxColumns]);
 
   // Handle resize drag (for Phase B - placeholder for now)
   const handleResize = useCallback((leftChannelId, rightChannelId, deltaX) => {
@@ -174,6 +189,15 @@ const ChannelColumnsLayout = ({
       const actualCols = getActualColumns(c.id, c.items?.length || 0);
       return actualCols > 0;
     });
+
+    // Log current layout state
+    const layoutSummary = enabledChannels.map(c => {
+      const items = c.items?.length || 0;
+      const actual = getActualColumns(c.id, items);
+      const max = maxColumns[c.id] ?? 2;
+      return `${c.name}: ${actual}col (max:${max}, items:${items})`;
+    });
+    console.log(`%c[Layout] ${layoutSummary.join(' | ')}`, 'color: #8b5cf6;');
     
     enabledChannels.forEach((channel, index) => {
       const actualColumns = getActualColumns(channel.id, channel.items?.length || 0);
