@@ -31,7 +31,7 @@ const ORDER_TYPES = [
 const DROPDOWN_TABLE_SORT = { available: 0, reserved: 1, occupied: 2, billReady: 3, paid: 4, yetToConfirm: 4 };
 
 // Order Entry Screen Component - 3-Panel Layout
-const OrderEntry = ({ table, onClose, orderData, orderType = "delivery", onOrderTypeChange, allTables = [], onSelectTable, savedCart = [], onCartChange, initialShowPayment = false }) => {
+const OrderEntry = ({ table, onClose, orderData, orderType = "delivery", onOrderTypeChange, allTables = [], onSelectTable, savedCart = [], onCartChange, initialShowPayment = false, initialTransferItem = null }) => {
   const { categories, products, popularFood } = useMenu();
   const { orders, refreshOrders, removeOrder, waitForOrderRemoval } = useOrders();
   const { getItemCancellationReasons, getOrderCancellationReasons } = useSettings();
@@ -70,7 +70,7 @@ const OrderEntry = ({ table, onClose, orderData, orderType = "delivery", onOrder
   const [showNotesModal, setShowNotesModal] = useState(false);
   const [orderNotes, setOrderNotes] = useState([]);
   const [showOrderPlaced, setShowOrderPlaced] = useState(false);
-  const [transferItem, setTransferItem] = useState(null);
+  const [transferItem, setTransferItem] = useState(initialTransferItem);
   const [showMergeModal, setShowMergeModal] = useState(false);
   const [showShiftModal, setShowShiftModal] = useState(false);
   const [cancelItem, setCancelItem] = useState(null);

@@ -172,6 +172,7 @@ const DashboardPage = () => {
   const [orderEntryTable, setOrderEntryTable] = useState(null);
   const [orderEntryType, setOrderEntryType] = useState(null);
   const [initialShowPayment, setInitialShowPayment] = useState(false);
+  const [initialTransferItem, setInitialTransferItem] = useState(null);
   const [cartsByTable, setCartsByTable] = useState({});
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -613,11 +614,20 @@ const DashboardPage = () => {
     setOrderEntryTable(null);
     setOrderEntryType(null);
     setInitialShowPayment(false);
+    setInitialTransferItem(null);
   };
 
   const handleBillClick = (tableEntry) => {
     handleTableClick(tableEntry);
     setInitialShowPayment(true);
+  };
+
+  // Handler for food transfer from Order Card - opens Order Entry with transfer modal
+  const handleFoodTransfer = (order, item, tableEntry) => {
+    // Open Order Entry for this table/order
+    handleTableClick(tableEntry);
+    // Set the item to trigger transfer modal in OrderEntry
+    setInitialTransferItem(item);
   };
 
   // Handler for marking order as ready
@@ -877,7 +887,7 @@ const DashboardPage = () => {
                           onItemStatusChange={handleItemStatusChange}
                           onMergeOrder={(o) => console.log('[OrderCard] Merge order:', o.orderId)}
                           onTableShift={(o) => console.log('[OrderCard] Shift table:', o.orderId)}
-                          onFoodTransfer={(o, item) => console.log('[OrderCard] Transfer food:', item.id, 'from order:', o.orderId)}
+                          onFoodTransfer={(o, item) => handleFoodTransfer(o, item, table)}
                         />
                       );
                     })
@@ -956,6 +966,7 @@ const DashboardPage = () => {
             savedCart={cartsByTable[orderEntryTable?.id || orderEntryType] || []}
             onCartChange={(key, items) => setCartsByTable(prev => ({ ...prev, [key]: items }))}
             initialShowPayment={initialShowPayment}
+            initialTransferItem={initialTransferItem}
           />
         )}
 
