@@ -161,10 +161,10 @@ const TableCard = ({ table, onClick, onOpenModal, onUpdateStatus, onBillClick, o
                 />
               </div>
             ) : hasOrders ? (
-              /* Button rules (CHG-008 final):
-                 fOrderStatus 1 (preparing) → KOT button (left) + "Preparing" label (right)
-                 fOrderStatus 2 (ready)     → "Ready" label full width
-                 fOrderStatus 5 (served)    → "Served" badge (left) + Bill button (right) */
+              /* Button rules:
+                 fOrderStatus 1 (preparing) → KOT button + Ready button
+                 fOrderStatus 2 (ready)     → KOT button + Serve button
+                 fOrderStatus 5 (served)    → KOT button + Bill button */
               <div className="flex gap-2">
                 {table.fOrderStatus === 1 && (
                   <>
@@ -176,26 +176,46 @@ const TableCard = ({ table, onClick, onOpenModal, onUpdateStatus, onBillClick, o
                       title="Print KOT"
                       ariaLabel={`Print KOT for table ${table.id}`}
                     />
+                    <TextButton
+                      onClick={() => onUpdateStatus?.(table.id, "ready")}
+                      testId={`ready-btn-${table.id}`}
+                      ariaLabel={`Mark order ready for table ${table.id}`}
+                      fullWidth={true}
+                    >
+                      Ready
+                    </TextButton>
                   </>
                 )}
                 {table.fOrderStatus === 2 && (
-                  <div
-                    className="flex-1 flex items-center justify-center rounded-lg text-xs font-semibold py-3"
-                    style={{ backgroundColor: COLORS.sectionBg, color: COLORS.primaryGreen }}
-                    data-testid={`status-label-${table.id}`}
-                  >
-                    Ready
-                  </div>
+                  <>
+                    <IconButton
+                      icon={Printer}
+                      onClick={() => {/* Print KOT - integrate with printer service */}}
+                      backgroundColor={COLORS.borderGray}
+                      testId={`print-btn-${table.id}`}
+                      title="Print KOT"
+                      ariaLabel={`Print KOT for table ${table.id}`}
+                    />
+                    <TextButton
+                      onClick={() => onUpdateStatus?.(table.id, "served")}
+                      testId={`serve-btn-${table.id}`}
+                      ariaLabel={`Mark order served for table ${table.id}`}
+                      fullWidth={true}
+                    >
+                      Serve
+                    </TextButton>
+                  </>
                 )}
                 {table.fOrderStatus === 5 && (
                   <>
-                    <div
-                      className="p-3 rounded-lg flex items-center justify-center"
-                      style={{ backgroundColor: COLORS.sectionBg }}
-                      data-testid={`served-badge-${table.id}`}
-                    >
-                      <Check className="w-5 h-5" style={{ color: COLORS.primaryGreen }} />
-                    </div>
+                    <IconButton
+                      icon={Printer}
+                      onClick={() => {/* Print KOT - integrate with printer service */}}
+                      backgroundColor={COLORS.borderGray}
+                      testId={`print-btn-${table.id}`}
+                      title="Print KOT"
+                      ariaLabel={`Print KOT for table ${table.id}`}
+                    />
                     <TextButton
                       onClick={() => onBillClick?.(table)}
                       testId={`collect-btn-${table.id}`}

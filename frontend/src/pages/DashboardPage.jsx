@@ -235,6 +235,7 @@ const DashboardPage = () => {
             orderId: order.orderId,
             orderType: 'walkIn',
             fOrderStatus: order.fOrderStatus,
+            waiter: order.waiter || '',
           })),
         };
       }
@@ -260,6 +261,7 @@ const DashboardPage = () => {
           orderId: order.orderId,
           orderType: 'walkIn',
           fOrderStatus: order.fOrderStatus,
+          waiter: order.waiter || '',
         });
       });
 
@@ -326,6 +328,7 @@ const DashboardPage = () => {
           orderType: 'takeAway',
           orderId: order.orderId,
           fOrderStatus: order.fOrderStatus,
+          waiter: order.waiter || '',
         });
       });
     }
@@ -343,6 +346,7 @@ const DashboardPage = () => {
           orderType: 'delivery',
           orderId: order.orderId,
           fOrderStatus: order.fOrderStatus,
+          waiter: order.waiter || '',
         });
       });
     }
