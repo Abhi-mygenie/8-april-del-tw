@@ -1,6 +1,6 @@
 # POS Frontend - Bug Tracker & Audit Document
 
-**Last Updated:** April 7, 2026
+**Last Updated:** April 7, 2026 (v2 — Permission & Cancellation context added)
 
 ---
 
@@ -26,6 +26,12 @@
 | 16 | BUG-215 | Full Order Cancel Treated as Partial | P0 | ✅ FIXED |
 | 17 | BUG-216 | Missing Table Engage, Incorrect Free | P0 | ❌ OPEN (Backend) |
 | 18 | BUG-221 | Merge Order - Source Table Locked | P0 | ❌ OPEN |
+
+### Open Bug Notes (April 7, 2026)
+- **BUG-210**: Multi-device race condition — needs `isTableEngaged` check BEFORE opening OrderEntry. Low risk now that permission gating prevents unauthorized operations.
+- **BUG-212**: Backend addon name mismatch — frontend workaround possible but not clean. Waiting on backend.
+- **BUG-216 & BUG-221**: Same root cause — `free→engage` workaround in `socketHandlers.js`. Fix: remove blanket workaround, handle cancel-item locking locally. Both Shift and Merge flows are broken by this.
+- **Permission gating** (implemented April 7, 2026) reduces risk of BUG-210 by preventing unauthorized users from performing conflicting operations.
 
 ### Status Legend
 - ✅ FIXED - Issue resolved and verified

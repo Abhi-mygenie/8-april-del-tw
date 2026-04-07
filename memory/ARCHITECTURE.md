@@ -1,7 +1,7 @@
 # MyGenie POS Frontend - Complete Architecture Document
 
-**Version:** 2.0  
-**Last Updated:** April 6, 2026  
+**Version:** 3.0 (Permissions & Cancellation Architecture Added)
+**Last Updated:** April 7, 2026  
 **Audience:** New developers, maintainers, and technical leads
 
 ---
@@ -324,7 +324,7 @@ import { useAuth } from "@/contexts";
 |---------|---------|-----------|-------------|
 | **AuthContext** | Authentication | `token`, `user`, `permissions` | `login()`, `logout()`, `hasPermission()` |
 | **SocketContext** | WebSocket connection | `status`, `isConnected` | `subscribe()`, `reconnect()` |
-| **RestaurantContext** | Restaurant config | `restaurant`, `currencySymbol`, `features` | `setRestaurant()` |
+| **RestaurantContext** | Restaurant config | `restaurant`, `currencySymbol`, `features`, `cancellation` | `setRestaurant()` |
 | **MenuContext** | Products catalog | `categories`, `products`, `popularFood` | `getProductById()`, `searchProducts()` |
 | **TableContext** | Table management | `tables`, `engagedTables` | `updateTableStatus()`, `setTableEngaged()` |
 | **OrderContext** | Active orders | `orders` | `addOrder()`, `updateOrder()`, `removeOrder()` |
@@ -343,8 +343,32 @@ const {
   hasPermission,   // (permission) => boolean
 } = useAuth();
 
-// Permission check example
-const canCancelOrder = hasPermission('cancel_order');
+// Permission check example (VERIFIED against actual API role[] array)
+const canCancelOrder = hasPermission('order_cancel');
+const canShiftTable = hasPermission('transfer_table');
+const canMergeOrder = hasPermission('merge_table');
+const canFoodTransfer = hasPermission('food_transfer');
+const canCancelItem = hasPermission('food');
+const canBill = hasPermission('bill');
+const canCustomerManage = hasPermission('customer_management');
+const canDiscount = hasPermission('discount');
+// Note: 'Ready' (capital R), 'Loyalty' (capital L), 'expence' (API typo)
+```
+
+### 5.2b Cancellation Settings (Restaurant-Level)
+```javascript
+// Exposed via RestaurantContext
+const { cancellation } = useRestaurant();
+// cancellation = {
+//   allowPostServeCancel: boolean,      // from cancle_post_serve
+//   allowPostServeCancel2: boolean,     // from allow_cancel_post_server (redundant gate)
+//   orderCancelWindowMinutes: number,   // from cancel_order_time (0 = unlimited)
+//   itemCancelWindowMinutes: number,    // from cancel_food_timings (0 = unlimited)
+// }
+
+// Decision logic:
+// Pre-Ready items: time window applies (cancel_order_time / cancel_food_timings)
+// Post-Ready items: cancle_post_serve flag applies (no time check)
 ```
 
 ### 5.3 OrderContext Deep Dive
@@ -686,8 +710,14 @@ const ProtectedRoute = ({ children }) => {
 #### Cards (`/components/cards/`)
 Display components for tables and orders:
 - `TableCard` - Table grid cell with order info
-- `DineInCard` - Dine-in order card
-- `DeliveryCard` - Delivery order card
+- `OrderCard` - Unified order card for List View (Dine-In, Delivery, TakeAway)
+  - Permission-gated buttons (Cancel, Merge, Shift, Food Transfer)
+  - Cancellation settings enforcement (time window + post-ready flag)
+  - Item-level status toggles for Dine-In (Preparing → Ready → Served)
+  - CSS Columns masonry layout (4 columns)
+  - KOT/Bill print disabled (Phase 2)
+- `DineInCard` - Legacy dine-in card (superseded by OrderCard)
+- `DeliveryCard` - Legacy delivery card (superseded by OrderCard)
 
 #### Order Entry (`/components/order-entry/`)
 Main order-taking flow components:
@@ -701,20 +731,25 @@ Main order-taking flow components:
 ```
 OrderEntry.jsx (main container)
 ├── Header (table info, customer)
+│   ├── Trash icon (cancel order — gated by `order_cancel` + cancellation settings)
+│   └── UserPlus icon (customer — gated by `customer_management`)
 ├── Split View
 │   ├── Left: CategoryPanel (menu browser)
-│   │   └── ProductCard (clickable items)
-│   │       └── ItemCustomizationModal (addons, variations)
+│   │   ├── ProductCard (clickable items)
+│   │   │   └── ItemCustomizationModal (addons, variations)
+│   │   ├── Shift Table button (gated by `transfer_table`)
+│   │   └── Merge Table button (gated by `merge_table`)
 │   │
 │   └── Right: CartPanel (order items)
-│       ├── UnplacedItemRow (new items)
+│       ├── UnplacedItemRow (new items — no permission needed)
 │       ├── PlacedItemRow (placed items)
+│       │   ├── Cancel item (gated by `food` + cancellation time/post-ready)
+│       │   └── Transfer food (gated by `food_transfer`)
 │       └── OrderSummary (totals)
 │
 ├── Action Bar
 │   ├── Place Order Button
-│   ├── Cancel Order Button
-│   └── Collect Bill Button
+│   └── Collect Bill Button (gated by `bill`)
 │
 └── Modals
     ├── CollectPaymentPanel
@@ -723,6 +758,19 @@ OrderEntry.jsx (main container)
     ├── ShiftTableModal
     ├── MergeTableModal
     └── TransferFoodModal
+```
+
+### 9.2b OrderCard Permission Architecture
+```
+DashboardPage.jsx
+├── useAuth() → hasPermission()
+├── useRestaurant() → cancellation
+└── OrderCard (props-based permission gating)
+    ├── canCancelOrder = hasPermission('order_cancel')
+    │   └── + cancellation time window / post-ready flag
+    ├── canMergeOrder = hasPermission('merge_table')
+    ├── canShiftTable = hasPermission('transfer_table')
+    └── canFoodTransfer = hasPermission('food_transfer')
 ```
 
 ### 9.3 Key Page Components
@@ -739,10 +787,15 @@ OrderEntry.jsx (main container)
 - Redirects to `/dashboard` on complete
 
 #### DashboardPage
-- Table grid with sections
+- Table grid with sections (Table View)
+- Order card masonry layout with CSS Columns (Order View / List View)
 - Real-time updates via `useSocketEvents()`
-- Opens `OrderEntry` on table click
+- Opens `OrderEntry` on table/card click
 - Filter by section, search by table number
+- Filter pills: Confirm, Cooking, Ready, Running, Schedule
+- View toggle: Table grid ↔ Order list (single icon)
+- Permission-gated OrderCard buttons (cancel, merge, shift, transfer)
+- Cancellation settings enforced (time window + post-ready flag)
 
 ---
 
@@ -1075,7 +1128,10 @@ export const getItems = async (params) => {
 |----------|------|-------------|
 | API Reference | `/app/memory/API_DOCUMENT_V2.md` | Detailed API payloads and responses |
 | Bug Tracker | `/app/memory/BUGS.md` | Known issues and fixes |
-| API Mapping | `/app/memory/API_MAPPING_AUDIT.md` | Endpoint mapping and data flow audit |
+| OrderCard Suggestions | `/app/memory/ORDERCARD_SUGGESTIONS.md` | OrderCard redesign tracking (Phase 1 & 2 done) |
+| Profile Permissions Mapping | `/app/memory/PROFILE_PERMISSIONS_MAPPING.md` | Permission strings → UI component mapping with implementation status |
+| Profile API Field Audit | `/app/memory/PROFILE_API_FIELD_AUDIT.md` | Complete 240-field audit of Profile API (MAPPED/MISSING/NOT NEEDED) |
+| PRD | `/app/memory/PRD.md` | Product requirements, completed work, and P0/P1/P2 backlog |
 
 ---
 
@@ -1101,7 +1157,7 @@ const { login, logout, user, hasPermission } = useAuth();
 const { orders, addOrder, removeOrder, getOrderById } = useOrders();
 const { tables, updateTableStatus, setTableEngaged } = useTables();
 const { products, categories, getProductById } = useMenu();
-const { restaurant, currencySymbol } = useRestaurant();
+const { restaurant, currencySymbol, cancellation } = useRestaurant();
 const { isConnected, subscribe } = useSocket();
 ```
 

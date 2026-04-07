@@ -2,7 +2,7 @@
 
 **Created:** April 7, 2026  
 **Last Updated:** April 7, 2026  
-**Status:** Pending Implementation
+**Status:** Mostly Implemented (Phase 1 & 2 done, Phase 3 pending)
 
 ---
 
@@ -212,22 +212,35 @@ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))'
 ## Implementation Checklist
 
 ### Phase 1: Core Changes (P0)
-- [ ] Add order type label to header
-- [ ] Show customer name instead of waiter
-- [ ] Remove waiter from center section
-- [ ] Remove item-level cancel buttons
-- [ ] Remove item-level action buttons
-- [ ] Remove item status text
-- [ ] Implement dynamic footer buttons
-- [ ] Change card min-width to 280px
-- [ ] Increase button sizes to 44px
+- [x] Add order type label to header
+- [x] Show customer name instead of waiter
+- [x] Remove waiter from center section
+- [x] Remove item-level cancel buttons (from card view)
+- [x] Remove item-level action buttons (replaced with status toggles for Dine-In)
+- [x] Remove item status text (replaced with icon-based toggles)
+- [x] Implement dynamic footer buttons (Ready/Serve/Bill based on fOrderStatus)
+- [x] Change card min-width to 280px
+- [x] Increase button sizes to 44px
 
 ### Phase 2: Polish (P1)
-- [ ] Conditional snooze button (only Yet to Confirm)
-- [ ] Increase item row height for touch
-- [ ] Make card body tappable
-- [ ] Add adequate spacing between elements
-- [ ] Reduce grid gap
+- [x] Conditional snooze button (only Yet to Confirm)
+- [x] Increase item row height for touch
+- [x] Make card body tappable (opens OrderEntry)
+- [x] Add adequate spacing between elements
+- [x] Reduce grid gap
+- [x] Permission-gate Cancel Order button (`order_cancel`)
+- [x] Permission-gate Merge Order button (`merge_table`)
+- [x] Permission-gate Table Shift button (`transfer_table`)
+- [x] Permission-gate Food Transfer icon (`food_transfer`)
+- [x] Cancellation time window logic (pre-ready: time check, post-ready: restaurant flag)
+- [x] CSS Columns masonry layout (4 columns)
+- [x] Disabled KOT/Bill print with Phase 2 tooltip
+- [x] isEngaged spinner overlay during API calls
+- [x] Item-level status toggles (Preparing → Ready → Served) for Dine-In
+- [x] Tightened vertical spacing for Delivery/TakeAway cards
+- [x] Gray italic for addon display
+- [x] Bold + large ₹ amount, prominent status badge
+- [x] Unified grid view for all order types
 
 ### Phase 3: Testing
 - [ ] Test on tablet device

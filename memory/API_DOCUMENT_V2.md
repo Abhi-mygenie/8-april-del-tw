@@ -1,6 +1,6 @@
 # API Document v2 — POS Frontend API Reference
 
-**Version:** 3.1
+**Version:** 3.2 (Permission & Cancellation API context added)
 **Last Updated:** April 7, 2026
 
 ## Endpoint Summary
@@ -16,6 +16,7 @@
 | 7 | Get Single Order | `/api/v2/vendoremployee/get-single-order-new` | POST | `application/json` |
 | 8 | Food Status Update | `/api/v2/vendoremployee/food-status-update` | PUT | `application/json` |
 | **9** | **Order Status Update (Ready/Served)** | `/api/v2/vendoremployee/order-status-update` | PUT | `application/json` |
+| **10** | **Profile + Permissions + Restaurant Config** | `/api/v2/vendoremployee/vendor-profile/profile` | GET | — |
 
 ---
 
@@ -1047,3 +1048,74 @@ socketHandlers.handleUpdateOrderStatus (status=3):
 
 ### KEY LEARNING: Backend GET API returns cancelled order with non-cancelled items
 When a full order is cancelled (status=3), the GET single order API still returns the order with individual `item.status` values that may NOT be `'cancelled'`. The order-level `f_order_status` IS `3` (cancelled), which transforms to `order.status === 'cancelled'`. The fix (BUG-215) checks order-level status in addition to item-level statuses.
+
+
+
+---
+
+## 10. Profile API — Permissions & Cancellation Settings (NEW — April 7, 2026)
+
+**Endpoint:** `GET /api/v2/vendoremployee/vendor-profile/profile`
+**Auth:** `Bearer <token>`
+
+### Purpose
+Returns logged-in employee's identity, role permissions, and full restaurant configuration.
+
+### Response Shape (Key Fields)
+```json
+{
+  "emp_id": 3592,
+  "role_name": "Owner",
+  "role": ["Manager", "food", "pos", "order", "bill", "order_cancel", "serve", ...],
+  "restaurants": [{
+    "cancel_order_time": 5,
+    "cancel_food_timings": 5,
+    "cancle_post_serve": "Yes",
+    "allow_cancel_post_server": "Yes",
+    ...
+  }]
+}
+```
+
+### Permission Strings (Verified from actual API — April 7, 2026)
+
+| Permission | UI Action | Gated In |
+|-----------|-----------|----------|
+| `order_cancel` | Cancel entire order | OrderCard, OrderEntry |
+| `food` | Cancel individual item | CartPanel → PlacedItemRow |
+| `transfer_table` | Shift order to another table | OrderCard, CategoryPanel |
+| `merge_table` | Merge two table orders | OrderCard, CategoryPanel |
+| `food_transfer` | Transfer item between tables | OrderCard, CartPanel → PlacedItemRow |
+| `bill` | Collect payment / settle bill | CartPanel (Collect Bill button) |
+| `customer_management` | Customer search/add | OrderEntry (UserPlus button) |
+| `discount` | Apply discounts | OrderEntry (computed, not yet gated in UI) |
+| `order_edit` | Edit/update existing order | Not yet gated |
+| `Ready` (capital R) | Mark items/order ready | Not yet gated |
+| `serve` | Mark items/order served | Not yet gated |
+| `print_icon` | Print KOT/Bill | Phase 2 |
+
+### Cancellation Settings (Restaurant-Level)
+
+| API Field | Type | Example | Transform Key | Description |
+|-----------|------|---------|---------------|-------------|
+| `cancel_order_time` | number | `5` | `cancellation.orderCancelWindowMinutes` | Minutes after order creation to allow full cancel (0=unlimited). **Pre-ready only.** |
+| `cancel_food_timings` | number | `5` | `cancellation.itemCancelWindowMinutes` | Minutes after item added to allow item cancel (0=unlimited). **Pre-ready only.** |
+| `cancle_post_serve` | string | `"Yes"` | `cancellation.allowPostServeCancel` | Allow cancel after food is ready/served. No time check. |
+| `allow_cancel_post_server` | string | `"Yes"` | `cancellation.allowPostServeCancel2` | Redundant gate (both must be "Yes"). |
+
+### Cancellation Decision Logic
+```
+Pre-Ready (item not ready/served):
+  Permission check + time window (cancel_order_time / cancel_food_timings)
+
+Post-Ready (item ready or served):
+  Permission check + cancle_post_serve flag (no time window)
+```
+
+### Transform & Context
+- **Transform:** `profileTransform.js` → `fromAPI.restaurant()` → `cancellation` object
+- **Context:** `RestaurantContext` → `cancellation` (via `useRestaurant()`)
+- **Auth:** `AuthContext` → `permissions` array → `hasPermission(string)` check
+
+### Full Field Audit
+See `/app/memory/PROFILE_API_FIELD_AUDIT.md` for complete 240-field mapping with MAPPED/MISSING status.
