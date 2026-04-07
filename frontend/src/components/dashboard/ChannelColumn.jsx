@@ -165,7 +165,13 @@ const ChannelColumn = ({
             No orders
           </div>
         ) : (
-          <div className="flex flex-col gap-3">
+          <div 
+            className={viewType === 'table' ? 'grid gap-3' : 'flex flex-col gap-3'}
+            style={viewType === 'table' ? { 
+              gridTemplateColumns: 'repeat(auto-fill, 160px)',
+              justifyContent: 'start',
+            } : {}}
+          >
             {sortedItems.map((item) => {
               const key = item.id || `${channel.id}-${item.orderId}`;
               
