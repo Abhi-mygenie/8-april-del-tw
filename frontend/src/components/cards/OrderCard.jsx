@@ -201,21 +201,6 @@ const OrderCard = ({
             </button>
           )}
 
-          {/* Cancel Order Button - All order types */}
-          {!isYetToConfirm && (
-            <button
-              data-testid={`cancel-order-btn-${orderId}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                onCancelOrder?.(order);
-              }}
-              className="min-h-[44px] min-w-[44px] hover:bg-white/50 rounded-lg flex items-center justify-center"
-              title="Cancel Order"
-            >
-              <X className="w-5 h-5" style={{ color: COLORS.errorText }} />
-            </button>
-          )}
-
           {/* Address toggle for own delivery */}
           {isDelivery && isOwn && (
             <button
@@ -460,7 +445,7 @@ const OrderCard = ({
             </button>
           </>
         ) : (
-          /* Normal flow: [KOT] + [Ready/Serve/Bill] for ALL order types */
+          /* Normal flow: [KOT] + [Cancel] + [Ready/Serve/Bill] for ALL order types */
           <>
             {/* KOT button - always visible */}
             <button
@@ -470,6 +455,17 @@ const OrderCard = ({
               title="Print KOT"
             >
               <Printer className="w-5 h-5" />
+            </button>
+
+            {/* Cancel Order Button - between KOT and action button */}
+            <button
+              data-testid={`cancel-order-btn-${orderId}`}
+              onClick={() => onCancelOrder?.(order)}
+              className="min-h-[44px] min-w-[44px] rounded-lg border flex items-center justify-center"
+              style={{ borderColor: COLORS.errorText, color: COLORS.errorText }}
+              title="Cancel Order"
+            >
+              <X className="w-5 h-5" />
             </button>
 
             {/* Order-level action buttons - for ALL order types */}
