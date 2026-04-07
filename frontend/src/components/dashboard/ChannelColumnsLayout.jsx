@@ -75,76 +75,35 @@ const ChannelColumnsLayout = ({
     return Math.min(orderCount, max);
   }, [maxColumns, viewType]);
 
-  // Get channel index in order
-  const getChannelIndex = useCallback((channelId) => {
-    return CHANNEL_ORDER.indexOf(channelId);
-  }, []);
-
   // Arrow click handler
-  // `<` = DECREASE this channel by 1 (min 1), right neighbor gains 1
-  // `>` = INCREASE this channel by 1 (no max), right neighbor loses 1
-  // Rightmost channel uses left neighbor instead
+  // `<` = DECREASE this channel by 1 (min 1)
+  // `>` = INCREASE this channel by 1 (no max limit)
+  // No transfer between channels — each is independent
   const handleArrowClick = useCallback((channelId, direction) => {
-    const currentIndex = getChannelIndex(channelId);
-
-    console.log(`%c[Arrow] CLICKED ${direction === 'left' ? 'DECREASE(<)' : 'INCREASE(>)'} on "${channelId}"`, 'background: #3b82f6; color: white; padding: 2px 6px; border-radius: 3px;');
-    console.log(`[Arrow] Before:`, { ...maxColumns });
-
-    // Find the adjacent channel to compensate (prefer right, fallback left)
-    const findAdjacentChannel = () => {
-      // Try right neighbors first
-      for (let i = currentIndex + 1; i < CHANNEL_ORDER.length; i++) {
-        const id = CHANNEL_ORDER[i];
-        if (enabledChannels.find(c => c.id === id)) return id;
-      }
-      // Fallback to left neighbors
-      for (let i = currentIndex - 1; i >= 0; i--) {
-        const id = CHANNEL_ORDER[i];
-        if (enabledChannels.find(c => c.id === id)) return id;
-      }
-      return null;
-    };
-
-    const adjacentId = findAdjacentChannel();
-    if (!adjacentId) return; // Only 1 channel visible, no transfer possible
+    console.log(`%c[Arrow] ${direction === 'left' ? 'DECREASE(<)' : 'INCREASE(>)'} on "${channelId}"`, 'background: #3b82f6; color: white; padding: 2px 6px; border-radius: 3px;');
 
     setMaxColumns(prev => {
       const currentMax = prev[channelId] ?? 2;
-      const adjacentMax = prev[adjacentId] ?? 2;
 
       if (direction === 'left') {
-        // DECREASE current channel
         if (currentMax <= 1) {
           console.log(`[Arrow] BLOCKED: "${channelId}" already at min (1)`);
           return prev;
         }
-        const newState = {
-          ...prev,
-          [channelId]: currentMax - 1,
-          [adjacentId]: adjacentMax + 1,
-        };
-        console.log(`%c[Arrow] ${channelId} ${currentMax}→${currentMax - 1}, ${adjacentId} ${adjacentMax}→${adjacentMax + 1}`, 'color: #22c55e; font-weight: bold;');
-        return newState;
+        const newVal = currentMax - 1;
+        console.log(`%c[Arrow] ${channelId} ${currentMax}→${newVal}`, 'color: #22c55e; font-weight: bold;');
+        return { ...prev, [channelId]: newVal };
       }
 
       if (direction === 'right') {
-        // INCREASE current channel — take from adjacent (must be > 1)
-        if (adjacentMax <= 1) {
-          console.log(`[Arrow] BLOCKED: adjacent "${adjacentId}" already at min (1)`);
-          return prev;
-        }
-        const newState = {
-          ...prev,
-          [channelId]: currentMax + 1,
-          [adjacentId]: adjacentMax - 1,
-        };
-        console.log(`%c[Arrow] ${channelId} ${currentMax}→${currentMax + 1}, ${adjacentId} ${adjacentMax}→${adjacentMax - 1}`, 'color: #22c55e; font-weight: bold;');
-        return newState;
+        const newVal = currentMax + 1;
+        console.log(`%c[Arrow] ${channelId} ${currentMax}→${newVal}`, 'color: #22c55e; font-weight: bold;');
+        return { ...prev, [channelId]: newVal };
       }
 
       return prev;
     });
-  }, [getChannelIndex, enabledChannels, maxColumns]);
+  }, []);
 
   // Handle resize drag (for Phase B - placeholder for now)
   const handleResize = useCallback((leftChannelId, rightChannelId, deltaX) => {
