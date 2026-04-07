@@ -1,6 +1,5 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
 import { COLORS } from '../../constants';
-import { useLocalStorage } from '../../hooks';
 import ChannelColumn from './ChannelColumn';
 import ResizeHandle from './ResizeHandle';
 
@@ -14,9 +13,6 @@ const DEFAULT_MAX_COLUMNS = {
 
 // Channel order for arrow navigation
 const CHANNEL_ORDER = ['dineIn', 'takeAway', 'delivery', 'room'];
-
-// localStorage key
-const STORAGE_KEY_MAX_COLUMNS = 'mygenie_channel_max_columns';
 
 // Card widths
 const TABLE_CARD_WIDTH = 168; // 160px + gap
@@ -58,8 +54,8 @@ const ChannelColumnsLayout = ({
 }) => {
   const containerRef = useRef(null);
   
-  // Persist max columns per channel
-  const [maxColumns, setMaxColumns] = useLocalStorage(STORAGE_KEY_MAX_COLUMNS, DEFAULT_MAX_COLUMNS);
+  // Reset to default on every mount (no persistence across sessions)
+  const [maxColumns, setMaxColumns] = useState(DEFAULT_MAX_COLUMNS);
 
   // Filter to only enabled channels
   const enabledChannels = useMemo(() => {
@@ -80,28 +76,27 @@ const ChannelColumnsLayout = ({
   }, []);
 
   // Arrow click handler - transfer 1 max column between adjacent channels
+  // Left arrow: current channel shrinks by 1, left neighbor grows by 1
+  // Right arrow: current channel shrinks by 1, right neighbor grows by 1
+  // Minimum maxColumns is 1 (prevents hiding a channel that has orders)
   const handleArrowClick = useCallback((channelId, direction) => {
     const currentIndex = getChannelIndex(channelId);
     
     if (direction === 'left' && currentIndex > 0) {
-      // Find the nearest visible channel on the left
       let leftIndex = currentIndex - 1;
       while (leftIndex >= 0) {
         const leftChannelId = CHANNEL_ORDER[leftIndex];
         const leftChannel = enabledChannels.find(c => c.id === leftChannelId);
         if (leftChannel) {
-          // Transfer: current loses 1, left gains 1
           setMaxColumns(prev => {
             const currentMax = prev[channelId] ?? 2;
-            if (currentMax <= 0) return prev; // Can't reduce below 0
-            
+            if (currentMax <= 1) return prev; // Can't reduce below 1
             return {
               ...prev,
               [channelId]: currentMax - 1,
               [leftChannelId]: (prev[leftChannelId] ?? 2) + 1,
             };
           });
-          console.log(`[Arrow] ${channelId} -1 → ${leftChannelId} +1`);
           break;
         }
         leftIndex--;
@@ -109,30 +104,26 @@ const ChannelColumnsLayout = ({
     }
     
     if (direction === 'right' && currentIndex < CHANNEL_ORDER.length - 1) {
-      // Find the nearest visible channel on the right
       let rightIndex = currentIndex + 1;
       while (rightIndex < CHANNEL_ORDER.length) {
         const rightChannelId = CHANNEL_ORDER[rightIndex];
         const rightChannel = enabledChannels.find(c => c.id === rightChannelId);
         if (rightChannel) {
-          // Transfer: current loses 1, right gains 1
           setMaxColumns(prev => {
             const currentMax = prev[channelId] ?? 2;
-            if (currentMax <= 0) return prev; // Can't reduce below 0
-            
+            if (currentMax <= 1) return prev; // Can't reduce below 1
             return {
               ...prev,
               [channelId]: currentMax - 1,
               [rightChannelId]: (prev[rightChannelId] ?? 2) + 1,
             };
           });
-          console.log(`[Arrow] ${channelId} -1 → ${rightChannelId} +1`);
           break;
         }
         rightIndex++;
       }
     }
-  }, [getChannelIndex, enabledChannels, setMaxColumns]);
+  }, [getChannelIndex, enabledChannels]);
 
   // Handle resize drag (for Phase B - placeholder for now)
   const handleResize = useCallback((leftChannelId, rightChannelId, deltaX) => {
@@ -141,15 +132,13 @@ const ChannelColumnsLayout = ({
     
     if (columnsDelta === 0) return;
     
-    console.log(`[Drag] ${leftChannelId} ${columnsDelta > 0 ? '+' : ''}${columnsDelta}, ${rightChannelId} ${columnsDelta > 0 ? '-' : '+'}${Math.abs(columnsDelta)}`);
-    
     setMaxColumns(prev => {
       const leftMax = prev[leftChannelId] ?? 2;
       const rightMax = prev[rightChannelId] ?? 2;
       
       // Positive delta = drag right = left gains, right loses
-      const newLeftMax = Math.max(0, leftMax + columnsDelta);
-      const newRightMax = Math.max(0, rightMax - columnsDelta);
+      const newLeftMax = Math.max(1, leftMax + columnsDelta);
+      const newRightMax = Math.max(1, rightMax - columnsDelta);
       
       return {
         ...prev,
@@ -157,7 +146,7 @@ const ChannelColumnsLayout = ({
         [rightChannelId]: newRightMax,
       };
     });
-  }, [viewType, setMaxColumns]);
+  }, [viewType]);
 
   // Calculate total width needed for layout
   const channelWidths = useMemo(() => {

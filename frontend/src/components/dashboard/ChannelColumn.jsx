@@ -88,11 +88,11 @@ const ChannelColumn = ({
         className="flex items-center justify-between px-3 py-3 border-b"
         style={{ borderColor: COLORS.borderGray }}
       >
-        {/* Left Arrow */}
+        {/* Left Arrow - disabled when can't shrink (maxColumns <= 1) or no left neighbor */}
         <button
           data-testid={`arrow-left-${channel.id}`}
           onClick={onLeftArrowClick}
-          disabled={!hasLeftArrow || maxColumns <= 0}
+          disabled={!hasLeftArrow || maxColumns <= 1}
           className="p-1 rounded hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
           title="Give column to left channel"
         >
@@ -115,11 +115,11 @@ const ChannelColumn = ({
           </span>
         </div>
 
-        {/* Right Arrow */}
+        {/* Right Arrow - disabled when can't shrink (maxColumns <= 1) or no right neighbor */}
         <button
           data-testid={`arrow-right-${channel.id}`}
           onClick={onRightArrowClick}
-          disabled={!hasRightArrow || maxColumns <= 0}
+          disabled={!hasRightArrow || maxColumns <= 1}
           className="p-1 rounded hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
           title="Give column to right channel"
         >
