@@ -139,7 +139,7 @@ export const fromAPI = {
           customerLabel = 'Del';
           break;
         default:
-          customerLabel = isWalkIn ? 'WC' : '';
+          customerLabel = isWalkIn ? 'Walk-In' : '';
       }
     }
 

@@ -221,10 +221,10 @@ const DashboardPage = () => {
       if (walkInOrders.length > 0) {
         grouped['walk_in'] = {
           name: 'Walk-In',
-          prefix: 'WC',
+          prefix: 'Walk-In',
           tables: walkInOrders.map((order) => ({
             id: `wc-${order.orderId}`,
-            label: order.customer || 'WC',
+            label: order.customer || 'Walk-In',
             status: order.tableStatus,
             tableId: 0,
             amount: order.amount,
@@ -249,7 +249,7 @@ const DashboardPage = () => {
       walkInOrders.forEach((order) => {
         flat.push({
           id: `wc-${order.orderId}`,
-          label: order.customer || 'WC',
+          label: order.customer || 'Walk-In',
           status: order.tableStatus,
           tableId: 0,
           amount: order.amount,
