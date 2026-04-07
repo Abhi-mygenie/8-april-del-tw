@@ -25,3 +25,32 @@ Frontend .env:
 
 ## Current Status
 App is running and displaying login page for MyGenie Restaurant POS System.
+
+---
+
+## Channel-Based Layout Redesign (April 7, 2026)
+
+### Status: PLANNING (Document Created)
+
+### Key Decisions:
+1. Replace area-based grouping (Default, out, in, Walk-In) with **channel-based columns** (Dine-In, TakeAway, Delivery, Room)
+2. Each channel = 1 column with single-card width
+3. Columns resizable via drag separator
+4. Columns can be fully collapsed
+5. Widths persist to localStorage
+6. **Channel filter buttons REMOVED** from Header (channels are now visible as columns)
+7. Same layout applies to BOTH Table View and List View
+
+### Documentation:
+- Full specification: `/app/docs/CHANNEL_BASED_LAYOUT_REDESIGN.md`
+
+### Identified Risks:
+- Breaking existing area-based functionality
+- Header channel filter removal
+- Active orders toggle interaction
+- Performance with many orders
+
+### Migration Strategy:
+- Feature flag approach for safe rollout
+- Keep old code until new layout is verified
+
