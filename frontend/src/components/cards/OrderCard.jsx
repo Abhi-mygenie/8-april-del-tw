@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { User, X, ChevronDown, ChevronUp, MapPin, Clock, Printer, ShoppingBag, Bike, Circle, CheckCircle2, Check, FileText } from "lucide-react";
+import { User, X, ChevronDown, ChevronUp, MapPin, Clock, Printer, ShoppingBag, Bike, Circle, CheckCircle2, Check, FileText, GitMerge, ArrowLeftRight, CornerRightUp } from "lucide-react";
 import { COLORS, SOURCE_COLORS } from "../../constants";
 
 /**
@@ -7,8 +7,8 @@ import { COLORS, SOURCE_COLORS } from "../../constants";
  * Compact design for Order View (4 cards per row, 280px min-width)
  * 
  * REDESIGNED: April 2026
- * - Header: Colored background (Yellow/Green/Pink/Blue) + MG logo + Customer + Cancel
- * - Items: Simple display WITH item-level Ready/Serve buttons
+ * - Header: [Logo][Table/Name][Time] [Amount] [Merge][Shift][Cancel]
+ * - Items: With food transfer icon (Dine-In), Ready/Serve circles
  * - Footer: Dynamic based on fOrderStatus, 44px touch targets
  */
 const OrderCard = ({
@@ -26,6 +26,9 @@ const OrderCard = ({
   onAccept,
   onReject,
   onItemStatusChange,
+  onMergeOrder,
+  onTableShift,
+  onFoodTransfer,
 }) => {
   const [showServed, setShowServed] = useState(false);
   const [showAddress, setShowAddress] = useState(false);
@@ -146,27 +149,28 @@ const OrderCard = ({
       style={{ backgroundColor: COLORS.lightBg, border: `1px solid ${COLORS.borderGray}` }}
       onClick={() => onEdit?.()}
     >
-      {/* ── HEADER — Colored background based on order type ── */}
+      {/* ── HEADER — [Logo][Name][Time] [Amount] [Merge][Shift][Cancel] ── */}
       <div
         className="px-3 py-2 flex items-center gap-2"
         style={{ backgroundColor: getHeaderBgColor() }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Logo */}
-        {renderLogo()}
+        {/* Left Section: Logo + Order Type + Name + Time */}
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          {/* Logo */}
+          {renderLogo()}
 
-        {/* Order Type Icon + Label (skip for Dine-In since table number is enough) */}
-        {!isDineIn && (
-          <div className="flex items-center gap-1 flex-shrink-0">
-            {renderOrderTypeIcon()}
-            <span className="text-xs font-semibold" style={{ color: COLORS.darkText }}>
-              {getOrderTypeLabel()}
-            </span>
-          </div>
-        )}
+          {/* Order Type Icon + Label (skip for Dine-In) */}
+          {!isDineIn && (
+            <div className="flex items-center gap-1 flex-shrink-0">
+              {renderOrderTypeIcon()}
+              <span className="text-xs font-semibold" style={{ color: COLORS.darkText }}>
+                {getOrderTypeLabel()}
+              </span>
+            </div>
+          )}
 
-        {/* Customer/Table Name + Time */}
-        <div className="flex-1 min-w-0 flex items-center gap-1">
+          {/* Table/Customer Name + Time */}
           <span className="text-xs font-medium truncate" style={{ color: COLORS.darkText }}>
             {getDisplayName()}
           </span>
@@ -175,55 +179,88 @@ const OrderCard = ({
           </span>
         </div>
 
-        {/* Amount */}
+        {/* Center: Amount */}
         <span className="font-bold text-sm flex-shrink-0" style={{ color: COLORS.primaryOrange }}>
           ₹{(order.amount || 0).toLocaleString()}
         </span>
 
-        {/* Snooze Button - Only for Yet to Confirm orders (44px touch target) */}
-        {isYetToConfirm && onToggleSnooze && (
-          <button
-            data-testid={`snooze-btn-${orderId}`}
-            onClick={(e) => { 
-              e.stopPropagation(); 
-              onToggleSnooze(String(orderId)); 
-            }}
-            className={`min-h-[44px] min-w-[44px] rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${isSnoozed ? "bg-orange-100" : "hover:bg-white/50"}`}
-            title={isSnoozed ? "Unsnooze" : "Snooze"}
-          >
-            <Clock className="w-5 h-5" style={{ color: isSnoozed ? COLORS.primaryOrange : COLORS.grayText }} />
-          </button>
-        )}
+        {/* Right Section: Action Buttons */}
+        <div className="flex items-center gap-1 flex-shrink-0">
+          {/* Snooze Button - Only for Yet to Confirm orders */}
+          {isYetToConfirm && onToggleSnooze && (
+            <button
+              data-testid={`snooze-btn-${orderId}`}
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                onToggleSnooze(String(orderId)); 
+              }}
+              className={`min-h-[44px] min-w-[44px] rounded-lg flex items-center justify-center transition-colors ${isSnoozed ? "bg-orange-100" : "hover:bg-white/50"}`}
+              title={isSnoozed ? "Unsnooze" : "Snooze"}
+            >
+              <Clock className="w-5 h-5" style={{ color: isSnoozed ? COLORS.primaryOrange : COLORS.grayText }} />
+            </button>
+          )}
 
-        {/* Order-level Cancel Button (44px touch target) */}
-        {!isYetToConfirm && onCancelOrder && (
-          <button
-            data-testid={`cancel-order-btn-${orderId}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              onCancelOrder(order);
-            }}
-            className="min-h-[44px] min-w-[44px] hover:bg-white/50 rounded-lg flex items-center justify-center flex-shrink-0"
-            title="Cancel Order"
-          >
-            <X className="w-5 h-5" style={{ color: COLORS.errorText }} />
-          </button>
-        )}
+          {/* Merge Order Button - Dine-In only */}
+          {isDineIn && !isYetToConfirm && (
+            <button
+              data-testid={`merge-btn-${orderId}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onMergeOrder?.(order);
+              }}
+              className="min-h-[44px] min-w-[44px] hover:bg-white/50 rounded-lg flex items-center justify-center"
+              title="Merge Order"
+            >
+              <GitMerge className="w-5 h-5" style={{ color: COLORS.grayText }} />
+            </button>
+          )}
 
-        {/* Address toggle for own delivery (44px touch target) */}
-        {isDelivery && isOwn && (
-          <button
-            data-testid={`address-btn-${orderId}`}
-            className="min-h-[44px] min-w-[44px] hover:bg-white/50 rounded-lg flex items-center justify-center flex-shrink-0"
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowAddress(!showAddress);
-            }}
-            title="View address"
-          >
-            <MapPin className="w-5 h-5" style={{ color: COLORS.grayText }} />
-          </button>
-        )}
+          {/* Table Shift Button - Dine-In only */}
+          {isDineIn && !isYetToConfirm && (
+            <button
+              data-testid={`shift-btn-${orderId}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onTableShift?.(order);
+              }}
+              className="min-h-[44px] min-w-[44px] hover:bg-white/50 rounded-lg flex items-center justify-center"
+              title="Table Shift"
+            >
+              <ArrowLeftRight className="w-5 h-5" style={{ color: COLORS.grayText }} />
+            </button>
+          )}
+
+          {/* Cancel Order Button - All order types */}
+          {!isYetToConfirm && (
+            <button
+              data-testid={`cancel-order-btn-${orderId}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onCancelOrder?.(order);
+              }}
+              className="min-h-[44px] min-w-[44px] hover:bg-white/50 rounded-lg flex items-center justify-center"
+              title="Cancel Order"
+            >
+              <X className="w-5 h-5" style={{ color: COLORS.errorText }} />
+            </button>
+          )}
+
+          {/* Address toggle for own delivery */}
+          {isDelivery && isOwn && (
+            <button
+              data-testid={`address-btn-${orderId}`}
+              className="min-h-[44px] min-w-[44px] hover:bg-white/50 rounded-lg flex items-center justify-center"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowAddress(!showAddress);
+              }}
+              title="View address"
+            >
+              <MapPin className="w-5 h-5" style={{ color: COLORS.grayText }} />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* ── ADDRESS POPUP (own delivery) ── */}
@@ -312,6 +349,20 @@ const OrderCard = ({
                       </div>
                     )}
                   </div>
+                  {/* Food Transfer icon - Dine-In only */}
+                  {isDineIn && !isYetToConfirm && (
+                    <button
+                      data-testid={`food-transfer-btn-${item.id}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onFoodTransfer?.(order, item);
+                      }}
+                      className="min-h-[44px] min-w-[44px] rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors flex-shrink-0"
+                      title="Transfer Item"
+                    >
+                      <CornerRightUp className="w-4 h-4" style={{ color: COLORS.grayText }} />
+                    </button>
+                  )}
                   {/* Status label + action icon - ONLY for Dine-In */}
                   {showItemAction && (
                     <button
