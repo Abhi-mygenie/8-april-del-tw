@@ -165,7 +165,7 @@ const OrderCard = ({
           ₹{(order.amount || 0).toLocaleString()}
         </span>
 
-        {/* Snooze Button - Only for Yet to Confirm orders */}
+        {/* Snooze Button - Only for Yet to Confirm orders (44px touch target) */}
         {isYetToConfirm && onToggleSnooze && (
           <button
             data-testid={`snooze-btn-${orderId}`}
@@ -173,14 +173,14 @@ const OrderCard = ({
               e.stopPropagation(); 
               onToggleSnooze(String(orderId)); 
             }}
-            className={`p-1.5 rounded flex-shrink-0 transition-colors ${isSnoozed ? "bg-orange-100" : "hover:bg-white/50"}`}
+            className={`min-h-[44px] min-w-[44px] rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${isSnoozed ? "bg-orange-100" : "hover:bg-white/50"}`}
             title={isSnoozed ? "Unsnooze" : "Snooze"}
           >
-            <Clock className="w-3.5 h-3.5" style={{ color: isSnoozed ? COLORS.primaryOrange : COLORS.grayText }} />
+            <Clock className="w-5 h-5" style={{ color: isSnoozed ? COLORS.primaryOrange : COLORS.grayText }} />
           </button>
         )}
 
-        {/* Order-level Cancel Button */}
+        {/* Order-level Cancel Button (44px touch target) */}
         {!isYetToConfirm && onCancelOrder && (
           <button
             data-testid={`cancel-order-btn-${orderId}`}
@@ -188,25 +188,25 @@ const OrderCard = ({
               e.stopPropagation();
               onCancelOrder(order);
             }}
-            className="p-1.5 hover:bg-white/50 rounded flex-shrink-0"
+            className="min-h-[44px] min-w-[44px] hover:bg-white/50 rounded-lg flex items-center justify-center flex-shrink-0"
             title="Cancel Order"
           >
-            <X className="w-4 h-4" style={{ color: COLORS.errorText }} />
+            <X className="w-5 h-5" style={{ color: COLORS.errorText }} />
           </button>
         )}
 
-        {/* Address toggle for own delivery */}
+        {/* Address toggle for own delivery (44px touch target) */}
         {isDelivery && isOwn && (
           <button
             data-testid={`address-btn-${orderId}`}
-            className="p-1.5 hover:bg-white/50 rounded flex-shrink-0"
+            className="min-h-[44px] min-w-[44px] hover:bg-white/50 rounded-lg flex items-center justify-center flex-shrink-0"
             onClick={(e) => {
               e.stopPropagation();
               setShowAddress(!showAddress);
             }}
             title="View address"
           >
-            <MapPin className="w-3.5 h-3.5" style={{ color: COLORS.grayText }} />
+            <MapPin className="w-5 h-5" style={{ color: COLORS.grayText }} />
           </button>
         )}
       </div>
@@ -227,23 +227,23 @@ const OrderCard = ({
         </div>
       )}
 
-      {/* ── ITEMS SECTION — With item-level Ready/Serve buttons ── */}
+      {/* ── ITEMS SECTION — With item-level Ready/Serve buttons (44px touch targets) ── */}
       <div className="px-3 py-2 border-b" style={{ borderColor: COLORS.borderGray }}>
         {activeItems.length > 0 ? (
           activeItems.map((item) => {
             const actionConfig = getItemActionConfig(item);
             return (
-              <div key={item.id} className="flex items-center gap-2 py-1.5">
+              <div key={item.id} className="flex items-center gap-3 py-2.5">
                 {/* Status dot */}
                 <div
-                  className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                  className="w-2 h-2 rounded-full flex-shrink-0"
                   style={{ backgroundColor: getItemDotColor(item) }}
                 />
                 {/* Item name + qty */}
-                <span className="flex-1 text-xs truncate" style={{ color: COLORS.darkText }}>
+                <span className="flex-1 text-sm truncate" style={{ color: COLORS.darkText }}>
                   {item.name} ({item.qty})
                 </span>
-                {/* Item-level action button */}
+                {/* Item-level action button (44px touch target) */}
                 {actionConfig && (
                   <button
                     data-testid={`item-action-btn-${item.id}`}
@@ -251,11 +251,10 @@ const OrderCard = ({
                       e.stopPropagation();
                       handleItemAction(item, actionConfig.label);
                     }}
-                    className="px-2 py-1 text-[10px] font-semibold rounded min-h-[28px]"
+                    className="px-4 text-xs font-semibold rounded-lg min-h-[44px] min-w-[70px]"
                     style={{ 
                       backgroundColor: actionConfig.color, 
-                      color: 'white',
-                      minWidth: '50px'
+                      color: 'white'
                     }}
                   >
                     {actionConfig.label}
@@ -265,18 +264,18 @@ const OrderCard = ({
             );
           })
         ) : (
-          <div className="py-1.5 text-xs" style={{ color: COLORS.grayText }}>
+          <div className="py-2.5 text-sm" style={{ color: COLORS.grayText }}>
             No active items
           </div>
         )}
       </div>
 
-      {/* ── SERVED ITEMS COLLAPSED ── */}
+      {/* ── SERVED ITEMS COLLAPSED (44px touch target for toggle) ── */}
       {servedItems.length > 0 && (
         <div className="border-b" style={{ borderColor: COLORS.borderGray }}>
           <button
             data-testid={`served-toggle-${orderId}`}
-            className="w-full px-3 py-1.5 flex items-center justify-between text-xs hover:bg-gray-50"
+            className="w-full px-3 min-h-[44px] flex items-center justify-between text-sm hover:bg-gray-50"
             style={{ color: COLORS.grayText }}
             onClick={(e) => {
               e.stopPropagation();
@@ -284,18 +283,18 @@ const OrderCard = ({
             }}
           >
             <span>▼ Served ({servedItems.length})</span>
-            {showServed ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            {showServed ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
 
           {showServed && (
             <div className="px-3 pb-2">
               {servedItems.map((item) => (
-                <div key={item.id} className="flex items-center gap-2 py-1.5">
+                <div key={item.id} className="flex items-center gap-3 py-2">
                   <div
-                    className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                    className="w-2 h-2 rounded-full flex-shrink-0"
                     style={{ backgroundColor: COLORS.primaryGreen }}
                   />
-                  <span className="text-xs" style={{ color: COLORS.grayText }}>
+                  <span className="text-sm" style={{ color: COLORS.grayText }}>
                     {item.name} ({item.qty})
                   </span>
                 </div>
