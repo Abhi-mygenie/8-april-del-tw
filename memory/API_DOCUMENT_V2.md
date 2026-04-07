@@ -1,7 +1,7 @@
 # API Document v2 — POS Frontend API Reference
 
-**Version:** 3.0
-**Last Updated:** April 6, 2026
+**Version:** 3.1
+**Last Updated:** April 7, 2026
 
 ## Endpoint Summary
 
@@ -15,6 +15,80 @@
 | 6 | Cancel Full Order | `/api/v2/vendoremployee/order-status-update` | PUT | `application/json` |
 | 7 | Get Single Order | `/api/v2/vendoremployee/get-single-order-new` | POST | `application/json` |
 | 8 | Food Status Update | `/api/v2/vendoremployee/food-status-update` | PUT | `application/json` |
+| **9** | **Order Status Update (Ready/Served)** | `/api/v2/vendoremployee/order-status-update` | PUT | `application/json` |
+
+---
+
+## 9. Order Status Update Endpoint (NEW - April 7, 2026)
+
+**Endpoint:** `PUT /api/v2/vendoremployee/order-status-update`
+
+**Purpose:** Update entire order status (ready/served/cancelled)
+
+**Content-Type:** `application/json`
+
+### Payload for Ready
+
+```json
+{
+  "order_id": "730522",
+  "role_name": "Manager",
+  "order_status": "ready"
+}
+```
+
+### Payload for Served
+
+```json
+{
+  "order_id": "730522",
+  "role_name": "Manager",
+  "order_status": "served"
+}
+```
+
+### Payload for Cancelled (already documented in #6)
+
+```json
+{
+  "order_id": "730522",
+  "role_name": "Manager",
+  "order_status": "cancelled",
+  "cancellation_reason": "Customer requested cancellation",
+  "cancellation_note": "Customer asked to cancel the whole order"
+}
+```
+
+### Field Reference
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `order_id` | string | ✅ | Order ID |
+| `role_name` | string | ✅ | User's role (e.g., "Manager", "Owner", "Waiter") |
+| `order_status` | string | ✅ | New status: `"ready"`, `"served"`, `"cancelled"` |
+| `cancellation_reason` | string | Only for cancelled | Reason for cancellation |
+| `cancellation_note` | string | Only for cancelled | Additional notes |
+
+### Status Mapping
+
+| API `order_status` | DB `f_order_status` | UI Display |
+|--------------------|---------------------|------------|
+| `"ready"` | 2 | Ready |
+| `"served"` | 5 | Served |
+| `"cancelled"` | 3 | Cancelled |
+
+### Frontend Implementation
+
+**Files:**
+- `orderTransform.js` → `toAPI.updateOrderStatus(orderId, roleName, status)`
+- `orderService.js` → `updateOrderStatus(orderId, roleName, status)`
+- `DashboardPage.jsx` → `handleMarkReady()`, `handleMarkServed()`
+- `TableCard.jsx` → Ready/Serve/Bill buttons
+
+**Button Flow:**
+```
+Preparing (1)  ──[Ready]──►  Ready (2)  ──[Serve]──►  Served (5)  ──[Bill]──►  Paid (6)
+```
 
 ---
 

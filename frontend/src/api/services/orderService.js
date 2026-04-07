@@ -2,7 +2,7 @@
 
 import api from '../axios';
 import { API_ENDPOINTS } from '../constants';
-import { fromAPI } from '../transforms/orderTransform';
+import { fromAPI, toAPI } from '../transforms/orderTransform';
 
 /**
  * Fetch running orders (includes all - tables and rooms)
@@ -48,4 +48,17 @@ export const fetchSingleOrderForSocket = async (orderId) => {
   
   const rawOrder = orders[0];
   return fromAPI.order(rawOrder);
+};
+
+/**
+ * Update order status (ready/served)
+ * @param {number|string} orderId - Order ID
+ * @param {string} roleName - User's role name
+ * @param {string} status - "ready" | "served"
+ * @returns {Promise<Object>} - API response
+ */
+export const updateOrderStatus = async (orderId, roleName, status) => {
+  const payload = toAPI.updateOrderStatus(orderId, roleName, status);
+  const response = await api.put(API_ENDPOINTS.ORDER_STATUS_UPDATE, payload);
+  return response.data;
 };

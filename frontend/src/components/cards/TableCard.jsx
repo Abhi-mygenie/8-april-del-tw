@@ -8,7 +8,7 @@ import { IconButton, TextButton } from "./buttons";
 import { CARD_BASE_STYLE } from "./TableCard.styles";
 
 // Table Card Component - Simplified (no expansion, uses modal)
-const TableCard = ({ table, onClick, onOpenModal, onUpdateStatus, onBillClick, onConfirmOrder, onCancelOrder, isSnoozed, onToggleSnooze, currencySymbol = '₹', isEngaged = false }) => {
+const TableCard = ({ table, onClick, onOpenModal, onUpdateStatus, onBillClick, onConfirmOrder, onCancelOrder, onMarkReady, onMarkServed, isSnoozed, onToggleSnooze, currencySymbol = '₹', isEngaged = false }) => {
   const statusConfig = getTableStatusConfig(table.status);
   const isActive = isTableActive(table.status);
   const hasOrders = ["occupied", "billReady"].includes(table.status);
@@ -177,10 +177,11 @@ const TableCard = ({ table, onClick, onOpenModal, onUpdateStatus, onBillClick, o
                       ariaLabel={`Print KOT for table ${table.id}`}
                     />
                     <TextButton
-                      onClick={() => onUpdateStatus?.(table.id, "ready")}
+                      onClick={() => onMarkReady?.(table)}
                       testId={`ready-btn-${table.id}`}
                       ariaLabel={`Mark order ready for table ${table.id}`}
-                      fullWidth={true}
+                      fullWidth={false}
+                      className="flex-1 text-xs py-2"
                     >
                       Ready
                     </TextButton>
@@ -197,10 +198,11 @@ const TableCard = ({ table, onClick, onOpenModal, onUpdateStatus, onBillClick, o
                       ariaLabel={`Print KOT for table ${table.id}`}
                     />
                     <TextButton
-                      onClick={() => onUpdateStatus?.(table.id, "served")}
+                      onClick={() => onMarkServed?.(table)}
                       testId={`serve-btn-${table.id}`}
                       ariaLabel={`Mark order served for table ${table.id}`}
-                      fullWidth={true}
+                      fullWidth={false}
+                      className="flex-1 text-xs py-2"
                     >
                       Serve
                     </TextButton>
@@ -220,7 +222,8 @@ const TableCard = ({ table, onClick, onOpenModal, onUpdateStatus, onBillClick, o
                       onClick={() => onBillClick?.(table)}
                       testId={`collect-btn-${table.id}`}
                       ariaLabel={`Collect payment for table ${table.id}`}
-                      fullWidth={true}
+                      fullWidth={false}
+                      className="flex-1 text-xs py-2"
                     >
                       {table.isRoom ? 'C/Out' : 'Bill'}
                     </TextButton>
@@ -288,6 +291,8 @@ TableCard.propTypes = {
   onBillClick: PropTypes.func,
   onConfirmOrder: PropTypes.func,
   onCancelOrder: PropTypes.func,
+  onMarkReady: PropTypes.func,
+  onMarkServed: PropTypes.func,
   isSnoozed: PropTypes.bool,
   onToggleSnooze: PropTypes.func,
   isEngaged: PropTypes.bool,
@@ -299,6 +304,8 @@ TableCard.defaultProps = {
   onBillClick: null,
   onConfirmOrder: null,
   onCancelOrder: null,
+  onMarkReady: null,
+  onMarkServed: null,
   isSnoozed: false,
   onToggleSnooze: null,
   isEngaged: false,

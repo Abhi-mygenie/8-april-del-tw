@@ -704,6 +704,22 @@ export const toAPI = {
       tip_tax_amount:           0,
     };
   },
+
+  // ==========================================================================
+  // Update Order Status (Ready / Served)
+  // Endpoint: PUT /api/v2/vendoremployee/order-status-update
+  // ==========================================================================
+  /**
+   * Build payload for updating order status (ready/served)
+   * @param {number|string} orderId - Order ID
+   * @param {string} roleName - User's role name (e.g., "Owner", "Manager")
+   * @param {string} status - New status: "ready" | "served"
+   */
+  updateOrderStatus: (orderId, roleName, status) => ({
+    order_id: String(orderId),
+    role_name: roleName,
+    order_status: status,
+  }),
 };
 
 // =============================================================================

@@ -18,6 +18,7 @@ import { useSocketEvents } from "../api/socket";
 import api from "../api/axios";
 import { API_ENDPOINTS } from "../api/constants";
 import { toAPI as orderToAPI } from "../api/transforms/orderTransform";
+import { updateOrderStatus } from "../api/services/orderService";
 
 // Helper: search a list of items by id, customer/guest, and phone fields
 const searchItems = (items, query, getFields) => {
@@ -598,6 +599,28 @@ const DashboardPage = () => {
     setInitialShowPayment(true);
   };
 
+  // Handler for marking order as ready
+  const handleMarkReady = useCallback(async (tableEntry) => {
+    if (!tableEntry?.orderId) return;
+    try {
+      await updateOrderStatus(tableEntry.orderId, user?.roleName || 'Manager', 'ready');
+      // Socket will handle UI update via update-order-status event
+    } catch (error) {
+      console.error('[handleMarkReady] Error:', error);
+    }
+  }, [user?.roleName]);
+
+  // Handler for marking order as served
+  const handleMarkServed = useCallback(async (tableEntry) => {
+    if (!tableEntry?.orderId) return;
+    try {
+      await updateOrderStatus(tableEntry.orderId, user?.roleName || 'Manager', 'served');
+      // Socket will handle UI update via update-order-status event
+    } catch (error) {
+      console.error('[handleMarkServed] Error:', error);
+    }
+  }, [user?.roleName]);
+
   const handleUpdateTableStatus = useCallback((tableStringId, newStatus) => {
     // Update through TableContext — useMemo derivation picks up the change
     updateTableStatus(Number(tableStringId), newStatus);
@@ -720,6 +743,8 @@ const DashboardPage = () => {
                         onBillClick={handleBillClick}
                         onConfirmOrder={handleConfirmOrder}
                         onCancelOrder={handleCancelOrder}
+                        onMarkReady={handleMarkReady}
+                        onMarkServed={handleMarkServed}
                         isSnoozed={snoozedOrders?.has(item.id)}
                         onToggleSnooze={toggleSnooze}
                         currencySymbol={currencySymbol}
