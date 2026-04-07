@@ -503,9 +503,10 @@ const OrderCard = ({
               {/* KOT button - always visible */}
               <button
                 data-testid={`kot-btn-${orderId}`}
-                className="min-h-[44px] min-w-[44px] rounded-lg border flex items-center justify-center"
+                className="min-h-[44px] min-w-[44px] rounded-lg border flex items-center justify-center opacity-70 cursor-not-allowed"
                 style={{ borderColor: COLORS.borderGray, color: COLORS.darkText }}
-                title="Print KOT"
+                title="KOT print coming in next phase"
+                onClick={(e) => e.stopPropagation()}
               >
                 <Printer className="w-5 h-5" />
               </button>
@@ -549,9 +550,10 @@ const OrderCard = ({
             {fOrderStatus === 5 && (
               <button
                 data-testid={`bill-btn-${orderId}`}
-                className="min-h-[44px] px-6 text-sm font-bold rounded-lg"
+                className="min-h-[44px] px-6 text-sm font-bold rounded-lg opacity-70 cursor-not-allowed"
                 style={{ backgroundColor: COLORS.primaryGreen, color: "white" }}
-                onClick={() => onBillClick?.(order)}
+                onClick={(e) => e.stopPropagation()}
+                title="Bill print coming in next phase"
               >
                 Bill
               </button>
