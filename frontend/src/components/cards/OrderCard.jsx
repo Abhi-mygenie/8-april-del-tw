@@ -201,36 +201,6 @@ const OrderCard = ({
             </button>
           )}
 
-          {/* Merge Order Button - Dine-In only */}
-          {isDineIn && !isYetToConfirm && (
-            <button
-              data-testid={`merge-btn-${orderId}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                onMergeOrder?.(order);
-              }}
-              className="min-h-[44px] min-w-[44px] hover:bg-white/50 rounded-lg flex items-center justify-center"
-              title="Merge Order"
-            >
-              <GitMerge className="w-5 h-5" style={{ color: COLORS.grayText }} />
-            </button>
-          )}
-
-          {/* Table Shift Button - Dine-In only */}
-          {isDineIn && !isYetToConfirm && (
-            <button
-              data-testid={`shift-btn-${orderId}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                onTableShift?.(order);
-              }}
-              className="min-h-[44px] min-w-[44px] hover:bg-white/50 rounded-lg flex items-center justify-center"
-              title="Table Shift"
-            >
-              <ArrowLeftRight className="w-5 h-5" style={{ color: COLORS.grayText }} />
-            </button>
-          )}
-
           {/* Cancel Order Button - All order types */}
           {!isYetToConfirm && (
             <button
@@ -323,6 +293,20 @@ const OrderCard = ({
               <div key={item.id} className="py-1">
                 {/* Main item row */}
                 <div className="flex items-center gap-2">
+                  {/* Food Transfer icon on LEFT - Dine-In only */}
+                  {isDineIn && !isYetToConfirm && (
+                    <button
+                      data-testid={`food-transfer-btn-${item.id}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onFoodTransfer?.(order, item);
+                      }}
+                      className="min-h-[44px] min-w-[44px] rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors flex-shrink-0 -ml-2"
+                      title="Transfer Item"
+                    >
+                      <CornerRightUp className="w-4 h-4" style={{ color: COLORS.grayText }} />
+                    </button>
+                  )}
                   {/* Status dot */}
                   <div
                     className="w-2 h-2 rounded-full flex-shrink-0"
@@ -349,20 +333,6 @@ const OrderCard = ({
                       </div>
                     )}
                   </div>
-                  {/* Food Transfer icon - Dine-In only */}
-                  {isDineIn && !isYetToConfirm && (
-                    <button
-                      data-testid={`food-transfer-btn-${item.id}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onFoodTransfer?.(order, item);
-                      }}
-                      className="min-h-[44px] min-w-[44px] rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors flex-shrink-0"
-                      title="Transfer Item"
-                    >
-                      <CornerRightUp className="w-4 h-4" style={{ color: COLORS.grayText }} />
-                    </button>
-                  )}
                   {/* Status label + action icon - ONLY for Dine-In */}
                   {showItemAction && (
                     <button
