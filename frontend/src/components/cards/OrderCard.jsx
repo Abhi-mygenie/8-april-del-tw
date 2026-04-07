@@ -445,32 +445,37 @@ const OrderCard = ({
             </button>
           </>
         ) : (
-          /* Normal flow: [KOT] + [Cancel] + [Ready/Serve/Bill] for ALL order types */
-          <div className="flex items-center gap-3 w-full">
-            {/* KOT button - always visible */}
-            <button
-              data-testid={`kot-btn-${orderId}`}
-              className="min-h-[44px] min-w-[44px] rounded-lg border flex items-center justify-center"
-              style={{ borderColor: COLORS.borderGray, color: COLORS.darkText }}
-              title="Print KOT"
-            >
-              <Printer className="w-5 h-5" />
-            </button>
+          /* Normal flow: [KOT] [Cancel] ... [Ready/Serve/Bill] for ALL order types */
+          <div className="flex items-center w-full">
+            {/* Left: KOT + Cancel */}
+            <div className="flex items-center gap-3">
+              {/* KOT button - always visible */}
+              <button
+                data-testid={`kot-btn-${orderId}`}
+                className="min-h-[44px] min-w-[44px] rounded-lg border flex items-center justify-center"
+                style={{ borderColor: COLORS.borderGray, color: COLORS.darkText }}
+                title="Print KOT"
+              >
+                <Printer className="w-5 h-5" />
+              </button>
 
-            {/* Cancel Order Button - between KOT and action button */}
-            <button
-              data-testid={`cancel-order-btn-${orderId}`}
-              onClick={() => onCancelOrder?.(order)}
-              className="min-h-[44px] min-w-[44px] rounded-lg border flex items-center justify-center"
-              style={{ borderColor: COLORS.errorText, color: COLORS.errorText }}
-              title="Cancel Order"
-            >
-              <X className="w-5 h-5" />
-            </button>
+              {/* Cancel Order Button */}
+              <button
+                data-testid={`cancel-order-btn-${orderId}`}
+                onClick={() => onCancelOrder?.(order)}
+                className="min-h-[44px] min-w-[44px] rounded-lg border flex items-center justify-center"
+                style={{ borderColor: COLORS.errorText, color: COLORS.errorText }}
+                title="Cancel Order"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-            {/* Order-level action buttons - for ALL order types */}
+            {/* Spacer */}
+            <div className="flex-1" />
+
+            {/* Right: Action button */}
             {fOrderStatus === 1 && (
-              /* Preparing → Ready button (orange) */
               <button
                 data-testid={`ready-btn-${orderId}`}
                 className="min-h-[44px] px-6 text-sm font-bold rounded-lg"
@@ -481,7 +486,6 @@ const OrderCard = ({
               </button>
             )}
             {fOrderStatus === 2 && (
-              /* Ready → Serve button (green) */
               <button
                 data-testid={`serve-btn-${orderId}`}
                 className="min-h-[44px] px-6 text-sm font-bold rounded-lg"
@@ -492,7 +496,6 @@ const OrderCard = ({
               </button>
             )}
             {fOrderStatus === 5 && (
-              /* Served → Bill button (green) */
               <button
                 data-testid={`bill-btn-${orderId}`}
                 className="min-h-[44px] px-6 text-sm font-bold rounded-lg"
