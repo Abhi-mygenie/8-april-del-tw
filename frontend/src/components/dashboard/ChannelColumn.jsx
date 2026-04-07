@@ -88,13 +88,13 @@ const ChannelColumn = ({
         className="flex items-center justify-between px-3 py-3 border-b"
         style={{ borderColor: COLORS.borderGray }}
       >
-        {/* Left Arrow - disabled when can't shrink (maxColumns <= 1) or no left neighbor */}
+        {/* Left Arrow - DECREASE this channel's columns (min 1) */}
         <button
           data-testid={`arrow-left-${channel.id}`}
           onClick={onLeftArrowClick}
-          disabled={!hasLeftArrow || maxColumns <= 1}
+          disabled={maxColumns <= 1}
           className="p-1 rounded hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-          title="Give column to left channel"
+          title="Decrease columns"
         >
           <ChevronLeft className="w-5 h-5" style={{ color: COLORS.grayText }} />
         </button>
@@ -115,13 +115,12 @@ const ChannelColumn = ({
           </span>
         </div>
 
-        {/* Right Arrow - disabled when can't shrink (maxColumns <= 1) or no right neighbor */}
+        {/* Right Arrow - INCREASE this channel's columns */}
         <button
           data-testid={`arrow-right-${channel.id}`}
           onClick={onRightArrowClick}
-          disabled={!hasRightArrow || maxColumns <= 1}
           className="p-1 rounded hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-          title="Give column to right channel"
+          title="Increase columns"
         >
           <ChevronRight className="w-5 h-5" style={{ color: COLORS.grayText }} />
         </button>
