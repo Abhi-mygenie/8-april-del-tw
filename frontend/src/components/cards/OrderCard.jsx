@@ -359,7 +359,7 @@ const OrderCard = ({
             </button>
           </>
         ) : (
-          /* Normal flow: [KOT] + [Ready/Serve/Bill] */
+          /* Normal flow: [KOT] + [Ready/Serve/Bill] (order-level buttons only for Dine-In) */
           <>
             {/* KOT button - always visible */}
             <button
@@ -371,39 +371,43 @@ const OrderCard = ({
               <Printer className="w-5 h-5" />
             </button>
 
-            {/* Dynamic action button based on fOrderStatus */}
-            {fOrderStatus === 1 && (
-              /* Preparing → Ready button (orange) */
-              <button
-                data-testid={`ready-btn-${orderId}`}
-                className="min-h-[44px] flex-1 px-4 text-sm font-bold rounded-lg"
-                style={{ backgroundColor: COLORS.primaryOrange, color: "white" }}
-                onClick={() => onMarkReady?.(order)}
-              >
-                Ready
-              </button>
-            )}
-            {fOrderStatus === 2 && (
-              /* Ready → Serve button (green) */
-              <button
-                data-testid={`serve-btn-${orderId}`}
-                className="min-h-[44px] flex-1 px-4 text-sm font-bold rounded-lg"
-                style={{ backgroundColor: COLORS.primaryGreen, color: "white" }}
-                onClick={() => onMarkServed?.(order)}
-              >
-                Serve
-              </button>
-            )}
-            {fOrderStatus === 5 && (
-              /* Served → Bill button (green) */
-              <button
-                data-testid={`bill-btn-${orderId}`}
-                className="min-h-[44px] flex-1 px-4 text-sm font-bold rounded-lg"
-                style={{ backgroundColor: COLORS.primaryGreen, color: "white" }}
-                onClick={() => onBillClick?.(order)}
-              >
-                Bill
-              </button>
+            {/* Order-level action buttons - ONLY for Dine-In (not TakeAway/Delivery) */}
+            {isDineIn && (
+              <>
+                {fOrderStatus === 1 && (
+                  /* Preparing → Ready button (orange) */
+                  <button
+                    data-testid={`ready-btn-${orderId}`}
+                    className="min-h-[44px] flex-1 px-4 text-sm font-bold rounded-lg"
+                    style={{ backgroundColor: COLORS.primaryOrange, color: "white" }}
+                    onClick={() => onMarkReady?.(order)}
+                  >
+                    Ready
+                  </button>
+                )}
+                {fOrderStatus === 2 && (
+                  /* Ready → Serve button (green) */
+                  <button
+                    data-testid={`serve-btn-${orderId}`}
+                    className="min-h-[44px] flex-1 px-4 text-sm font-bold rounded-lg"
+                    style={{ backgroundColor: COLORS.primaryGreen, color: "white" }}
+                    onClick={() => onMarkServed?.(order)}
+                  >
+                    Serve
+                  </button>
+                )}
+                {fOrderStatus === 5 && (
+                  /* Served → Bill button (green) */
+                  <button
+                    data-testid={`bill-btn-${orderId}`}
+                    className="min-h-[44px] flex-1 px-4 text-sm font-bold rounded-lg"
+                    style={{ backgroundColor: COLORS.primaryGreen, color: "white" }}
+                    onClick={() => onBillClick?.(order)}
+                  >
+                    Bill
+                  </button>
+                )}
+              </>
             )}
           </>
         )}
