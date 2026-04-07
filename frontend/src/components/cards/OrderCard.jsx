@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { User, X, ChevronDown, ChevronUp, MapPin, Clock, Printer, ShoppingBag, Bike, Circle, CheckCircle2, Check, FileText, GitMerge, ArrowLeftRight, CornerRightUp } from "lucide-react";
+import { User, X, ChevronDown, ChevronUp, MapPin, Clock, Printer, ShoppingBag, Bike, Circle, CheckCircle2, Check, FileText, GitMerge, ArrowLeftRight, CornerRightUp, Loader2 } from "lucide-react";
 import { COLORS, SOURCE_COLORS } from "../../constants";
 
 /**
@@ -16,6 +16,7 @@ const OrderCard = ({
   orderType,
   tableLabel,
   isSnoozed,
+  isEngaged,
   onToggleSnooze,
   onEdit,
   onMarkReady,
@@ -145,10 +146,16 @@ const OrderCard = ({
   return (
     <div
       data-testid={`order-card-${orderId}`}
-      className={`rounded-lg shadow-sm overflow-hidden mb-2 ${isSnoozed ? "opacity-60" : ""}`}
+      className={`relative rounded-lg shadow-sm overflow-hidden mb-2 ${isSnoozed ? "opacity-60" : ""} ${isEngaged ? "pointer-events-none" : "cursor-pointer"}`}
       style={{ backgroundColor: COLORS.lightBg, border: `1px solid ${COLORS.borderGray}`, breakInside: 'avoid' }}
-      onClick={() => onEdit?.()}
+      onClick={isEngaged ? undefined : () => onEdit?.()}
     >
+      {/* Engaged spinner overlay */}
+      {isEngaged && (
+        <div className="absolute inset-0 z-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.7)' }}>
+          <Loader2 className="w-6 h-6 animate-spin" style={{ color: COLORS.primaryOrange }} />
+        </div>
+      )}
       {/* ── HEADER — [Logo][Name][Time] [Amount] [Merge][Shift][Cancel] ── */}
       <div
         className="px-3 py-2 flex items-center gap-2"

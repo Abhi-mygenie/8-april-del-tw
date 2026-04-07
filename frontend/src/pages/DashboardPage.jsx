@@ -812,6 +812,7 @@ const DashboardPage = () => {
                           orderType="dineIn"
                           tableLabel={table.label}
                           isSnoozed={snoozedOrders.has(table.id)}
+                          isEngaged={isTableEngaged(table.tableId)}
                           onToggleSnooze={toggleSnooze}
                           onEdit={() => handleTableClick(table)}
                           onMarkReady={() => handleMarkReady({ ...table, orderId: order.orderId, tableId: table.tableId || 0 })}
@@ -831,6 +832,7 @@ const DashboardPage = () => {
                         order={order}
                         orderType="delivery"
                         isSnoozed={snoozedOrders.has(String(order.orderId))}
+                        isEngaged={false}
                         onToggleSnooze={toggleSnooze}
                         onEdit={() => handleTableClick({ id: `del-${order.orderId}`, orderId: order.orderId, orderType: 'delivery' })}
                         onMarkReady={() => handleMarkReady({ orderId: order.orderId, tableId: 0 })}
@@ -849,6 +851,7 @@ const DashboardPage = () => {
                         order={order}
                         orderType="takeAway"
                         isSnoozed={snoozedOrders.has(String(order.orderId))}
+                        isEngaged={false}
                         onToggleSnooze={toggleSnooze}
                         onEdit={() => handleTableClick({ id: `ta-${order.orderId}`, orderId: order.orderId, orderType: 'takeAway' })}
                         onMarkReady={() => handleMarkReady({ orderId: order.orderId, tableId: 0 })}
