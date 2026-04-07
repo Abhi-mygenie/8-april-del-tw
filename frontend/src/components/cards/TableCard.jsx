@@ -112,13 +112,22 @@ const TableCard = ({ table, onClick, onOpenModal, onUpdateStatus, onBillClick, o
         {/* Active content */}
         {isActive && (
           <div className="mt-2.5 flex-1 flex flex-col">
-            {/* Primary name — Rooms: customer, Tables: waiter */}
+            {/* Primary name + Status — Rooms: customer, Tables: waiter */}
             <div className="text-sm font-semibold leading-tight whitespace-nowrap overflow-hidden text-ellipsis" style={{ color: COLORS.darkText }}>
               {table.status === "reserved" 
                 ? table.reservedFor 
-                : table.isRoom
-                  ? (table.customer || 'NA')
-                  : (table.waiter || 'NA')}
+                : (
+                  <>
+                    {table.isRoom
+                      ? (table.customer || 'NA')
+                      : (table.waiter || 'NA')}
+                    {/* Add status label inline */}
+                    {table.fOrderStatus === 1 && <span style={{ color: COLORS.primaryOrange }}> • Preparing</span>}
+                    {table.fOrderStatus === 2 && <span style={{ color: COLORS.primaryGreen }}> • Ready</span>}
+                    {table.fOrderStatus === 5 && <span style={{ color: COLORS.primaryGreen }}> • Served</span>}
+                    {table.fOrderStatus === 7 && <span style={{ color: COLORS.amber }}> • Confirming</span>}
+                  </>
+                )}
             </div>
             
             {/* Time */}
