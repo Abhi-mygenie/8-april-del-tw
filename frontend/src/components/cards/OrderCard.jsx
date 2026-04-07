@@ -279,6 +279,9 @@ const OrderCard = ({
             // Item-level notes
             const itemNote = item.notes || '';
             
+            // Item-level actions only for Dine-In (not TakeAway/Delivery)
+            const showItemAction = isDineIn && actionConfig;
+            
             return (
               <div key={item.id} className="py-1">
                 {/* Main item row */}
@@ -309,8 +312,8 @@ const OrderCard = ({
                       </div>
                     )}
                   </div>
-                  {/* Status label + action icon as single tappable area */}
-                  {actionConfig && (
+                  {/* Status label + action icon - ONLY for Dine-In */}
+                  {showItemAction && (
                     <button
                       data-testid={`item-action-btn-${item.id}`}
                       onClick={(e) => {
