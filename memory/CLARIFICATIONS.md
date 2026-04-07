@@ -23,35 +23,20 @@
 
 ### CLARIFICATION-001: How should `order_type` be set for different order modes?
 
-**Current State (HARDCODED):**
-```javascript
-// orderTransform.js - ALL orders send "pos" regardless of actual type
-order_type: 'pos'  // Lines 413, 481, 533
-```
+**Status: ✅ RESOLVED (April 7, 2026)**
 
-**Impact:**
-- User selects "TakeAway" → payload sends `order_type: "pos"` → backend stores as "pos"
-- User selects "Delivery" → payload sends `order_type: "pos"` → backend stores as "pos"
-- User selects "Walk-In" → payload sends `order_type: "pos"` → backend stores as "pos"
-- **All non-table orders appear as "WC" (Walk-In Counter) in Table View**
+**Answer from team:**
+| User Selection | `order_type` value |
+|----------------|-------------------|
+| Dine-In | `"dinein"` |
+| TakeAway | `"takeaway"` |
+| Delivery | `"delivery"` |
 
-**Questions:**
-1. What are the exact `order_type` values expected by backend for each mode?
-   - Dine-In (with table): `?`
-   - Walk-In (no table): `?`
-   - TakeAway: `?`
-   - Delivery: `?`
-   - Room Service: `?`
-2. Is `order_type` used for reporting/analytics? If so, the current hardcoding breaks all reports.
-3. Should frontend derive `order_type` from user selection, or should backend infer from `table_id`?
-
-**Expected Answer Format:**
-| User Selection | table_id | order_type to send |
-|----------------|----------|-------------------|
-| Dine-In | 4271 | `"pos"` or `"dinein"` |
-| Walk-In | 0 | `"WalkIn"` or `"pos"` |
-| TakeAway | 0 | `"take_away"` |
-| Delivery | 0 | `"delivery"` |
+**Fix Applied:**
+- Updated `ORDER_TYPES.TAKE_AWAY` from `'take_away'` to `'takeaway'`
+- Added `mapOrderTypeToAPI()` function
+- Updated `placeOrder`, `updateOrder`, `placeOrderWithPayment` to use dynamic `order_type`
+- Updated `normalizeOrderType()` to handle new values
 
 ---
 
@@ -401,12 +386,14 @@ User reports: "I am not able to choose walk in while ordering, it selects first 
 
 ### CLARIFICATION-027: Status border colors removed?
 
+**Status: ✅ RESOLVED (April 7, 2026)**
+
 **User Request:**
 "remove border colors" (status-based border colors on table cards)
 
-**Questions:**
-1. Confirm: Replace all status-based borders with neutral gray?
-2. How should order status be indicated instead?
+**Fix Applied:**
+- Changed all table card borders to neutral gray `#E5E5E5`
+- Status is now indicated only via action buttons/labels (Preparing, Ready, Bill, etc.)
 
 ---
 

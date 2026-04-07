@@ -137,7 +137,7 @@ export const ORDER_TYPES = {
   POS: 'pos',
   DINE_IN: 'dinein',
   WALK_IN: 'WalkIn',
-  TAKE_AWAY: 'take_away',
+  TAKE_AWAY: 'takeaway',
   DELIVERY: 'delivery',
 };
 

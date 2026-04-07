@@ -44,13 +44,31 @@ const normalizeOrderType = (orderType) => {
     case ORDER_TYPES.POS:
     case ORDER_TYPES.DINE_IN:
     case ORDER_TYPES.WALK_IN:
+    case 'dinein':  // Direct match from API
       return 'dineIn';
     case ORDER_TYPES.TAKE_AWAY:
+    case 'takeaway':  // Direct match from API
       return 'takeAway';
     case ORDER_TYPES.DELIVERY:
+    case 'delivery':  // Direct match from API
       return 'delivery';
     default:
       return 'dineIn';
+  }
+};
+
+/**
+ * Map frontend orderType to API order_type value
+ */
+const mapOrderTypeToAPI = (orderType) => {
+  switch (orderType) {
+    case 'takeAway':
+      return 'takeaway';
+    case 'delivery':
+      return 'delivery';
+    case 'dineIn':
+    default:
+      return 'dinein';
   }
 };
 
@@ -410,7 +428,7 @@ export const toAPI = {
       user_id:                    userId,
       restaurant_id:              restaurantId,
       table_id:                   String(table?.tableId || 0),
-      order_type:                 'pos',
+      order_type:                 mapOrderTypeToAPI(orderType),
       cust_name:                  customer?.name || '',
       cust_mobile:                customer?.phone || '',
       cust_email:                 '',
@@ -478,7 +496,7 @@ export const toAPI = {
 
     return {
       order_id:                   String(table.orderId),
-      order_type:                 'pos',
+      order_type:                 mapOrderTypeToAPI(orderType),
       cust_name:                  customer?.name || '',
       order_note:                 orderNotes.map(n => n.label).join(', '),
       payment_method:             'pending',
@@ -530,7 +548,7 @@ export const toAPI = {
       user_id:                    userId,
       restaurant_id:              restaurantId,
       table_id:                   String(table?.tableId || 0),
-      order_type:                 'pos',
+      order_type:                 mapOrderTypeToAPI(orderType),
       cust_name:                  customer?.name || '',
       cust_mobile:                customer?.phone || '',
       cust_email:                 '',

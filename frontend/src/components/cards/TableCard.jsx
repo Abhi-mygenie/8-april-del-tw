@@ -17,11 +17,12 @@ const TableCard = ({ table, onClick, onOpenModal, onUpdateStatus, onBillClick, o
   const orderData = mockOrderItems[table.id] || { waiter: "", items: [] };
 
   // Memoize dynamic styles to prevent unnecessary re-renders
+  // Border color is neutral gray for all cards (status shown via labels/buttons)
   const cardStyle = useMemo(() => ({
     ...CARD_BASE_STYLE,
-    border: `3px solid ${statusConfig.borderColor}`,
+    border: `3px solid #E5E5E5`,
     minHeight: CONFIG.CARD_MIN_HEIGHT,
-  }), [statusConfig.borderColor]);
+  }), []);
 
   const headerPillStyle = useMemo(() => {
     // Different background colors by order type
