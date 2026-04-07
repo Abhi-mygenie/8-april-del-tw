@@ -81,11 +81,14 @@ const OrderCard = ({
       }
       return 'WC';
     }
-    // For TakeAway/Delivery: show customer name
-    if (order.customer && order.customer.trim()) {
+    // For TakeAway/Delivery: show customer name only if it exists and is meaningful
+    if (order.customer && order.customer.trim() && 
+        order.customer !== 'Walk-In' && 
+        order.customer !== 'Del' && 
+        order.customer !== 'TA') {
       return order.customer;
     }
-    return 'Walk-In';
+    return ''; // Don't show anything if no real customer name
   };
 
   // Source logo - MG text for own, letter for aggregators
@@ -178,9 +181,11 @@ const OrderCard = ({
           )}
 
           {/* Table/Customer Name + Time */}
-          <span className="text-xs font-medium truncate" style={{ color: COLORS.darkText }}>
-            {getDisplayName()}
-          </span>
+          {getDisplayName() && (
+            <span className="text-xs font-medium truncate" style={{ color: COLORS.darkText }}>
+              {getDisplayName()}
+            </span>
+          )}
           <span className="text-[10px] flex-shrink-0" style={{ color: COLORS.grayText }}>
             · {order.time || ''}
           </span>
