@@ -101,18 +101,8 @@ const Header = ({
   // Determine which statuses to show based on view (same for all channels including Room)
   const isTableView = activeView === "table";
   
-  // Context-aware status filters
-  let statuses;
-  if (isTableView) {
-    // Grid/Table View: Only Schedule and Confirm
-    statuses = [
-      { id: "schedule", label: "Schedule" },
-      { id: "confirm", label: "Confirm" }
-    ];
-  } else {
-    // Order/List View: Show all order statuses
-    statuses = orderStatuses;
-  }
+  // Show all 5 status filters for both views
+  const statuses = orderStatuses;
 
   // Dynamic search placeholder based on selected channels
   const getSearchPlaceholder = () => {
@@ -556,31 +546,20 @@ const Header = ({
             <PlusSquare className="w-5 h-5" />
           </button>
           
-          {/* View Toggle - Available for all channels including Room */}
-          <div className="flex items-center bg-gray-100 rounded-lg p-1">
-            <button
-              data-testid="table-view-btn"
-              className={`p-2.5 rounded-md transition-colors ${
-                activeView === "table" ? "bg-white shadow-sm" : ""
-              }`}
-                style={{ color: activeView === "table" ? COLORS.primaryOrange : COLORS.grayText }}
-                onClick={() => setActiveView("table")}
-                title="Table View"
-              >
-                <Grid3X3 className="w-4 h-4" />
-              </button>
-              <button
-                data-testid="order-view-btn"
-                className={`p-2.5 rounded-md transition-colors ${
-                  activeView === "order" ? "bg-white shadow-sm" : ""
-                }`}
-                style={{ color: activeView === "order" ? COLORS.primaryOrange : COLORS.grayText }}
-                onClick={() => setActiveView("order")}
-                title="Order View"
-              >
-                <List className="w-4 h-4" />
-              </button>
-            </div>
+          {/* View Toggle - Single icon showing alternate view */}
+          <button
+            data-testid="view-toggle-btn"
+            className="p-2.5 rounded-lg transition-colors bg-gray-100 hover:bg-gray-200"
+            style={{ color: activeView === "table" ? COLORS.primaryOrange : COLORS.primaryOrange }}
+            onClick={() => setActiveView(activeView === "table" ? "order" : "table")}
+            title={activeView === "table" ? "Switch to Order View" : "Switch to Table View"}
+          >
+            {activeView === "table" ? (
+              <List className="w-5 h-5" />
+            ) : (
+              <Grid3X3 className="w-5 h-5" />
+            )}
+          </button>
 
           {/* Active First Toggle - Show for all channels */}
           <div
