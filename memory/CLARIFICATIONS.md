@@ -404,7 +404,39 @@ User reports: "I am not able to choose walk in while ordering, it selects first 
 
 ## 10. Endpoint Clarifications
 
-### CLARIFICATION-028: Is there a single-table availability check endpoint?
+### CLARIFICATION-028: 403 Forbidden on "served" status update (NEW - April 7, 2026)
+
+**Status:** ❌ OPEN - Blocking Serve button functionality
+
+**Issue:**
+- `PUT /api/v2/vendoremployee/order-status-update` with `order_status: "ready"` → ✅ Works
+- `PUT /api/v2/vendoremployee/order-status-update` with `order_status: "served"` → ❌ 403 Forbidden
+
+**Error:**
+```
+[handleMarkServed] Error: AxiosError: Request failed with status code 403
+```
+
+**Payload Sent:**
+```json
+{
+  "order_id": "730537",
+  "role_name": "Owner",
+  "order_status": "served"
+}
+```
+
+**Questions:**
+1. What permission/role is required to mark order as "served"?
+2. Is the correct status value `"served"` or something else (e.g., `"serve"`, `"completed"`, `"delivered"`)?
+3. Is there a workflow restriction (e.g., must go through KDS/kitchen first)?
+4. Does the role "Owner" have this permission?
+
+**Impact:** Serve button on TableCard is non-functional until resolved.
+
+---
+
+### CLARIFICATION-029: Is there a single-table availability check endpoint?
 
 **Current State:**
 Must call `GET /all-table-list` and filter to check one table's `engage` status.
@@ -414,7 +446,7 @@ Is there a `GET /table/{id}` or `GET /table-status/{id}` endpoint?
 
 ---
 
-### CLARIFICATION-029: TBD Endpoints in constants.js
+### CLARIFICATION-030: TBD Endpoints in constants.js
 
 | Constant | Current Value | Question |
 |----------|---------------|----------|
@@ -423,7 +455,7 @@ Is there a `GET /table/{id}` or `GET /table-status/{id}` endpoint?
 
 ---
 
-### CLARIFICATION-030: Correct endpoint versions
+### CLARIFICATION-031: Correct endpoint versions
 
 **Confusion:**
 - Some endpoints are v1, some v2
@@ -437,24 +469,25 @@ Can you provide authoritative list of correct endpoint versions for each action?
 ## Summary - Priority Order
 
 ### P0 - Blocking (Must resolve before launch)
-1. **CLARIFICATION-001** - Order type hardcoding (all orders show as WC)
+1. ~~**CLARIFICATION-001** - Order type hardcoding (all orders show as WC)~~ ✅ RESOLVED
 2. **CLARIFICATION-006** - Multi-device race condition (two orders on same table)
 3. **CLARIFICATION-023** - Addon name mismatch (confuses kitchen/customer)
+4. **CLARIFICATION-028** - 403 Forbidden on "served" status (Serve button broken) 🆕
 
 ### P1 - High Priority
-4. CLARIFICATION-003/004 - Socket engage/free inconsistency
-5. CLARIFICATION-005 - Socket missing financial fields
-6. CLARIFICATION-011 - Status transition diagram
+5. CLARIFICATION-003/004 - Socket engage/free inconsistency
+6. CLARIFICATION-005 - Socket missing financial fields
+7. CLARIFICATION-011 - Status transition diagram
 
 ### P2 - Medium Priority
-7. CLARIFICATION-008 - `order_sub_total_without_tax` returns 0
-8. CLARIFICATION-017 - Partial payments spec
-9. CLARIFICATION-025 - Walk-In UX flow
+8. CLARIFICATION-008 - `order_sub_total_without_tax` returns 0
+9. CLARIFICATION-017 - Partial payments spec
+10. CLARIFICATION-025 - Walk-In UX flow
 
 ### P3 - Low Priority (Documentation)
-10. All hardcoded value clarifications
-11. Not implemented feature specs
-12. Endpoint version clarifications
+11. All hardcoded value clarifications
+12. Not implemented feature specs
+13. Endpoint version clarifications
 
 ---
 
@@ -462,15 +495,17 @@ Can you provide authoritative list of correct endpoint versions for each action?
 
 | # | Owner | Action |
 |---|-------|--------|
-| 1 | Backend Team | Answer CLARIFICATION-001 (order_type values) |
+| 1 | ~~Backend Team~~ | ~~Answer CLARIFICATION-001 (order_type values)~~ ✅ DONE |
 | 2 | Backend Team | Fix BUG-204 (order_sub_total_without_tax) |
 | 3 | Backend Team | Fix BUG-212 (addon name mismatch) |
 | 4 | Backend Team | Add `engage` to socket events (BUG-211, 216) |
 | 5 | Product Team | Confirm Walk-In UX flow |
-| 6 | Product Team | Confirm order type visual differentiation |
-| 7 | Frontend Team | Update payload once CLARIFICATION-001 is answered |
+| 6 | ~~Product Team~~ | ~~Confirm order type visual differentiation~~ ✅ DONE |
+| 7 | ~~Frontend Team~~ | ~~Update payload once CLARIFICATION-001 is answered~~ ✅ DONE |
+| **8** | **Backend Team** | **Answer CLARIFICATION-028 (403 on "served" status)** 🆕 |
 
 ---
 
 *Document created: April 7, 2026*
+*Last updated: April 7, 2026*
 *This document should be reviewed with backend and product teams before proceeding with fixes.*
