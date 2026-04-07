@@ -191,8 +191,8 @@ const OrderCard = ({
           </span>
         </div>
 
-        {/* Center: Amount */}
-        <span className="font-bold text-sm flex-shrink-0" style={{ color: COLORS.primaryOrange }}>
+        {/* Center: Amount - Bold + Large */}
+        <span className="font-extrabold text-lg flex-shrink-0" style={{ color: COLORS.primaryOrange }}>
           ₹{(order.amount || 0).toLocaleString()}
         </span>
 
@@ -348,28 +348,28 @@ const OrderCard = ({
                       <CornerRightUp className="w-4 h-4" style={{ color: COLORS.grayText }} />
                     </button>
                   )}
-                  {/* Item name + qty + details inline */}
+                  {/* Item name + qty + details inline - SMALLER, SECONDARY */}
                   <div className="flex-1 min-w-0">
-                    <span className="text-xs" style={{ color: COLORS.darkText }}>
+                    <span className="text-[11px]" style={{ color: COLORS.grayText }}>
                       {item.name} ({item.qty})
                     </span>
                     {/* Variants/Addons inline */}
                     {detailsStr && (
-                      <div className="text-[10px] leading-tight" style={{ color: COLORS.primaryOrange }}>
+                      <div className="text-[9px] leading-tight" style={{ color: COLORS.primaryOrange }}>
                         {detailsStr}
                       </div>
                     )}
                     {/* Item note inline */}
                     {itemNote && (
-                      <div className="flex items-center gap-1 text-[10px] leading-tight">
-                        <FileText className="w-2.5 h-2.5" style={{ color: COLORS.grayText }} />
+                      <div className="flex items-center gap-1 text-[9px] leading-tight">
+                        <FileText className="w-2 h-2" style={{ color: COLORS.grayText }} />
                         <span className="italic" style={{ color: COLORS.grayText }}>
                           {itemNote}
                         </span>
                       </div>
                     )}
                   </div>
-                  {/* Status label + action icon - ONLY for Dine-In */}
+                  {/* Status label + action icon - ONLY for Dine-In - MORE PROMINENT */}
                   {showItemAction && (
                     <button
                       data-testid={`item-action-btn-${item.id}`}
@@ -377,10 +377,10 @@ const OrderCard = ({
                         e.stopPropagation();
                         handleItemAction(item, actionConfig.action);
                       }}
-                      className="min-h-[44px] px-2 rounded-lg flex items-center gap-2 hover:bg-gray-100 transition-colors -mr-2 flex-shrink-0"
+                      className="min-h-[44px] px-3 rounded-lg flex items-center gap-2 hover:bg-gray-100 transition-colors -mr-2 flex-shrink-0"
                       title={actionConfig.action === 'ready' ? 'Mark Ready' : 'Mark Served'}
                     >
-                      <span className="text-[10px]" style={{ color: COLORS.grayText }}>
+                      <span className="text-xs font-semibold" style={{ color: actionConfig.color }}>
                         {statusLabel}
                       </span>
                       {actionConfig.icon === 'empty' ? (
