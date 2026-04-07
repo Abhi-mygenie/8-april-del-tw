@@ -66,19 +66,44 @@ const OrderCard = ({
 
   // Check if order cancel is allowed based on restaurant settings
   const isOrderCancelAllowed = (() => {
-    if (!canCancelOrder) return false;
-    if (!cancellation) return true; // No settings = allow (backward compat)
+    if (!canCancelOrder) {
+      console.log(`[OrderCard ${orderId}] Cancel BLOCKED: No permission (canCancelOrder=false)`);
+      return false;
+    }
+    if (!cancellation) {
+      console.log(`[OrderCard ${orderId}] Cancel ALLOWED: No cancellation settings`);
+      return true; // No settings = allow (backward compat)
+    }
 
     if (hasAnyItemReady) {
       // Post-Ready: check restaurant flag only, no time window
-      return cancellation.allowPostServeCancel && cancellation.allowPostServeCancel2;
+      const allowed = cancellation.allowPostServeCancel && cancellation.allowPostServeCancel2;
+      console.log(`[OrderCard ${orderId}] Post-Ready Cancel Check:`, {
+        hasAnyItemReady,
+        allowPostServeCancel: cancellation.allowPostServeCancel,
+        allowPostServeCancel2: cancellation.allowPostServeCancel2,
+        result: allowed ? 'ALLOWED' : 'BLOCKED'
+      });
+      return allowed;
     }
     // Pre-Ready: check time window
     const windowMin = cancellation.orderCancelWindowMinutes;
-    if (!windowMin || windowMin === 0) return true; // 0 = unlimited
-    if (!order.createdAt) return true; // No timestamp = allow
+    if (!windowMin || windowMin === 0) {
+      console.log(`[OrderCard ${orderId}] Pre-Ready Cancel ALLOWED: No time window (windowMin=${windowMin})`);
+      return true; // 0 = unlimited
+    }
+    if (!order.createdAt) {
+      console.log(`[OrderCard ${orderId}] Pre-Ready Cancel ALLOWED: No createdAt timestamp`);
+      return true; // No timestamp = allow
+    }
     const elapsed = (Date.now() - new Date(order.createdAt).getTime()) / 60000;
-    return elapsed <= windowMin;
+    const allowed = elapsed <= windowMin;
+    console.log(`[OrderCard ${orderId}] Pre-Ready Cancel Check:`, {
+      windowMin,
+      elapsedMin: elapsed.toFixed(1),
+      result: allowed ? 'ALLOWED' : 'BLOCKED (time exceeded)'
+    });
+    return allowed;
   })();
 
   // Header background color based on order type (matching TableCard)
