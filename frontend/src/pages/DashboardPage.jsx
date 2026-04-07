@@ -851,8 +851,8 @@ const DashboardPage = () => {
                           isSnoozed={snoozedOrders.has(table.id)}
                           isEngaged={isTableEngaged(table.tableId)}
                           canCancelOrder={hasPermission('order_cancel')}
-                          canMergeOrder={hasPermission('table_merge')}
-                          canShiftTable={hasPermission('table_shift')}
+                          canMergeOrder={hasPermission('merge_table')}
+                          canShiftTable={hasPermission('transfer_table')}
                           canFoodTransfer={hasPermission('food_transfer')}
                           onToggleSnooze={toggleSnooze}
                           onEdit={() => handleTableClick(table)}

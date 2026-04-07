@@ -81,36 +81,25 @@ Response shape:
 The `role` field in the API response is a **flat array of permission strings**. Each string represents a specific action the user is allowed to perform. The array is role-dependent — an "Owner" gets all permissions, while a restricted "Waiter" may get only a subset.
 
 ```javascript
-// Example for Owner/Manager (all permissions)
+// Actual Owner role array (from LV FOODS / role_name: "Owner")
 "role": [
-  "order_cancel",
-  "food_cancel",
-  "order_edit",
-  "order_view",
-  "table_shift",
-  "table_merge",
-  "food_transfer",
-  "bill_collect",
-  "bill_print",
-  "kot_print",
-  "discount_apply",
-  "complementary_apply",
-  "customer_manage",
-  "menu_manage",
-  "report_view",
-  "settings_manage",
-  "employee_manage",
-  "table_manage",
-  "room_manage",
-  "printer_manage"
-]
-
-// Example for restricted Waiter
-"role": [
-  "order_view",
-  "order_edit",
-  "kot_print",
-  "bill_print"
+  "Manager", "food", "pos", "order", "bill",
+  "order_cancel", "serve", "aggregator",
+  "show_online_order", "assign_online_order",
+  "order_unpaid", "update_payment", "order_edit",
+  "delivery_man", "clear_payment", "Ready",
+  "customer_management", "virtual_wallet", "discount",
+  "transfer_table", "merge_table", "food_transfer",
+  "whatsapp_icon", "print_icon", "table_view",
+  "employee", "restaurant_setup", "inventory",
+  "coupon", "printer", "menu", "expence",
+  "Loyalty", "restaurant_settings", "printer_management",
+  "table_management", "delivery_management",
+  "physicalqty_master", "report", "report_summery",
+  "waiter_revenue_report", "sattle_report", "revenue_report",
+  "room_report", "sales_report", "revenue_report_average",
+  "consumption_report", "cancellation_report",
+  "pl_report", "wastage_report"
 ]
 ```
 
@@ -134,28 +123,95 @@ const isAdmin = hasAllPermissions(['settings_manage', 'employee_manage']);
 
 ## 4. Known Permission Strings & UI Mapping
 
+### Order Operations
+
 | Permission String | Description | UI Component(s) Affected | Visibility Rule | Status |
 |-------------------|-------------|--------------------------|-----------------|--------|
-| `order_cancel` | Cancel entire order | `OrderCard` → Cancel [X] button (footer) | Hide button if missing | **MAPPED** — `canCancelOrder` prop gated in `OrderCard.jsx`, passed from `DashboardPage.jsx` via `hasPermission('order_cancel')` |
-| `food_cancel` | Cancel individual food item | `OrderEntry` → `CancelFoodModal` | Hide item cancel if missing | **MISSING** — Not yet gated in `OrderEntry.jsx` |
-| `order_edit` | Edit/update an existing order (add items) | `OrderCard` → tap to open `OrderEntry`, `OrderEntry` → add items flow | Disable card tap or hide edit controls | **MISSING** — Card tap not gated |
-| `order_view` | View orders on dashboard | `DashboardPage` → Order View tab | Hide Order View entirely if missing | **MISSING** — Order View always visible |
-| `table_shift` | Shift order to another table | `OrderCard` → Shift button (header), `OrderEntry` → `ShiftTableModal` | Hide shift button if missing | **MAPPED** — `canShiftTable` prop gated in `OrderCard.jsx`, passed from `DashboardPage.jsx` via `hasPermission('table_shift')`. `OrderEntry.jsx` NOT yet gated |
-| `table_merge` | Merge orders from two tables | `OrderCard` → Merge button (header), `OrderEntry` → `MergeTableModal` | Hide merge button if missing | **MAPPED** — `canMergeOrder` prop gated in `OrderCard.jsx`, passed from `DashboardPage.jsx` via `hasPermission('table_merge')`. `OrderEntry.jsx` NOT yet gated |
-| `food_transfer` | Transfer item to another table's order | `OrderCard` → Food Transfer icon (item row), `OrderEntry` → `TransferFoodModal` | Hide transfer icon if missing | **MAPPED** — `canFoodTransfer` prop gated in `OrderCard.jsx`, passed from `DashboardPage.jsx` via `hasPermission('food_transfer')`. `OrderEntry.jsx` NOT yet gated |
-| `bill_collect` | Collect payment / settle bill | `OrderCard` → Bill button (footer), `OrderEntry` → `CollectPaymentPanel` | Hide bill button if missing | **MISSING** — Bill button not gated (currently disabled for Phase 2) |
-| `bill_print` | Print bill receipt | `OrderCard` → Bill print action (Phase 2) | Disable print if missing | **MISSING** — Phase 2 |
-| `kot_print` | Print Kitchen Order Ticket | `OrderCard` → KOT button (footer, Phase 2) | Disable KOT if missing | **MISSING** — Phase 2 |
-| `discount_apply` | Apply manual/coupon discounts | `OrderEntry` → Discount section | Hide discount controls if missing | **MISSING** — Not yet gated |
-| `complementary_apply` | Mark item as complementary | `OrderEntry` → Complementary toggle | Hide complementary option if missing | **MISSING** — Not implemented |
-| `customer_manage` | Search/add customers | `OrderEntry` → `CustomerModal` | Disable customer button if missing | **MISSING** — Not yet gated |
-| `menu_manage` | Manage menu items | Sidebar → Menu Management | Hide menu management link if missing | **MISSING** — Not yet gated |
-| `report_view` | View reports/analytics | Sidebar → Reports, `AllOrdersReportPage` | Hide reports link if missing | **MISSING** — Not yet gated |
-| `settings_manage` | Access settings | Sidebar → Settings, `SettingsPanel` | Hide settings link if missing | **MISSING** — Not yet gated |
-| `employee_manage` | Manage employees | Sidebar → Employee section | Hide employee management if missing | **MISSING** — Not yet gated |
-| `table_manage` | Manage table layout | Sidebar → Table management | Hide table management if missing | **MISSING** — Not yet gated |
-| `room_manage` | Manage rooms | Sidebar → Room section | Hide room management if missing | **MISSING** — Not yet gated |
-| `printer_manage` | Manage printers | Settings → Printer config | Hide printer settings if missing | **MISSING** — Not yet gated |
+| `order` | General order access | `DashboardPage` → Order View tab | Hide Order View entirely if missing | **MISSING** — Order View always visible |
+| `order_cancel` | Cancel entire order | `OrderCard` → Cancel [X] button (footer) | Hide button if missing | **MAPPED** — `canCancelOrder` prop in `OrderCard.jsx` |
+| `order_edit` | Edit/update existing order | `OrderCard` → tap to open `OrderEntry` | Disable card tap if missing | **MISSING** — Card tap not gated |
+| `food` | General food operations (includes item cancel) | `OrderEntry` → `CancelFoodModal` | Hide item cancel if missing | **MISSING** — Not yet gated |
+| `serve` | Mark order/items as served | `OrderCard` → Serve button, item serve toggle | Hide serve actions if missing | **MISSING** — Always visible |
+| `Ready` | Mark order/items as ready (note: capital R) | `OrderCard` → Ready button, item ready toggle | Hide ready actions if missing | **MISSING** — Always visible |
+
+### Table Operations
+
+| Permission String | Description | UI Component(s) Affected | Visibility Rule | Status |
+|-------------------|-------------|--------------------------|-----------------|--------|
+| `transfer_table` | Shift order to another table | `OrderCard` → Shift button (header) | Hide shift button if missing | **MAPPED** — `canShiftTable` prop in `OrderCard.jsx` |
+| `merge_table` | Merge orders from two tables | `OrderCard` → Merge button (header) | Hide merge button if missing | **MAPPED** — `canMergeOrder` prop in `OrderCard.jsx` |
+| `food_transfer` | Transfer item to another table | `OrderCard` → Food Transfer icon (item row) | Hide transfer icon if missing | **MAPPED** — `canFoodTransfer` prop in `OrderCard.jsx` |
+| `table_view` | View tables on dashboard | `DashboardPage` → Table grid | Hide table grid if missing | **MISSING** — Always visible |
+| `table_management` | Manage table layout/config | Sidebar → Table management | Hide link if missing | **MISSING** |
+
+### Billing & Payment
+
+| Permission String | Description | UI Component(s) Affected | Visibility Rule | Status |
+|-------------------|-------------|--------------------------|-----------------|--------|
+| `bill` | Collect payment / settle bill | `OrderCard` → Bill button, `CollectPaymentPanel` | Hide bill button if missing | **MISSING** — Disabled for Phase 2 |
+| `order_unpaid` | View unpaid orders | Reports / Dashboard filters | Filter capability | **MISSING** |
+| `update_payment` | Update payment on order | Payment modification | Gate payment edits | **MISSING** |
+| `clear_payment` | Clear/void a payment | Payment panel | Gate clear action | **MISSING** |
+| `print_icon` | Print bill/KOT | `OrderCard` → KOT button, Bill print | Gate print actions | **MISSING** — Phase 2 |
+
+### Customer & Discount
+
+| Permission String | Description | UI Component(s) Affected | Visibility Rule | Status |
+|-------------------|-------------|--------------------------|-----------------|--------|
+| `customer_management` | Search/add customers | `OrderEntry` → `CustomerModal` | Disable customer button if missing | **MISSING** |
+| `discount` | Apply manual/coupon discounts | `OrderEntry` → Discount section | Hide discount controls if missing | **MISSING** |
+| `coupon` | Manage coupons | Settings → Coupons | Gate coupon section | **MISSING** |
+| `virtual_wallet` | Customer wallet operations | Payment → Wallet option | Gate wallet option | **MISSING** |
+| `Loyalty` | Loyalty program (note: capital L) | Loyalty section | Gate loyalty features | **MISSING** |
+
+### Admin & Setup
+
+| Permission String | Description | UI Component(s) Affected | Visibility Rule | Status |
+|-------------------|-------------|--------------------------|-----------------|--------|
+| `Manager` | Manager-level access | General admin | Broad access gate | **MISSING** |
+| `pos` | POS system access | Entire POS app | Block POS if missing | **MISSING** |
+| `menu` | Menu management | Sidebar → Menu Management | Hide link if missing | **MISSING** |
+| `employee` | Employee management | Sidebar → Employee section | Hide link if missing | **MISSING** |
+| `restaurant_setup` | Restaurant setup/config | Sidebar → Setup | Hide link if missing | **MISSING** |
+| `restaurant_settings` | Restaurant settings | Sidebar → Settings | Hide link if missing | **MISSING** |
+| `printer` | Printer access | Settings → Printer section | Gate printer access | **MISSING** |
+| `printer_management` | Manage printer config | Settings → Printer config | Gate printer management | **MISSING** |
+| `inventory` | Inventory management | Sidebar → Inventory | Hide link if missing | **MISSING** |
+| `delivery_management` | Delivery management | Sidebar → Delivery config | Hide link if missing | **MISSING** |
+| `delivery_man` | Delivery person assignment | Order → Assign delivery | Gate assign action | **MISSING** |
+| `expence` | Expense tracking (note: typo in API) | Sidebar → Expenses | Hide link if missing | **MISSING** |
+| `physicalqty_master` | Physical quantity master | Inventory → Physical QTY | Gate section | **MISSING** |
+
+### Aggregator
+
+| Permission String | Description | UI Component(s) Affected | Visibility Rule | Status |
+|-------------------|-------------|--------------------------|-----------------|--------|
+| `aggregator` | Aggregator order access | Aggregator section | Gate aggregator features | **MISSING** |
+| `show_online_order` | View online orders | Dashboard → Online orders | Show/hide online orders | **MISSING** |
+| `assign_online_order` | Accept/assign online orders | Order → Accept/Reject | Gate accept action | **MISSING** |
+
+### Reports
+
+| Permission String | Description | UI Component(s) Affected | Visibility Rule | Status |
+|-------------------|-------------|--------------------------|-----------------|--------|
+| `report` | General report access | Sidebar → Reports | Hide reports link if missing | **MISSING** |
+| `report_summery` | Summary report (note: typo) | Reports → Summary | Gate summary tab | **MISSING** |
+| `waiter_revenue_report` | Waiter revenue report | Reports → Waiter | Gate waiter report | **MISSING** |
+| `sattle_report` | Settlement report (note: typo) | Reports → Settlement | Gate settlement tab | **MISSING** |
+| `revenue_report` | Revenue report | Reports → Revenue | Gate revenue tab | **MISSING** |
+| `room_report` | Room report | Reports → Room | Gate room report | **MISSING** |
+| `sales_report` | Sales report | Reports → Sales | Gate sales tab | **MISSING** |
+| `revenue_report_average` | Average revenue report | Reports → Average | Gate average tab | **MISSING** |
+| `consumption_report` | Consumption report | Reports → Consumption | Gate consumption tab | **MISSING** |
+| `cancellation_report` | Cancellation report | Reports → Cancellation | Gate cancellation tab | **MISSING** |
+| `pl_report` | P&L report | Reports → P&L | Gate P&L tab | **MISSING** |
+| `wastage_report` | Wastage report | Reports → Wastage | Gate wastage tab | **MISSING** |
+
+### UI-Only Permissions
+
+| Permission String | Description | UI Component(s) Affected | Visibility Rule | Status |
+|-------------------|-------------|--------------------------|-----------------|--------|
+| `whatsapp_icon` | Show WhatsApp icon | Header/Footer → WhatsApp | Show/hide icon | **MISSING** |
 
 ---
 
@@ -163,15 +219,15 @@ const isAdmin = hasAllPermissions(['settings_manage', 'employee_manage']);
 
 | `role_name` Value | Typical Permission Set | Description |
 |-------------------|----------------------|-------------|
-| `Owner` | ALL permissions | Restaurant owner — full access |
+| `Owner` | ALL 50+ permissions (verified from actual API) | Restaurant owner — full access |
 | `Manager` | ALL or nearly all | On-duty manager — full operational access |
-| `Captain` | `order_*`, `food_*`, `table_*`, `bill_*`, `kot_print`, `customer_manage` | Floor captain — order operations, no admin |
-| `Waiter` | `order_view`, `order_edit`, `kot_print` | Basic waiter — view/take orders only |
-| `Cashier` | `order_view`, `bill_collect`, `bill_print`, `report_view` | Cashier — billing and reports |
-| `KDS` | `order_view` | Kitchen Display — view-only |
+| `Captain` | `order`, `food`, `order_cancel`, `order_edit`, `serve`, `Ready`, `transfer_table`, `merge_table`, `food_transfer`, `bill`, `print_icon`, `customer_management` | Floor captain — order operations, no admin |
+| `Waiter` | `order`, `order_edit`, `serve`, `print_icon` | Basic waiter — view/take orders only |
+| `Cashier` | `order`, `bill`, `print_icon`, `report`, `customer_management` | Cashier — billing and reports |
+| `KDS` | `order`, `Ready`, `serve` | Kitchen Display — view and status only |
 | Custom roles | Varies | Restaurant-defined custom roles |
 
-**Note:** `role_name` is sent in API payloads (e.g., cancel order requires `role_name`). The actual permissions come from the `role` array, not the role name.
+**Note:** `role_name` is sent in API payloads (e.g., cancel order requires `role_name`). The actual permissions come from the `role` array, not the role name. The `role` array may contain `"Manager"` as a permission string (not to be confused with `role_name`).
 
 ---
 
@@ -179,12 +235,12 @@ const isAdmin = hasAllPermissions(['settings_manage', 'employee_manage']);
 
 These fields are on the **restaurant object** (inside `restaurants[0]`) and control when/how cancellations are allowed. They are **operational business rules** set by the restaurant owner.
 
-| API Field | Type | Values | Description | UI Impact |
-|-----------|------|--------|-------------|-----------|
-| `cancle_post_serve` | string | `"Yes"` / `"No"` | Allow cancellation of items **after** they've been served | If `"No"`: hide cancel button for items with `status === "served"` |
-| `allow_cancel_post_server` | string | `"Yes"` / `"No"` | Secondary flag for post-serve cancellation (redundant with above, both must be checked) | Same as above — double-gate |
-| `cancel_order_time` | number/string | Minutes (e.g., `30`) or `0` for unlimited | Time window (in minutes) after order creation within which full order cancellation is allowed | If elapsed: disable/hide Cancel Order button, show "Cancellation window expired" tooltip |
-| `cancel_food_timings` | number/string | Minutes (e.g., `15`) or `0` for unlimited | Time window after item was added within which individual item cancellation is allowed | If elapsed: disable/hide Cancel Item action |
+| API Field | Type | Values | Description | UI Impact | Confirmed Value (LV FOODS) |
+|-----------|------|--------|-------------|-----------|---------------------------|
+| `cancle_post_serve` | string | `"Yes"` / `"No"` | Allow cancellation of items **after** they've been served | If `"No"`: hide cancel button for items with `status === "served"` | `"Yes"` |
+| `allow_cancel_post_server` | string | `"Yes"` / `"No"` | Secondary flag for post-serve cancellation (redundant with above, both must be checked) | Same as above — double-gate | `"Yes"` |
+| `cancel_order_time` | number/string | Minutes (e.g., `5`) or `0` for unlimited | Time window (in minutes) after order creation within which full order cancellation is allowed | If elapsed: disable/hide Cancel Order button, show "Cancellation window expired" tooltip | `5` |
+| `cancel_food_timings` | number/string | Minutes (e.g., `5`) or `0` for unlimited | Time window after item was added within which individual item cancellation is allowed | If elapsed: disable/hide Cancel Item action | `5` |
 
 ### Current Transform Status
 **MAPPED** in `profileTransform.js` → `fromAPI.restaurant()` as `cancellation` object. Exposed via `RestaurantContext.cancellation`.
@@ -304,39 +360,39 @@ This is the master reference for which UI actions need which permission checks a
 | UI Element | Location in Card | Permission Required | Additional Condition | Status |
 |------------|-----------------|---------------------|---------------------|--------|
 | **Cancel Order [X]** | Footer left | `order_cancel` | `cancel_order_time` not expired | **MAPPED** — Gated via `canCancelOrder` prop. Time-window check: **MISSING** |
-| **Merge Order** | Header right | `table_merge` | Dine-In only, not YetToConfirm | **MAPPED** — Gated via `canMergeOrder` prop |
-| **Table Shift** | Header right | `table_shift` | Dine-In only, not YetToConfirm | **MAPPED** — Gated via `canShiftTable` prop |
+| **Merge Order** | Header right | `merge_table` | Dine-In only, not YetToConfirm | **MAPPED** — Gated via `canMergeOrder` prop |
+| **Table Shift** | Header right | `transfer_table` | Dine-In only, not YetToConfirm | **MAPPED** — Gated via `canShiftTable` prop |
 | **Food Transfer** | Item row left | `food_transfer` | Dine-In only, not YetToConfirm | **MAPPED** — Gated via `canFoodTransfer` prop |
 | **Card tap → Edit** | Entire card | `order_edit` | Not engaged | **MISSING** — Always clickable |
-| **Ready button** | Footer right | `order_view` (implicit) | `fOrderStatus === 1` | **MAPPED** — Always visible (implicit permission) |
-| **Serve button** | Footer right | `order_view` (implicit) | `fOrderStatus === 2` | **MAPPED** — Always visible (implicit permission) |
-| **Bill button** | Footer right | `bill_collect` | `fOrderStatus === 5` | **MISSING** — Permission not gated (disabled for Phase 2) |
-| **KOT button** | Footer left | `kot_print` | Always present | **MISSING** — Permission not gated (disabled for Phase 2) |
-| **Item Ready/Serve toggle** | Item row right | `order_view` (implicit) | Dine-In only | **MAPPED** — Handler wired via `onItemStatusChange` |
+| **Ready button** | Footer right | `Ready` (capital R) | `fOrderStatus === 1` | **MISSING** — Always visible |
+| **Serve button** | Footer right | `serve` | `fOrderStatus === 2` | **MISSING** — Always visible |
+| **Bill button** | Footer right | `bill` | `fOrderStatus === 5` | **MISSING** — Permission not gated (disabled for Phase 2) |
+| **KOT button** | Footer left | `print_icon` | Always present | **MISSING** — Permission not gated (disabled for Phase 2) |
+| **Item Ready/Serve toggle** | Item row right | `Ready` / `serve` | Dine-In only | **MAPPED** — Handler wired via `onItemStatusChange` |
 
 ### OrderEntry.jsx (Order Taking Panel)
 
 | UI Element | Permission Required | Additional Condition | Status |
 |------------|---------------------|---------------------|--------|
 | Add items to cart | `order_edit` | — | **MISSING** |
-| Cancel food item | `food_cancel` | `cancel_food_timings` not expired | **MISSING** |
+| Cancel food item | `food` | `cancel_food_timings` not expired | **MISSING** |
 | Cancel full order | `order_cancel` | `cancel_order_time` not expired | **MISSING** |
-| Shift table | `table_shift` | Dine-In only | **MISSING** |
-| Merge order | `table_merge` | Dine-In only | **MISSING** |
+| Shift table | `transfer_table` | Dine-In only | **MISSING** |
+| Merge order | `merge_table` | Dine-In only | **MISSING** |
 | Transfer food | `food_transfer` | Dine-In only | **MISSING** |
-| Collect payment | `bill_collect` | Order must be placed | **MISSING** |
-| Apply discount | `discount_apply` | — | **MISSING** |
-| Complementary item | `complementary_apply` | — | **MISSING** |
-| Customer search | `customer_manage` | — | **MISSING** |
+| Collect payment | `bill` | Order must be placed | **MISSING** |
+| Apply discount | `discount` | — | **MISSING** |
+| Complementary item | `complementary` (TBD — not in Owner role) | — | **MISSING** |
+| Customer search | `customer_management` | — | **MISSING** |
 
 ### Sidebar / Navigation
 
 | UI Element | Permission Required | Status |
 |------------|---------------------|--------|
-| Menu Management | `menu_manage` | **MISSING** |
-| Reports | `report_view` | **MISSING** |
-| Settings | `settings_manage` | **MISSING** |
-| Employee Management | `employee_manage` | **MISSING** |
+| Menu Management | `menu` | **MISSING** |
+| Reports | `report` | **MISSING** |
+| Settings | `restaurant_settings` | **MISSING** |
+| Employee Management | `employee` | **MISSING** |
 
 ---
 
@@ -345,17 +401,26 @@ This is the master reference for which UI actions need which permission checks a
 - [x] **Transform**: Add cancellation settings to `profileTransform.js` → `fromAPI.restaurant()`
 - [x] **Transform**: Store cancellation config in `RestaurantContext` for UI access
 - [x] **OrderCard.jsx**: Wrap Cancel button with `hasPermission('order_cancel')` via `canCancelOrder` prop
-- [x] **OrderCard.jsx**: Wrap Merge button with `hasPermission('table_merge')` via `canMergeOrder` prop
-- [x] **OrderCard.jsx**: Wrap Shift button with `hasPermission('table_shift')` via `canShiftTable` prop
+- [x] **OrderCard.jsx**: Wrap Merge button with `hasPermission('merge_table')` via `canMergeOrder` prop
+- [x] **OrderCard.jsx**: Wrap Shift button with `hasPermission('transfer_table')` via `canShiftTable` prop
 - [x] **OrderCard.jsx**: Wrap Food Transfer icon with `hasPermission('food_transfer')` via `canFoodTransfer` prop
 - [x] **DashboardPage.jsx**: Wire `onCancelOrder` handler → `CancelOrderModal` → API
 - [x] **DashboardPage.jsx**: Wire `onItemStatusChange` handler → `FOOD_STATUS_UPDATE` API
+- [x] **Permission strings verified** against actual API response (Feb 2026)
 - [ ] **OrderCard.jsx**: Add `cancel_order_time` elapsed check for Cancel button
-- [ ] **OrderEntry.jsx**: Add permission gates to modal triggers (Cancel, Shift, Merge, Transfer)
-- [ ] **Sidebar.jsx**: Add permission gates to navigation links (Menu, Reports, Settings)
+- [ ] **OrderCard.jsx**: Gate Ready button with `hasPermission('Ready')` (capital R)
+- [ ] **OrderCard.jsx**: Gate Serve button with `hasPermission('serve')`
+- [ ] **OrderEntry.jsx**: Add permission gates to modal triggers (food cancel, shift, merge, transfer)
+- [ ] **Sidebar.jsx**: Add permission gates to navigation links (`menu`, `report`, `restaurant_settings`, `employee`)
 - [ ] **OrderCard.jsx**: Gate `onEdit` (card tap) with `order_edit` permission
-- [ ] **OrderCard.jsx**: Gate Bill button with `bill_collect` permission (after Phase 2)
+- [ ] **OrderCard.jsx**: Gate Bill button with `bill` permission (after Phase 2)
 
 ---
+
+### API Typos to Note
+- `cancle_post_serve` (should be "cancel") — accepted as-is
+- `report_summery` (should be "summary") — accepted as-is
+- `sattle_report` (should be "settlement") — accepted as-is
+- `expence` (should be "expense") — accepted as-is
 
 *This document should be updated as new permissions are discovered from the API or as UI components are gated.*
