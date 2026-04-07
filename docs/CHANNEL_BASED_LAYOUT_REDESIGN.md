@@ -222,6 +222,128 @@ const [collapsedChannels, setCollapsedChannels] = useLocalStorage('collapsedChan
 
 ---
 
+## 4A. API to UI Data Mapping (Complete Flow)
+
+### 4A.1 Table Data Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ BACKEND API: GET /api/v1/all-table-list                                     │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ Response: [                                                                 │
+│   {                                                                         │
+│     "id": 123,                                                              │
+│     "table_no": "1",                                                        │
+│     "title": "Default",        ← This is the SECTION/AREA name             │
+│     "rtype": "TB" | "RM",      ← Table or Room                             │
+│     "status": 1,               ← Active/Inactive                            │
+│     "engage": 0 | 1,           ← Occupied or not                           │
+│     "restaurant_id": 509,                                                   │
+│     ...                                                                     │
+│   }                                                                         │
+│ ]                                                                           │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ TRANSFORM: tableTransform.js → fromAPI.table()                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ Maps:                                                                       │
+│   api.id          → tableId                                                │
+│   api.table_no    → tableNumber                                            │
+│   api.title       → sectionName   ← AREA NAME ("Default", "out", "in")     │
+│   api.rtype       → tableType (TB/RM), isRoom                              │
+│   api.status      → isActive                                               │
+│   api.engage      → isOccupied, status                                     │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ CONTEXT: TableContext.jsx                                                   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ Stores transformed tables in state:                                         │
+│   tables = [{ tableId, sectionName, status, isRoom, ... }, ...]            │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ DASHBOARD: DashboardPage.jsx (Line 229-266)                                 │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ CURRENT: Groups tables by sectionName (area-based)                         │
+│                                                                             │
+│   const hasSections = tables.some(t => t.sectionName);                     │
+│   if (hasSections) {                                                       │
+│     tables.forEach(t => {                                                  │
+│       const section = t.sectionName || 'Default';                          │
+│       grouped[section].push(t);                                            │
+│     });                                                                     │
+│   }                                                                         │
+│                                                                             │
+│ NEW: Will group by CHANNEL instead (dineIn, takeAway, delivery, room)      │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 4A.2 API Field Mapping Reference
+
+| API Field | Transform | Frontend Field | Used For |
+|-----------|-----------|----------------|----------|
+| `id` | Direct | `tableId` | Unique identifier |
+| `table_no` | Direct | `tableNumber` | Display "T1", "T2" |
+| `title` | Direct | `sectionName` | **AREA GROUPING** (currently) |
+| `rtype` | Map TB/RM | `tableType`, `isRoom` | Distinguish tables vs rooms |
+| `status` | toBoolean | `isActive` | Show/hide disabled tables |
+| `engage` | toBoolean | `isOccupied` | Table status (available/occupied) |
+| `waiter_id` | Direct | `assignedWaiterId` | Waiter assignment |
+
+### 4A.3 Order Data Flow (TakeAway, Delivery, Walk-In)
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ BACKEND API: GET /api/v2/employee-orders-list                               │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ Response includes order_type field:                                         │
+│   "order_type": "Dine In" | "Take Away" | "Delivery" | "Room" | "Walk In"  │
+│   "f_order_status": 1-9 (order status)                                     │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ TRANSFORM: orderTransform.js → fromAPI.order()                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ Maps:                                                                       │
+│   api.order_type  → orderType ('dineIn'|'takeAway'|'delivery'|'room')     │
+│   api.table_id    → tableId (0 for non-dineIn)                             │
+│   api.f_order_status → fOrderStatus, status                                │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ CONTEXT: OrderContext.jsx                                                   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ Provides filtered order arrays:                                             │
+│   - dineInOrders (tableId > 0, orderType = dineIn)                         │
+│   - takeAwayOrders (orderType = takeAway)                                  │
+│   - deliveryOrders (orderType = delivery)                                  │
+│   - walkInOrders (orderType = walkIn, tableId = 0)                         │
+│   - roomOrders (orderType = room)                                          │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 4A.4 Channel Source Mapping
+
+| Channel | Data Source | From Context |
+|---------|-------------|--------------|
+| **Dine-In** | Tables + Walk-In Orders | `useTables().tables` (non-room) + `useOrders().walkInOrders` |
+| **TakeAway** | TakeAway Orders | `useOrders().takeAwayOrders` |
+| **Delivery** | Delivery Orders | `useOrders().deliveryOrders` |
+| **Room** | Room Tables | `useTables().tables` (isRoom=true) |
+
+### 4A.5 What Changes in New Layout
+
+| Current | New |
+|---------|-----|
+| Group by `sectionName` (api.title) | Group by `channel` (orderType/isRoom) |
+| Sections: Default, out, in, Walk-In | Columns: Dine-In, TakeAway, Delivery, Room |
+| TableSection component per area | ChannelColumn component per channel |
+| activeChannels filters data | All channels visible as columns |
+
+---
+
 ## 5. Detailed Component Specifications
 
 ### 5.1 ChannelColumnsLayout
