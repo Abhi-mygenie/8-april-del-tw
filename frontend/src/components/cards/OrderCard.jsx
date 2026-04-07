@@ -266,17 +266,21 @@ const OrderCard = ({
             // Build variants/addons display string
             const variants = item.variation || [];
             const addons = item.addOns || [];
-            const variantStr = variants.map(v => 
-              typeof v === 'string' ? v : `${v.name || v.variant_name}: ${v.value || v.option_label || v.label}`
-            ).join(', ');
-            const addonStr = addons.map(a => a.name || a.addon_name).join(', ');
+            const variantStr = variants.map(v => {
+              if (typeof v === 'string') return v;
+              const name = v.name || v.variant_name || v.variant_group || '';
+              const value = v.value || v.option_label || v.label || v.selected_option || '';
+              if (name && value) return `${name}: ${value}`;
+              return name || value || '';
+            }).filter(Boolean).join(', ');
+            const addonStr = addons.map(a => a.name || a.addon_name || '').filter(Boolean).join(', ');
             const detailsStr = [variantStr, addonStr].filter(Boolean).join(', ');
             
             // Item-level notes
             const itemNote = item.notes || '';
             
             return (
-              <div key={item.id} className="py-1.5">
+              <div key={item.id} className="py-1">
                 {/* Main item row */}
                 <div className="flex items-center gap-2">
                   {/* Status dot */}
@@ -284,10 +288,27 @@ const OrderCard = ({
                     className="w-2 h-2 rounded-full flex-shrink-0"
                     style={{ backgroundColor: getItemDotColor(item) }}
                   />
-                  {/* Item name + qty */}
-                  <span className="flex-1 text-xs truncate" style={{ color: COLORS.darkText }}>
-                    {item.name} ({item.qty})
-                  </span>
+                  {/* Item name + qty + details inline */}
+                  <div className="flex-1 min-w-0">
+                    <span className="text-xs" style={{ color: COLORS.darkText }}>
+                      {item.name} ({item.qty})
+                    </span>
+                    {/* Variants/Addons inline */}
+                    {detailsStr && (
+                      <div className="text-[10px] leading-tight" style={{ color: COLORS.primaryOrange }}>
+                        {detailsStr}
+                      </div>
+                    )}
+                    {/* Item note inline */}
+                    {itemNote && (
+                      <div className="flex items-center gap-1 text-[10px] leading-tight">
+                        <FileText className="w-2.5 h-2.5" style={{ color: COLORS.grayText }} />
+                        <span className="italic" style={{ color: COLORS.grayText }}>
+                          {itemNote}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                   {/* Status label + action icon as single tappable area */}
                   {actionConfig && (
                     <button
@@ -296,7 +317,7 @@ const OrderCard = ({
                         e.stopPropagation();
                         handleItemAction(item, actionConfig.action);
                       }}
-                      className="min-h-[44px] px-2 rounded-lg flex items-center gap-2 hover:bg-gray-100 transition-colors -mr-2"
+                      className="min-h-[44px] px-2 rounded-lg flex items-center gap-2 hover:bg-gray-100 transition-colors -mr-2 flex-shrink-0"
                       title={actionConfig.action === 'ready' ? 'Mark Ready' : 'Mark Served'}
                     >
                       <span className="text-[10px]" style={{ color: COLORS.grayText }}>
@@ -310,25 +331,6 @@ const OrderCard = ({
                     </button>
                   )}
                 </div>
-                
-                {/* Variants/Addons row */}
-                {detailsStr && (
-                  <div className="ml-4 mt-0.5">
-                    <span className="text-[10px]" style={{ color: COLORS.primaryOrange }}>
-                      {detailsStr}
-                    </span>
-                  </div>
-                )}
-                
-                {/* Item note row */}
-                {itemNote && (
-                  <div className="ml-4 mt-0.5 flex items-center gap-1">
-                    <FileText className="w-2.5 h-2.5" style={{ color: COLORS.grayText }} />
-                    <span className="text-[10px] italic" style={{ color: COLORS.grayText }}>
-                      {itemNote}
-                    </span>
-                  </div>
-                )}
               </div>
             );
           })
