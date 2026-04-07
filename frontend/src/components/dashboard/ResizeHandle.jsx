@@ -19,10 +19,12 @@ const ResizeHandle = ({ onDrag, onDragStart, onDragEnd }) => {
     const deltaX = e.clientX - startX.current;
     startX.current = e.clientX;
     
+    console.log('[ResizeHandle] Dragging, deltaX:', deltaX);
     onDrag?.(deltaX);
   }, [onDrag]);
 
   const handleMouseUp = useCallback(() => {
+    console.log('[ResizeHandle] Mouse up, stopping drag');
     isDragging.current = false;
     
     // Remove document-level listeners
@@ -38,6 +40,8 @@ const ResizeHandle = ({ onDrag, onDragStart, onDragEnd }) => {
 
   const handleMouseDown = useCallback((e) => {
     e.preventDefault();
+    e.stopPropagation();
+    console.log('[ResizeHandle] Mouse down, starting drag');
     isDragging.current = true;
     startX.current = e.clientX;
     
@@ -55,32 +59,34 @@ const ResizeHandle = ({ onDrag, onDragStart, onDragEnd }) => {
   return (
     <div
       data-testid="resize-handle"
-      className="resize-handle group flex-shrink-0 flex items-center justify-center cursor-col-resize"
+      className="resize-handle flex-shrink-0 flex items-center justify-center"
       style={{
-        width: '12px',
-        marginLeft: '-6px',
-        marginRight: '-6px',
-        zIndex: 10,
+        width: '20px',
+        cursor: 'col-resize',
+        zIndex: 50,
+        position: 'relative',
       }}
       onMouseDown={handleMouseDown}
     >
-      {/* Visual indicator */}
+      {/* Visual indicator - more prominent */}
       <div
-        className="h-full transition-all duration-150 group-hover:bg-opacity-100"
         style={{
-          width: '4px',
-          backgroundColor: COLORS.borderGray,
-          borderRadius: '2px',
-          opacity: 0.5,
+          width: '6px',
+          height: '100%',
+          backgroundColor: '#E5E5E5',
+          borderRadius: '3px',
+          transition: 'background-color 0.15s',
         }}
+        className="hover:bg-orange-400"
       />
       
-      {/* Hover/Active state overlay */}
+      {/* Inline hover styles */}
       <style>{`
-        .resize-handle:hover > div,
+        .resize-handle:hover > div {
+          background-color: ${COLORS.primaryOrange} !important;
+        }
         .resize-handle:active > div {
           background-color: ${COLORS.primaryOrange} !important;
-          opacity: 1 !important;
         }
       `}</style>
     </div>
