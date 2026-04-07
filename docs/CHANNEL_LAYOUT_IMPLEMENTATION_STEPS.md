@@ -311,3 +311,19 @@ import { ChannelColumnsLayout } from '../components/dashboard';
 ## Ready to Start?
 
 Confirm to proceed with **Step 1: Create Feature Flag & Utility Hooks**
+
+---
+
+## Known Bugs (To Fix Later)
+
+### BUG-001: Resize Handle Drag Not Updating Column Widths
+**Status:** Parked
+**Symptoms:** 
+- Drag events are detected (MOUSEMOVE deltaX logs show in console)
+- But column widths don't change visually
+**Root Cause:** 
+- `handleResize` function in ChannelColumnsLayout.jsx receives deltaX but state update may not be triggering re-render
+- Need to debug the `setColumnWidths` function and verify percentage calculations
+**Files:** 
+- `/app/frontend/src/components/dashboard/ChannelColumnsLayout.jsx` (handleResize function)
+- `/app/frontend/src/components/dashboard/ResizeHandle.jsx` (working correctly now)
