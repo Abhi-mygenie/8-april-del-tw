@@ -113,15 +113,17 @@ const TableCard = ({ table, onClick, onOpenModal, onUpdateStatus, onBillClick, o
         {isActive && (
           <div className="mt-2.5 flex-1 flex flex-col">
             {/* Primary name + Status — Rooms: customer, Tables: waiter */}
-            <div className="text-sm font-semibold leading-tight whitespace-nowrap overflow-hidden text-ellipsis" style={{ color: COLORS.darkText }}>
+            <div className="text-sm leading-tight whitespace-nowrap overflow-hidden text-ellipsis" style={{ color: COLORS.darkText }}>
               {table.status === "reserved" 
-                ? table.reservedFor 
+                ? <span className="font-semibold">{table.reservedFor}</span>
                 : (
                   <>
-                    {table.isRoom
-                      ? (table.customer || 'NA')
-                      : (table.waiter || 'NA')}
-                    {/* Add status label inline */}
+                    <span className="font-semibold">
+                      {table.isRoom
+                        ? (table.customer || 'NA')
+                        : (table.waiter || 'NA')}
+                    </span>
+                    {/* Add status label inline - normal weight to match bottom style */}
                     {table.fOrderStatus === 1 && <span style={{ color: COLORS.primaryOrange }}> • Preparing</span>}
                     {table.fOrderStatus === 2 && <span style={{ color: COLORS.primaryGreen }}> • Ready</span>}
                     {table.fOrderStatus === 5 && <span style={{ color: COLORS.primaryGreen }}> • Served</span>}
@@ -174,13 +176,6 @@ const TableCard = ({ table, onClick, onOpenModal, onUpdateStatus, onBillClick, o
                       title="Print KOT"
                       ariaLabel={`Print KOT for table ${table.id}`}
                     />
-                    <div
-                      className="flex-1 flex items-center justify-center rounded-lg text-xs font-semibold"
-                      style={{ backgroundColor: COLORS.sectionBg, color: COLORS.primaryOrange }}
-                      data-testid={`status-label-${table.id}`}
-                    >
-                      Preparing
-                    </div>
                   </>
                 )}
                 {table.fOrderStatus === 2 && (
