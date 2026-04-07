@@ -5,24 +5,30 @@ import { sortByActiveFirst, TABLE_STATUS_PRIORITY } from '../../utils';
 import TableCard from '../cards/TableCard';
 import OrderCard from '../cards/OrderCard';
 
+// Card widths
+const TABLE_CARD_WIDTH = 160;
+const ORDER_CARD_WIDTH = 300;
+const GAP = 12;
+const PADDING = 24;
+
 /**
  * ChannelColumn - Single column for a channel (Dine-In, TakeAway, Delivery, Room)
  * 
- * Features:
- * - Collapsible with header always visible
- * - Scrollable content area
- * - Renders TableCard or OrderCard based on viewType
- * - Shows "No orders" when empty
- * - Sorts by active first when enabled
+ * New Behavior:
+ * - actualColumns determines grid width (not percentage)
+ * - Arrow buttons to transfer columns to adjacent channels
+ * - Auto-hides when 0 orders (handled by parent)
  */
 const ChannelColumn = ({
   channel,           // { id, name, items, enabled }
-  width,             // Percentage width
-  minWidth = 350,    // Minimum pixel width (enough for 2 TableCards)
-  isCollapsed,
-  activeFirst,
+  actualColumns,     // Current column count based on order count
+  maxColumns,        // Max column setting for this channel
   viewType,          // 'table' | 'order'
-  onCollapse,
+  activeFirst,
+  hasLeftArrow,      // Show left arrow button
+  hasRightArrow,     // Show right arrow button
+  onLeftArrowClick,  // Transfer column to left neighbor
+  onRightArrowClick, // Transfer column to right neighbor
   onItemClick,
   // Card handlers
   onMarkReady,
@@ -34,12 +40,6 @@ const ChannelColumn = ({
   onConfirmOrder,
   onUpdateStatus,
   // Permissions
-  canCancelOrder,
-  canPrintBill,
-  canBill,
-  canMergeOrder,
-  canShiftTable,
-  canFoodTransfer,
   hasPermission,
   // Other
   snoozedOrders,
@@ -70,65 +70,36 @@ const ChannelColumn = ({
 
   const totalCount = channel.items?.length || 0;
 
-  // Collapsed view - just show header with expand button
-  if (isCollapsed) {
-    return (
-      <div
-        data-testid={`channel-column-${channel.id}-collapsed`}
-        className="flex flex-col h-full bg-white rounded-lg shadow-sm"
-        style={{ 
-          width: '48px',
-          minWidth: '48px',
-          flexShrink: 0,
-        }}
-      >
-        {/* Collapsed Header */}
-        <div 
-          className="flex flex-col items-center py-4 px-2 cursor-pointer hover:bg-gray-50"
-          onClick={onCollapse}
-          title={`Expand ${channel.name}`}
-        >
-          <ChevronRight className="w-5 h-5 mb-2" style={{ color: COLORS.grayText }} />
-          <span 
-            className="text-xs font-medium writing-mode-vertical"
-            style={{ 
-              color: COLORS.darkText,
-              writingMode: 'vertical-rl',
-              textOrientation: 'mixed',
-            }}
-          >
-            {channel.name}
-          </span>
-          <span 
-            className="text-xs mt-2 px-1.5 py-0.5 rounded-full"
-            style={{ 
-              backgroundColor: activeCount > 0 ? COLORS.primaryOrange : COLORS.borderGray,
-              color: activeCount > 0 ? 'white' : COLORS.grayText,
-            }}
-          >
-            {activeCount}
-          </span>
-        </div>
-      </div>
-    );
-  }
+  // Calculate width based on actual columns
+  const cardWidth = viewType === 'table' ? TABLE_CARD_WIDTH : ORDER_CARD_WIDTH;
+  const columnWidth = (actualColumns * cardWidth) + ((actualColumns - 1) * GAP) + PADDING;
 
-  // Expanded view
   return (
     <div
       data-testid={`channel-column-${channel.id}`}
-      className="flex flex-col h-full bg-white rounded-lg shadow-sm overflow-hidden"
+      className="flex flex-col h-full bg-white rounded-lg shadow-sm overflow-hidden flex-shrink-0"
       style={{ 
-        width: `${width}%`,
-        minWidth: `${minWidth}px`,
-        flexShrink: 0,
+        width: `${columnWidth}px`,
+        minWidth: `${columnWidth}px`,
       }}
     >
-      {/* Column Header */}
+      {/* Column Header with Arrow Buttons */}
       <div 
-        className="flex items-center justify-between px-4 py-3 border-b"
+        className="flex items-center justify-between px-3 py-3 border-b"
         style={{ borderColor: COLORS.borderGray }}
       >
+        {/* Left Arrow */}
+        <button
+          data-testid={`arrow-left-${channel.id}`}
+          onClick={onLeftArrowClick}
+          disabled={!hasLeftArrow || maxColumns <= 0}
+          className="p-1 rounded hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          title="Give column to left channel"
+        >
+          <ChevronLeft className="w-5 h-5" style={{ color: COLORS.grayText }} />
+        </button>
+
+        {/* Channel Name & Count */}
         <div className="flex items-center gap-2">
           <span className="font-semibold text-sm" style={{ color: COLORS.darkText }}>
             {channel.name}
@@ -143,15 +114,16 @@ const ChannelColumn = ({
             {viewType === 'table' ? `${activeCount}/${totalCount}` : activeCount}
           </span>
         </div>
-        
-        {/* Collapse Button */}
+
+        {/* Right Arrow */}
         <button
-          data-testid={`collapse-${channel.id}`}
-          onClick={onCollapse}
-          className="p-1 rounded hover:bg-gray-100 transition-colors"
-          title={`Collapse ${channel.name}`}
+          data-testid={`arrow-right-${channel.id}`}
+          onClick={onRightArrowClick}
+          disabled={!hasRightArrow || maxColumns <= 0}
+          className="p-1 rounded hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          title="Give column to right channel"
         >
-          <ChevronLeft className="w-4 h-4" style={{ color: COLORS.grayText }} />
+          <ChevronRight className="w-5 h-5" style={{ color: COLORS.grayText }} />
         </button>
       </div>
 
@@ -166,11 +138,12 @@ const ChannelColumn = ({
           </div>
         ) : (
           <div 
-            className={viewType === 'table' ? 'grid gap-3' : 'flex flex-col gap-3'}
-            style={viewType === 'table' ? { 
-              gridTemplateColumns: 'repeat(2, 160px)',  // Force 2 cards per row in table view
-              justifyContent: 'start',
-            } : {}}
+            className="grid gap-3"
+            style={{ 
+              gridTemplateColumns: viewType === 'table' 
+                ? `repeat(${actualColumns}, ${TABLE_CARD_WIDTH}px)` 
+                : `repeat(${actualColumns}, 1fr)`,
+            }}
           >
             {sortedItems.map((item) => {
               const key = item.id || `${channel.id}-${item.orderId}`;
@@ -198,7 +171,6 @@ const ChannelColumn = ({
               }
               
               // List View - render OrderCard
-              // Need to get order data for the item
               const order = item.order || item;
               return (
                 <OrderCard
@@ -208,12 +180,12 @@ const ChannelColumn = ({
                   tableLabel={item.label || item.tableNumber}
                   isSnoozed={snoozedOrders?.has(item.id)}
                   isEngaged={isTableEngaged?.(item.tableId)}
-                  canCancelOrder={canCancelOrder ?? hasPermission?.('order_cancel')}
-                  canMergeOrder={canMergeOrder ?? (channel.id === 'dineIn' && hasPermission?.('merge_table'))}
-                  canShiftTable={canShiftTable ?? (channel.id === 'dineIn' && hasPermission?.('transfer_table'))}
-                  canFoodTransfer={canFoodTransfer ?? (channel.id === 'dineIn' && hasPermission?.('food_transfer'))}
-                  canPrintBill={canPrintBill ?? hasPermission?.('print_icon')}
-                  canBill={canBill ?? hasPermission?.('bill')}
+                  canCancelOrder={hasPermission?.('order_cancel')}
+                  canMergeOrder={channel.id === 'dineIn' && hasPermission?.('merge_table')}
+                  canShiftTable={channel.id === 'dineIn' && hasPermission?.('transfer_table')}
+                  canFoodTransfer={channel.id === 'dineIn' && hasPermission?.('food_transfer')}
+                  canPrintBill={hasPermission?.('print_icon')}
+                  canBill={hasPermission?.('bill')}
                   onToggleSnooze={onToggleSnooze}
                   onEdit={() => onItemClick?.(item)}
                   onMarkReady={() => onMarkReady?.(item)}

@@ -4,30 +4,33 @@ import { useLocalStorage } from '../../hooks';
 import ChannelColumn from './ChannelColumn';
 import ResizeHandle from './ResizeHandle';
 
-// Default column widths (percentages, must sum to 100)
-const DEFAULT_WIDTHS = {
-  dineIn: 25,
-  takeAway: 25,
-  delivery: 25,
-  room: 25,
+// Default max columns per channel
+const DEFAULT_MAX_COLUMNS = {
+  dineIn: 2,
+  takeAway: 2,
+  delivery: 2,
+  room: 2,
 };
 
-// Minimum width in pixels for a column (enough for 2 TableCards: 160*2 + gaps + padding)
-const MIN_COLUMN_WIDTH = 350;
+// Channel order for arrow navigation
+const CHANNEL_ORDER = ['dineIn', 'takeAway', 'delivery', 'room'];
 
-// localStorage keys
-const STORAGE_KEY_WIDTHS = 'mygenie_channel_widths';
-const STORAGE_KEY_COLLAPSED = 'mygenie_channel_collapsed';
+// localStorage key
+const STORAGE_KEY_MAX_COLUMNS = 'mygenie_channel_max_columns';
+
+// Card widths
+const TABLE_CARD_WIDTH = 168; // 160px + gap
+const ORDER_CARD_WIDTH = 320; // Wider for order cards
 
 /**
  * ChannelColumnsLayout - Main container for channel-based column layout
  * 
- * Features:
- * - 4 columns for Dine-In, TakeAway, Delivery, Room
- * - Resizable via drag handles between columns
- * - Collapsible columns
- * - Persists widths and collapsed state to localStorage
- * - Same layout for Table View and List View
+ * New Behavior:
+ * - Each channel has a "max columns" setting (default 2 for table view, 1 for order view)
+ * - Actual columns = min(orderCount, maxColumns) - auto-sizes based on content
+ * - 0 orders = channel hidden (0 columns)
+ * - Arrow buttons transfer max columns between adjacent channels
+ * - Drag also transfers columns
  */
 const ChannelColumnsLayout = ({
   channels,          // Array of { id, name, items, enabled }
@@ -55,109 +58,154 @@ const ChannelColumnsLayout = ({
 }) => {
   const containerRef = useRef(null);
   
-  // Persist column widths
-  const [columnWidths, setColumnWidths] = useLocalStorage(STORAGE_KEY_WIDTHS, DEFAULT_WIDTHS);
-  
-  // Persist collapsed state
-  const [collapsedChannels, setCollapsedChannels] = useLocalStorage(STORAGE_KEY_COLLAPSED, []);
+  // Persist max columns per channel
+  const [maxColumns, setMaxColumns] = useLocalStorage(STORAGE_KEY_MAX_COLUMNS, DEFAULT_MAX_COLUMNS);
 
   // Filter to only enabled channels
   const enabledChannels = useMemo(() => {
     return channels.filter(c => c.enabled !== false);
   }, [channels]);
 
-  // Get channel IDs that are visible (enabled and not collapsed)
-  const visibleChannelIds = useMemo(() => {
-    return enabledChannels
-      .filter(c => !collapsedChannels.includes(c.id))
-      .map(c => c.id);
-  }, [enabledChannels, collapsedChannels]);
+  // Calculate actual columns for each channel based on order count
+  const getActualColumns = useCallback((channelId, orderCount) => {
+    if (orderCount === 0) return 0; // Auto-hide when no orders
+    
+    const max = maxColumns[channelId] ?? (viewType === 'table' ? 2 : 1);
+    return Math.min(orderCount, max);
+  }, [maxColumns, viewType]);
 
-  // Calculate actual widths accounting for collapsed columns
-  const effectiveWidths = useMemo(() => {
-    const widths = { ...columnWidths };
+  // Get channel index in order
+  const getChannelIndex = useCallback((channelId) => {
+    return CHANNEL_ORDER.indexOf(channelId);
+  }, []);
+
+  // Arrow click handler - transfer 1 max column between adjacent channels
+  const handleArrowClick = useCallback((channelId, direction) => {
+    const currentIndex = getChannelIndex(channelId);
     
-    // If some channels are collapsed, redistribute their width
-    const collapsedWidth = collapsedChannels.reduce((sum, id) => sum + (widths[id] || 0), 0);
-    const visibleCount = visibleChannelIds.length;
-    
-    if (visibleCount > 0 && collapsedWidth > 0) {
-      const extraPerChannel = collapsedWidth / visibleCount;
-      visibleChannelIds.forEach(id => {
-        widths[id] = (widths[id] || 25) + extraPerChannel;
-      });
+    if (direction === 'left' && currentIndex > 0) {
+      // Find the nearest visible channel on the left
+      let leftIndex = currentIndex - 1;
+      while (leftIndex >= 0) {
+        const leftChannelId = CHANNEL_ORDER[leftIndex];
+        const leftChannel = enabledChannels.find(c => c.id === leftChannelId);
+        if (leftChannel) {
+          // Transfer: current loses 1, left gains 1
+          setMaxColumns(prev => {
+            const currentMax = prev[channelId] ?? 2;
+            if (currentMax <= 0) return prev; // Can't reduce below 0
+            
+            return {
+              ...prev,
+              [channelId]: currentMax - 1,
+              [leftChannelId]: (prev[leftChannelId] ?? 2) + 1,
+            };
+          });
+          console.log(`[Arrow] ${channelId} -1 → ${leftChannelId} +1`);
+          break;
+        }
+        leftIndex--;
+      }
     }
     
-    return widths;
-  }, [columnWidths, collapsedChannels, visibleChannelIds]);
+    if (direction === 'right' && currentIndex < CHANNEL_ORDER.length - 1) {
+      // Find the nearest visible channel on the right
+      let rightIndex = currentIndex + 1;
+      while (rightIndex < CHANNEL_ORDER.length) {
+        const rightChannelId = CHANNEL_ORDER[rightIndex];
+        const rightChannel = enabledChannels.find(c => c.id === rightChannelId);
+        if (rightChannel) {
+          // Transfer: current loses 1, right gains 1
+          setMaxColumns(prev => {
+            const currentMax = prev[channelId] ?? 2;
+            if (currentMax <= 0) return prev; // Can't reduce below 0
+            
+            return {
+              ...prev,
+              [channelId]: currentMax - 1,
+              [rightChannelId]: (prev[rightChannelId] ?? 2) + 1,
+            };
+          });
+          console.log(`[Arrow] ${channelId} -1 → ${rightChannelId} +1`);
+          break;
+        }
+        rightIndex++;
+      }
+    }
+  }, [getChannelIndex, enabledChannels, setMaxColumns]);
 
-  // Handle resize drag
+  // Handle resize drag (for Phase B - placeholder for now)
   const handleResize = useCallback((leftChannelId, rightChannelId, deltaX) => {
-    if (!containerRef.current) return;
+    const cardWidth = viewType === 'table' ? TABLE_CARD_WIDTH : ORDER_CARD_WIDTH;
+    const columnsDelta = Math.round(deltaX / cardWidth);
     
-    const containerWidth = containerRef.current.offsetWidth;
-    const deltaPercent = (deltaX / containerWidth) * 100;
+    if (columnsDelta === 0) return;
     
-    setColumnWidths(prev => {
-      const newWidths = { ...prev };
-      const leftWidth = newWidths[leftChannelId] || 25;
-      const rightWidth = newWidths[rightChannelId] || 25;
+    console.log(`[Drag] ${leftChannelId} ${columnsDelta > 0 ? '+' : ''}${columnsDelta}, ${rightChannelId} ${columnsDelta > 0 ? '-' : '+'}${Math.abs(columnsDelta)}`);
+    
+    setMaxColumns(prev => {
+      const leftMax = prev[leftChannelId] ?? 2;
+      const rightMax = prev[rightChannelId] ?? 2;
       
-      // Calculate new widths
-      let newLeftWidth = leftWidth + deltaPercent;
-      let newRightWidth = rightWidth - deltaPercent;
+      // Positive delta = drag right = left gains, right loses
+      const newLeftMax = Math.max(0, leftMax + columnsDelta);
+      const newRightMax = Math.max(0, rightMax - columnsDelta);
       
-      // Enforce minimum widths (in percentage terms, roughly)
-      const minPercent = (MIN_COLUMN_WIDTH / containerWidth) * 100;
-      
-      if (newLeftWidth < minPercent) {
-        newLeftWidth = minPercent;
-        newRightWidth = leftWidth + rightWidth - minPercent;
-      }
-      if (newRightWidth < minPercent) {
-        newRightWidth = minPercent;
-        newLeftWidth = leftWidth + rightWidth - minPercent;
-      }
-      
-      newWidths[leftChannelId] = newLeftWidth;
-      newWidths[rightChannelId] = newRightWidth;
-      
-      return newWidths;
+      return {
+        ...prev,
+        [leftChannelId]: newLeftMax,
+        [rightChannelId]: newRightMax,
+      };
     });
-  }, [setColumnWidths]);
+  }, [viewType, setMaxColumns]);
 
-  // Toggle column collapse
-  const toggleCollapse = useCallback((channelId) => {
-    setCollapsedChannels(prev => {
-      if (prev.includes(channelId)) {
-        return prev.filter(id => id !== channelId);
-      }
-      // Don't allow collapsing all columns
-      if (prev.length >= enabledChannels.length - 1) {
-        return prev;
-      }
-      return [...prev, channelId];
+  // Calculate total width needed for layout
+  const channelWidths = useMemo(() => {
+    const cardWidth = viewType === 'table' ? TABLE_CARD_WIDTH : ORDER_CARD_WIDTH;
+    const widths = {};
+    
+    enabledChannels.forEach(channel => {
+      const actualCols = getActualColumns(channel.id, channel.items?.length || 0);
+      // Width = columns * cardWidth + padding (24px)
+      widths[channel.id] = actualCols > 0 ? (actualCols * cardWidth) + 24 : 0;
     });
-  }, [setCollapsedChannels, enabledChannels.length]);
+    
+    return widths;
+  }, [enabledChannels, viewType, getActualColumns]);
 
   // Render columns with resize handles between them
   const renderColumns = () => {
     const elements = [];
+    const visibleChannels = enabledChannels.filter(c => {
+      const actualCols = getActualColumns(c.id, c.items?.length || 0);
+      return actualCols > 0;
+    });
     
     enabledChannels.forEach((channel, index) => {
-      const isCollapsed = collapsedChannels.includes(channel.id);
-      const width = isCollapsed ? 0 : effectiveWidths[channel.id] || 25;
+      const actualColumns = getActualColumns(channel.id, channel.items?.length || 0);
+      const channelMax = maxColumns[channel.id] ?? (viewType === 'table' ? 2 : 1);
+      
+      // Skip channels with 0 actual columns (no orders)
+      if (actualColumns === 0) return;
+      
+      // Determine if this channel has neighbors for arrow buttons
+      const currentOrderIndex = getChannelIndex(channel.id);
+      const hasLeftNeighbor = currentOrderIndex > 0;
+      const hasRightNeighbor = currentOrderIndex < CHANNEL_ORDER.length - 1;
       
       // Add column
       elements.push(
         <ChannelColumn
           key={channel.id}
           channel={channel}
-          width={width}
-          isCollapsed={isCollapsed}
-          activeFirst={activeFirst}
+          actualColumns={actualColumns}
+          maxColumns={channelMax}
           viewType={viewType}
-          onCollapse={() => toggleCollapse(channel.id)}
+          activeFirst={activeFirst}
+          hasLeftArrow={hasLeftNeighbor && channelMax > 0}
+          hasRightArrow={hasRightNeighbor && channelMax > 0}
+          onLeftArrowClick={() => handleArrowClick(channel.id, 'left')}
+          onRightArrowClick={() => handleArrowClick(channel.id, 'right')}
           onItemClick={onItemClick}
           onMarkReady={onMarkReady}
           onMarkServed={onMarkServed}
@@ -176,21 +224,16 @@ const ChannelColumnsLayout = ({
         />
       );
       
-      // Add resize handle between columns (not after last one)
-      if (index < enabledChannels.length - 1) {
-        const nextChannel = enabledChannels[index + 1];
-        const leftCollapsed = isCollapsed;
-        const rightCollapsed = collapsedChannels.includes(nextChannel.id);
-        
-        // Only show resize handle if both adjacent columns are expanded
-        if (!leftCollapsed && !rightCollapsed) {
-          elements.push(
-            <ResizeHandle
-              key={`resize-${channel.id}-${nextChannel.id}`}
-              onDrag={(deltaX) => handleResize(channel.id, nextChannel.id, deltaX)}
-            />
-          );
-        }
+      // Add resize handle between visible columns
+      const nextVisibleIndex = visibleChannels.findIndex(c => c.id === channel.id) + 1;
+      if (nextVisibleIndex < visibleChannels.length) {
+        const nextChannel = visibleChannels[nextVisibleIndex];
+        elements.push(
+          <ResizeHandle
+            key={`resize-${channel.id}-${nextChannel.id}`}
+            onDrag={(deltaX) => handleResize(channel.id, nextChannel.id, deltaX)}
+          />
+        );
       }
     });
     
@@ -208,11 +251,24 @@ const ChannelColumnsLayout = ({
     );
   }
 
+  // Check if all channels have 0 orders
+  const allEmpty = enabledChannels.every(c => (c.items?.length || 0) === 0);
+  if (allEmpty) {
+    return (
+      <div 
+        className="flex items-center justify-center h-64 text-sm"
+        style={{ color: COLORS.grayText }}
+      >
+        No active orders
+      </div>
+    );
+  }
+
   return (
     <div
       ref={containerRef}
       data-testid="channel-columns-layout"
-      className="flex h-full gap-0"
+      className="flex h-full gap-0 overflow-x-auto"
       style={{ 
         minHeight: '500px',
         backgroundColor: COLORS.sectionBg,
