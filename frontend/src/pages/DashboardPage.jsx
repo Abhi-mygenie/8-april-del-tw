@@ -62,7 +62,7 @@ const EmptyTableState = () => (
 );
 
 // Reusable order list section (Delivery/TakeAway) — now uses OrderCard
-const OrderListSection = ({ title, orders, orderType, matchingIds, snoozedOrders, onToggleSnooze, onEdit, className }) => (
+const OrderListSection = ({ title, orders, orderType, matchingIds, snoozedOrders, onToggleSnooze, onEdit, onMarkReady, onMarkServed, onBillClick, className }) => (
   <div className={className}>
     <div className="flex items-center gap-2 mb-4 text-sm" style={{ color: COLORS.grayText }}>
       <span className="font-medium" style={{ color: COLORS.darkText }}>{title}</span>
@@ -70,7 +70,7 @@ const OrderListSection = ({ title, orders, orderType, matchingIds, snoozedOrders
       <span>{matchingIds === null ? orders.length : matchingIds.size} Orders</span>
     </div>
     {orders.length > 0 ? (
-      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))' }}>
+      <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
         {orders
           .filter(order => matchingIds === null || matchingIds.has(String(order.orderId)))
           .map((order) => (
@@ -81,6 +81,9 @@ const OrderListSection = ({ title, orders, orderType, matchingIds, snoozedOrders
               isSnoozed={snoozedOrders.has(String(order.orderId))}
               onToggleSnooze={onToggleSnooze}
               onEdit={onEdit}
+              onMarkReady={() => onMarkReady?.({ orderId: order.orderId, tableId: 0 })}
+              onMarkServed={() => onMarkServed?.({ orderId: order.orderId, tableId: 0 })}
+              onBillClick={() => onBillClick?.(order)}
             />
           ))}
       </div>
@@ -783,7 +786,7 @@ const DashboardPage = () => {
                     <div className="flex items-center gap-2 mb-4 text-sm" style={{ color: COLORS.grayText }}>
                       <span className="font-medium" style={{ color: COLORS.darkText }}>Dine In Orders</span>
                     </div>
-                    <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))' }}>
+                    <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
                       {allTablesList
                         .filter(t => !["available", "reserved"].includes(t.status))
                         .filter(t => matchingTableIds === null || matchingTableIds.has(t.id))
@@ -802,6 +805,9 @@ const DashboardPage = () => {
                               isSnoozed={snoozedOrders.has(table.id)}
                               onToggleSnooze={toggleSnooze}
                               onEdit={() => handleTableClick(table)}
+                              onMarkReady={() => handleMarkReady({ ...table, orderId: order.orderId, tableId: table.tableId || 0 })}
+                              onMarkServed={() => handleMarkServed({ ...table, orderId: order.orderId, tableId: table.tableId || 0 })}
+                              onBillClick={() => handleBillClick(table)}
                             />
                           );
                         })
@@ -820,6 +826,9 @@ const DashboardPage = () => {
                     snoozedOrders={snoozedOrders}
                     onToggleSnooze={toggleSnooze}
                     onEdit={(order) => handleTableClick({ id: `del-${order.orderId}`, orderId: order.orderId, orderType: 'delivery' })}
+                    onMarkReady={handleMarkReady}
+                    onMarkServed={handleMarkServed}
+                    onBillClick={(order) => handleBillClick({ id: `del-${order.orderId}`, orderId: order.orderId, orderType: 'delivery' })}
                     className={activeChannels.includes("dineIn") ? "mt-6 pt-6 border-t" : ""}
                   />
                 )}
@@ -834,6 +843,9 @@ const DashboardPage = () => {
                     snoozedOrders={snoozedOrders}
                     onToggleSnooze={toggleSnooze}
                     onEdit={(order) => handleTableClick({ id: `ta-${order.orderId}`, orderId: order.orderId, orderType: 'takeAway' })}
+                    onMarkReady={handleMarkReady}
+                    onMarkServed={handleMarkServed}
+                    onBillClick={(order) => handleBillClick({ id: `ta-${order.orderId}`, orderId: order.orderId, orderType: 'takeAway' })}
                     className={activeChannels.includes("dineIn") || activeChannels.includes("delivery") ? "mt-6 pt-6 border-t" : ""}
                   />
                 )}
