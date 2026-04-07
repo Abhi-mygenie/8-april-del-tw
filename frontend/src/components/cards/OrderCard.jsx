@@ -288,14 +288,28 @@ const OrderCard = ({
             // Build variants/addons display string
             const variants = item.variation || [];
             const addons = item.addOns || [];
+            
+            // Parse variants - handle different structures
             const variantStr = variants.map(v => {
               if (typeof v === 'string') return v;
+              // Check for name + labels array format (e.g., {name: "HALFNHALF", labels: ["Marinara"]})
+              if (v.labels && Array.isArray(v.labels) && v.labels.length > 0) {
+                const name = v.name || v.variant_name || v.variant_group || '';
+                return `${name}: ${v.labels.join(', ')}`;
+              }
+              // Check for name + value format
               const name = v.name || v.variant_name || v.variant_group || '';
               const value = v.value || v.option_label || v.label || v.selected_option || '';
               if (name && value) return `${name}: ${value}`;
               return name || value || '';
             }).filter(Boolean).join(', ');
-            const addonStr = addons.map(a => a.name || a.addon_name || '').filter(Boolean).join(', ');
+            
+            // Parse addons - prefix with + 
+            const addonStr = addons.map(a => {
+              const name = a.name || a.addon_name || '';
+              return name ? `+ ${name}` : '';
+            }).filter(Boolean).join(', ');
+            
             const detailsStr = [variantStr, addonStr].filter(Boolean).join(', ');
             
             // Item-level notes
