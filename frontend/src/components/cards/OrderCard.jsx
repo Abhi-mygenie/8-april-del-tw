@@ -1,10 +1,15 @@
 import { useState } from "react";
-import { User, X, ChevronDown, ChevronUp, MapPin, Clock, Printer } from "lucide-react";
+import { User, ChevronDown, ChevronUp, MapPin, Clock, Printer, X } from "lucide-react";
 import { COLORS, SOURCE_COLORS } from "../../constants";
 
 /**
  * Unified Order Card - Handles Dine-In, TakeAway, and Delivery
- * Compact design for Order View (4 cards per row)
+ * Compact design for Order View (4 cards per row, 280px min-width)
+ * 
+ * REDESIGNED: April 2026 based on ORDERCARD_SUGGESTIONS.md
+ * - Header: [Logo] [OrderType] [Customer] · [Time] [Amount] [Snooze?]
+ * - Items: Simple display, no item-level buttons
+ * - Footer: Dynamic based on fOrderStatus, 44px touch targets
  * 
  * @param {object}  order      - Full canonical order object from OrderContext
  * @param {string}  orderType  - 'dineIn' | 'takeAway' | 'delivery'
@@ -15,7 +20,8 @@ import { COLORS, SOURCE_COLORS } from "../../constants";
  * @param {func}    onMarkReady - Handler for Ready button
  * @param {func}    onMarkServed - Handler for Serve button
  * @param {func}    onBillClick - Handler for Bill button
- * @param {func}    onCancelItem - Handler for item-level cancel
+ * @param {func}    onAccept   - Handler for Accept button (Yet to Confirm)
+ * @param {func}    onReject   - Handler for Reject button (Yet to Confirm)
  */
 const OrderCard = ({
   order,
@@ -27,7 +33,8 @@ const OrderCard = ({
   onMarkReady,
   onMarkServed,
   onBillClick,
-  onCancelItem,
+  onAccept,
+  onReject,
 }) => {
   const [showServed, setShowServed] = useState(false);
   const [showAddress, setShowAddress] = useState(false);
@@ -38,13 +45,32 @@ const OrderCard = ({
   const isOwn = source === "own";
   const isDineIn = orderType === "dineIn";
   const isDelivery = orderType === "delivery";
+  const isTakeAway = orderType === "takeAway";
   const orderId = order.orderId || order.id;
   const fOrderStatus = order.fOrderStatus || 1;
 
   // Items grouped by status
   const items = order.items || [];
-  const activeItems = items.filter(i => i.status !== "served");
+  const activeItems = items.filter(i => i.status !== "served" && i.status !== "cancelled");
   const servedItems = items.filter(i => i.status === "served");
+
+  const isYetToConfirm = order.status === "yetToConfirm" || order.status === "pending";
+
+  // Order type label for header
+  const getOrderTypeLabel = () => {
+    if (isDineIn) return "Dine In";
+    if (isTakeAway) return "Take Away";
+    if (isDelivery) return "Delivery";
+    return "";
+  };
+
+  // Customer name display - fallback to "Walk-In" or "WC"
+  const getCustomerName = () => {
+    if (order.customer && order.customer.trim()) {
+      return order.customer;
+    }
+    return isDineIn ? "WC" : "Walk-In";
+  };
 
   // Source logo
   const renderLogo = () => {
@@ -69,28 +95,11 @@ const OrderCard = ({
     );
   };
 
-  // Primary ID: table label for dine-in, order # for others
-  const primaryId = isDineIn ? (tableLabel || "T?") : `#${order.orderNumber || orderId}`;
-
-  // Handle item action (Ready/Serve) — item level
-  const handleItemAction = (item, action) => {
-    console.log(`[OrderCard] ${action} item ${item.id} on order ${orderId}`);
-    // Item-level status update would go here
-  };
-
-  // Handle item cancel
-  const handleItemCancel = (item) => {
-    console.log(`[OrderCard] Cancel item ${item.id} on order ${orderId}`);
-    if (onCancelItem) onCancelItem(order, item);
-  };
-
-  const isYetToConfirm = order.status === "yetToConfirm" || order.status === "pending";
-
-  // Get action button config based on item status
-  const getItemActionConfig = (item) => {
-    if (item.status === 'preparing') return { label: 'Ready', color: COLORS.primaryOrange };
-    if (item.status === 'ready') return { label: 'Serve', color: COLORS.primaryGreen };
-    return null;
+  // Get status dot color for items
+  const getItemDotColor = (item) => {
+    if (item.status === 'preparing') return COLORS.primaryOrange;
+    if (item.status === 'ready') return COLORS.primaryGreen;
+    return COLORS.grayText;
   };
 
   return (
@@ -98,68 +107,81 @@ const OrderCard = ({
       data-testid={`order-card-${orderId}`}
       className={`rounded-lg shadow-sm overflow-hidden ${isSnoozed ? "opacity-60" : ""}`}
       style={{ backgroundColor: COLORS.lightBg, border: `1px solid ${COLORS.borderGray}` }}
+      onClick={() => onEdit?.()}
     >
-      {/* ── HEADER — Compact 3-zone layout ── */}
+      {/* ── HEADER — New layout: [Logo] [OrderType] [Customer] · [Time] [Amount] [Snooze?] ── */}
       <div
-        className="px-3 py-2 flex items-center border-b"
+        className="px-3 py-2 flex items-center gap-2 border-b"
         style={{ borderColor: COLORS.borderGray }}
+        onClick={(e) => e.stopPropagation()}
       >
-        {/* LEFT: Logo + ID + Customer */}
-        <div className="flex items-center gap-1.5 min-w-0 flex-shrink-0">
-          {renderLogo()}
-          <div className="flex flex-col leading-tight">
-            <span className="text-[10px] font-bold" style={{ color: COLORS.darkText }}>
-              {primaryId}
-            </span>
-            <span className="text-xs font-medium truncate max-w-[60px]" style={{ color: COLORS.darkText }}>
-              {order.customer || "WC"}
-            </span>
-          </div>
-          {isDelivery && isOwn && (
-            <button
-              data-testid={`address-btn-${orderId}`}
-              className="p-1.5 hover:bg-gray-100 rounded flex-shrink-0"
-              onClick={() => setShowAddress(!showAddress)}
-              title="View address"
-            >
-              <MapPin className="w-3 h-3" style={{ color: COLORS.grayText }} />
-            </button>
-          )}
-        </div>
+        {/* Logo */}
+        {renderLogo()}
 
-        {/* CENTER: Waiter + Time */}
-        <div className="flex-1 flex items-center justify-center gap-1 px-1">
-          {isOwn && order.waiter && (
-            <span className="text-[10px] truncate" style={{ color: COLORS.grayText }}>
-              {order.waiter}
-            </span>
-          )}
-          <span className="text-[10px]" style={{ color: COLORS.grayText }}>
-            · {order.time}
+        {/* Order Type Label */}
+        <span 
+          className="text-[10px] font-semibold px-1.5 py-0.5 rounded flex-shrink-0"
+          style={{ 
+            backgroundColor: isDineIn ? '#FFF3E0' : isTakeAway ? '#E8F5E9' : '#FFEBEE',
+            color: isDineIn ? COLORS.primaryOrange : isTakeAway ? COLORS.primaryGreen : '#E53935'
+          }}
+        >
+          {getOrderTypeLabel()}
+        </span>
+
+        {/* Customer Name + Time */}
+        <div className="flex-1 min-w-0 flex items-center gap-1">
+          <span className="text-xs font-medium truncate" style={{ color: COLORS.darkText }}>
+            {getCustomerName()}
+          </span>
+          <span className="text-[10px] flex-shrink-0" style={{ color: COLORS.grayText }}>
+            · {order.time || ''}
           </span>
         </div>
 
-        {/* RIGHT: Amount + Snooze */}
-        <div className="flex items-center gap-1 flex-shrink-0">
-          <span className="font-bold text-sm" style={{ color: COLORS.primaryOrange }}>
-            ₹{(order.amount || 0).toLocaleString()}
-          </span>
-          {onToggleSnooze && (
-            <button
-              data-testid={`snooze-btn-${orderId}`}
-              onClick={(e) => { e.stopPropagation(); onToggleSnooze(String(orderId)); }}
-              className={`p-1.5 rounded flex-shrink-0 transition-colors ${isSnoozed ? "bg-orange-100" : "hover:bg-gray-100"}`}
-              title={isSnoozed ? "Unsnooze" : "Snooze"}
-            >
-              <Clock className="w-3.5 h-3.5" style={{ color: isSnoozed ? COLORS.primaryOrange : COLORS.grayText }} />
-            </button>
-          )}
-        </div>
+        {/* Amount */}
+        <span className="font-bold text-sm flex-shrink-0" style={{ color: COLORS.primaryOrange }}>
+          ₹{(order.amount || 0).toLocaleString()}
+        </span>
+
+        {/* Snooze Button - Only for Yet to Confirm orders */}
+        {isYetToConfirm && onToggleSnooze && (
+          <button
+            data-testid={`snooze-btn-${orderId}`}
+            onClick={(e) => { 
+              e.stopPropagation(); 
+              onToggleSnooze(String(orderId)); 
+            }}
+            className={`p-1.5 rounded flex-shrink-0 transition-colors ${isSnoozed ? "bg-orange-100" : "hover:bg-gray-100"}`}
+            title={isSnoozed ? "Unsnooze" : "Snooze"}
+          >
+            <Clock className="w-3.5 h-3.5" style={{ color: isSnoozed ? COLORS.primaryOrange : COLORS.grayText }} />
+          </button>
+        )}
+
+        {/* Address toggle for own delivery */}
+        {isDelivery && isOwn && (
+          <button
+            data-testid={`address-btn-${orderId}`}
+            className="p-1.5 hover:bg-gray-100 rounded flex-shrink-0"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowAddress(!showAddress);
+            }}
+            title="View address"
+          >
+            <MapPin className="w-3.5 h-3.5" style={{ color: COLORS.grayText }} />
+          </button>
+        )}
       </div>
 
       {/* ── ADDRESS POPUP (own delivery) ── */}
       {showAddress && isDelivery && isOwn && (
-        <div className="px-3 py-1.5 border-b text-[10px]" style={{ borderColor: COLORS.borderGray, backgroundColor: COLORS.sectionBg }}>
+        <div 
+          className="px-3 py-1.5 border-b text-[10px]" 
+          style={{ borderColor: COLORS.borderGray, backgroundColor: COLORS.sectionBg }}
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="flex items-start gap-1.5">
             <MapPin className="w-3 h-3 flex-shrink-0 mt-0.5" style={{ color: COLORS.primaryOrange }} />
             <span style={{ color: COLORS.darkText }}>
@@ -169,52 +191,22 @@ const OrderCard = ({
         </div>
       )}
 
-      {/* ── ITEMS SECTION — Compact, no status text ── */}
-      <div className="px-3 py-1.5 border-b" style={{ borderColor: COLORS.borderGray }}>
+      {/* ── ITEMS SECTION — Simplified: just ● name (qty) ── */}
+      <div className="px-3 py-2 border-b" style={{ borderColor: COLORS.borderGray }}>
         {activeItems.length > 0 ? (
-          activeItems.map((item) => {
-            const actionCfg = getItemActionConfig(item);
-            return (
-              <div key={item.id} className="flex items-center justify-between py-1">
-                <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                  <div
-                    className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: actionCfg?.color || COLORS.primaryGreen }}
-                  />
-                  <span className="text-xs truncate" style={{ color: COLORS.darkText }}>
-                    {item.name} ({item.qty})
-                  </span>
-                </div>
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  {/* Item-level cancel */}
-                  <button
-                    data-testid={`cancel-item-${item.id}`}
-                    className="p-1 rounded hover:bg-red-50"
-                    onClick={() => handleItemCancel(item)}
-                    title="Cancel item"
-                  >
-                    <X className="w-3.5 h-3.5" style={{ color: COLORS.errorText }} />
-                  </button>
-                  {/* Item-level action */}
-                  {actionCfg && item.status !== "served" && (
-                    <button
-                      data-testid={`item-action-${item.id}`}
-                      className="px-2 py-1 text-[10px] font-bold rounded"
-                      style={{
-                        backgroundColor: actionCfg.color,
-                        color: "white",
-                      }}
-                      onClick={() => handleItemAction(item, actionCfg.label)}
-                    >
-                      {actionCfg.label}
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })
+          activeItems.map((item) => (
+            <div key={item.id} className="flex items-center gap-2 py-1.5">
+              <div
+                className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                style={{ backgroundColor: getItemDotColor(item) }}
+              />
+              <span className="text-xs" style={{ color: COLORS.darkText }}>
+                {item.name} ({item.qty})
+              </span>
+            </div>
+          ))
         ) : (
-          <div className="py-1 text-[10px]" style={{ color: COLORS.grayText }}>
+          <div className="py-1.5 text-xs" style={{ color: COLORS.grayText }}>
             No active items
           </div>
         )}
@@ -225,35 +217,28 @@ const OrderCard = ({
         <div className="border-b" style={{ borderColor: COLORS.borderGray }}>
           <button
             data-testid={`served-toggle-${orderId}`}
-            className="w-full px-3 py-1.5 flex items-center justify-between text-[10px] hover:bg-gray-50"
+            className="w-full px-3 py-1.5 flex items-center justify-between text-xs hover:bg-gray-50"
             style={{ color: COLORS.grayText }}
-            onClick={() => setShowServed(!showServed)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowServed(!showServed);
+            }}
           >
-            <span>Served ({servedItems.length})</span>
-            {showServed ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+            <span>▼ Served ({servedItems.length})</span>
+            {showServed ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
           </button>
 
           {showServed && (
-            <div className="px-3 pb-1.5">
+            <div className="px-3 pb-2">
               {servedItems.map((item) => (
-                <div key={item.id} className="flex items-center justify-between py-1">
-                  <div className="flex items-center gap-1.5">
-                    <div
-                      className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: COLORS.primaryGreen }}
-                    />
-                    <span className="text-[10px]" style={{ color: COLORS.grayText }}>
-                      {item.name} ({item.qty})
-                    </span>
-                  </div>
-                  <button
-                    data-testid={`cancel-served-${item.id}`}
-                    className="p-1 rounded hover:bg-red-50"
-                    onClick={() => handleItemCancel(item)}
-                    title="Cancel item"
-                  >
-                    <X className="w-3 h-3" style={{ color: COLORS.errorText }} />
-                  </button>
+                <div key={item.id} className="flex items-center gap-2 py-1.5">
+                  <div
+                    className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: COLORS.primaryGreen }}
+                  />
+                  <span className="text-xs" style={{ color: COLORS.grayText }}>
+                    {item.name} ({item.qty})
+                  </span>
                 </div>
               ))}
             </div>
@@ -264,92 +249,105 @@ const OrderCard = ({
       {/* ── RIDER SECTION (Delivery + Aggregator only) ── */}
       {isDelivery && !isOwn && (
         <div
-          className="px-3 py-1.5 border-b flex items-center gap-1.5"
+          className="px-3 py-2 border-b flex items-center gap-2"
           style={{ borderColor: COLORS.borderGray, backgroundColor: COLORS.sectionBg }}
+          onClick={(e) => e.stopPropagation()}
         >
           <div
-            className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+            className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
             style={{ backgroundColor: COLORS.borderGray }}
           >
-            <User className="w-2.5 h-2.5" style={{ color: COLORS.grayText }} />
+            <User className="w-3 h-3" style={{ color: COLORS.grayText }} />
           </div>
           <div className="flex-1 min-w-0">
             {order.rider ? (
               <>
-                <div className="text-[10px] font-medium truncate" style={{ color: COLORS.darkText }}>{order.rider}</div>
-                <div className="text-[9px]" style={{ color: COLORS.grayText }}>{order.riderPhone}</div>
+                <div className="text-xs font-medium truncate" style={{ color: COLORS.darkText }}>{order.rider}</div>
+                <div className="text-[10px]" style={{ color: COLORS.grayText }}>{order.riderPhone}</div>
               </>
             ) : (
-              <div className="text-[10px]" style={{ color: COLORS.grayText }}>Awaiting Runner</div>
+              <div className="text-xs" style={{ color: COLORS.grayText }}>Awaiting Runner</div>
             )}
           </div>
         </div>
       )}
 
-      {/* ── FOOTER ACTIONS — Dynamic based on fOrderStatus ── */}
-      <div className="px-3 py-2 flex items-center justify-between" style={{ backgroundColor: COLORS.sectionBg }}>
-        {/* Left: KOT button (always visible) */}
-        <button
-          data-testid={`kot-btn-${orderId}`}
-          className="p-2 rounded border flex items-center justify-center"
-          style={{ borderColor: COLORS.borderGray, color: COLORS.darkText }}
-          title="Print KOT"
-        >
-          <Printer className="w-4 h-4" />
-        </button>
+      {/* ── FOOTER ACTIONS — Dynamic based on fOrderStatus, 44px touch targets ── */}
+      <div 
+        className="px-3 py-2 flex items-center justify-between gap-2" 
+        style={{ backgroundColor: COLORS.sectionBg }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {isYetToConfirm ? (
+          /* Yet to confirm — [X Reject] + [Accept] */
+          <>
+            <button
+              data-testid={`reject-btn-${orderId}`}
+              className="min-h-[44px] min-w-[44px] px-3 rounded-lg border flex items-center justify-center gap-1 text-xs font-semibold"
+              style={{ borderColor: COLORS.errorText, color: COLORS.errorText }}
+              onClick={() => onReject?.(order)}
+            >
+              <X className="w-4 h-4" />
+              <span className="hidden sm:inline">Reject</span>
+            </button>
+            <button
+              data-testid={`accept-btn-${orderId}`}
+              className="min-h-[44px] flex-1 px-4 text-sm font-bold rounded-lg"
+              style={{ backgroundColor: COLORS.primaryGreen, color: "white" }}
+              onClick={() => onAccept?.(order)}
+            >
+              Accept
+            </button>
+          </>
+        ) : (
+          /* Normal flow: [KOT] + [Ready/Serve/Bill] */
+          <>
+            {/* KOT button - always visible */}
+            <button
+              data-testid={`kot-btn-${orderId}`}
+              className="min-h-[44px] min-w-[44px] rounded-lg border flex items-center justify-center"
+              style={{ borderColor: COLORS.borderGray, color: COLORS.darkText }}
+              title="Print KOT"
+            >
+              <Printer className="w-5 h-5" />
+            </button>
 
-        {/* Right: Dynamic action based on order status */}
-        <div className="flex items-center gap-2">
-          {isYetToConfirm ? (
-            /* Yet to confirm — Reject + Accept */
-            <>
+            {/* Dynamic action button based on fOrderStatus */}
+            {fOrderStatus === 1 && (
+              /* Preparing → Ready button (orange) */
               <button
-                data-testid={`reject-btn-${orderId}`}
-                className="p-2 rounded border flex items-center justify-center"
-                style={{ borderColor: COLORS.errorText, color: COLORS.errorText }}
+                data-testid={`ready-btn-${orderId}`}
+                className="min-h-[44px] flex-1 px-4 text-sm font-bold rounded-lg"
+                style={{ backgroundColor: COLORS.primaryOrange, color: "white" }}
+                onClick={() => onMarkReady?.(order)}
               >
-                <X className="w-4 h-4" />
+                Ready
               </button>
+            )}
+            {fOrderStatus === 2 && (
+              /* Ready → Serve button (green) */
               <button
-                data-testid={`accept-btn-${orderId}`}
-                className="px-4 py-2 text-xs font-bold rounded"
+                data-testid={`serve-btn-${orderId}`}
+                className="min-h-[44px] flex-1 px-4 text-sm font-bold rounded-lg"
                 style={{ backgroundColor: COLORS.primaryGreen, color: "white" }}
+                onClick={() => onMarkServed?.(order)}
               >
-                Accept
+                Serve
               </button>
-            </>
-          ) : fOrderStatus === 1 ? (
-            /* Preparing — Ready button */
-            <button
-              data-testid={`ready-btn-${orderId}`}
-              className="px-4 py-2 text-xs font-bold rounded"
-              style={{ backgroundColor: COLORS.primaryOrange, color: "white" }}
-              onClick={() => onMarkReady?.(order)}
-            >
-              Ready
-            </button>
-          ) : fOrderStatus === 2 ? (
-            /* Ready — Serve button */
-            <button
-              data-testid={`serve-btn-${orderId}`}
-              className="px-4 py-2 text-xs font-bold rounded"
-              style={{ backgroundColor: COLORS.primaryGreen, color: "white" }}
-              onClick={() => onMarkServed?.(order)}
-            >
-              Serve
-            </button>
-          ) : fOrderStatus === 5 ? (
-            /* Served — Bill button */
-            <button
-              data-testid={`bill-btn-${orderId}`}
-              className="px-4 py-2 text-xs font-bold rounded"
-              style={{ backgroundColor: COLORS.primaryGreen, color: "white" }}
-              onClick={() => onBillClick?.(order)}
-            >
-              Bill
-            </button>
-          ) : null}
-        </div>
+            )}
+            {fOrderStatus === 5 && (
+              /* Served → Bill button (green) */
+              <button
+                data-testid={`bill-btn-${orderId}`}
+                className="min-h-[44px] flex-1 px-4 text-sm font-bold rounded-lg"
+                style={{ backgroundColor: COLORS.primaryGreen, color: "white" }}
+                onClick={() => onBillClick?.(order)}
+              >
+                Bill
+              </button>
+            )}
+          </>
+        )}
       </div>
     </div>
   );
