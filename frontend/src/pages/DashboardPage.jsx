@@ -166,11 +166,12 @@ const DashboardPage = () => {
     };
   }, []);
   const [activeChannels, setActiveChannels] = useState(["delivery", "takeAway", "dineIn", "room"]);
-  const [activeStatuses, setActiveStatuses] = useState(["confirm", "cooking", "ready", "running", "schedule"]);
+  const [activeStatuses, setActiveStatuses] = useState(["pending", "preparing", "ready", "running", "served", "pendingPayment", "paid", "cancelled", "reserved"]);
   const [tableFilter, setTableFilter] = useState(null); // null | 'confirm' | 'schedule'
   const [activeView, setActiveView] = useState("table");
   const [dashboardView, setDashboardView] = useState("channel"); // 'channel' | 'status' - for dual-view toggle
-  const [hiddenColumns, setHiddenColumns] = useState([]); // Array of column IDs to hide
+  const [hiddenChannels, setHiddenChannels] = useState([]); // Hidden channel IDs (dineIn, delivery, etc.)
+  const [hiddenStatuses, setHiddenStatuses] = useState([]); // Hidden status IDs (preparing, ready, etc.)
   const [activeFirst, setActiveFirst] = useState(true);
   const [orderEntryTable, setOrderEntryTable] = useState(null);
   const [orderEntryType, setOrderEntryType] = useState(null);
@@ -377,36 +378,61 @@ const DashboardPage = () => {
       return table;
     };
 
+    // Helper function to check if order status matches active status filters
+    const statusMatchesFilter = (item) => {
+      // If item has no order or no fOrderStatus, include it (e.g., available tables)
+      if (!item.order && !item.fOrderStatus) return true;
+      
+      const fOrderStatus = item.order?.fOrderStatus || item.fOrderStatus;
+      if (!fOrderStatus) return true;
+      
+      // Map fOrderStatus to filter IDs
+      const statusMap = {
+        7: 'pending',      // YTC
+        1: 'preparing',
+        2: 'ready',
+        8: 'running',
+        5: 'served',
+        9: 'pendingPayment',
+        6: 'paid',
+        3: 'cancelled',
+        10: 'reserved',
+      };
+      
+      const statusId = statusMap[fOrderStatus];
+      return statusId ? activeStatuses.includes(statusId) : true;
+    };
+
     return {
       dineIn: {
         id: 'dineIn',
         name: 'Dine-In',
         items: [
-          ...allTablesList.filter(t => !t.isRoom && !t.isWalkIn).map(enrichTable),
-          ...walkInOrders.map(adaptWalkIn),
+          ...allTablesList.filter(t => !t.isRoom && !t.isWalkIn).map(enrichTable).filter(statusMatchesFilter),
+          ...walkInOrders.map(adaptWalkIn).filter(statusMatchesFilter),
         ],
         enabled: features.dineIn !== false,
       },
       takeAway: {
         id: 'takeAway',
         name: 'TakeAway',
-        items: takeAwayOrders.map(o => adaptOrder(o, 'takeAway')),
+        items: takeAwayOrders.map(o => adaptOrder(o, 'takeAway')).filter(statusMatchesFilter),
         enabled: features.takeaway !== false,
       },
       delivery: {
         id: 'delivery',
         name: 'Delivery',
-        items: deliveryOrders.map(o => adaptOrder(o, 'delivery')),
+        items: deliveryOrders.map(o => adaptOrder(o, 'delivery')).filter(statusMatchesFilter),
         enabled: features.delivery !== false,
       },
       room: {
         id: 'room',
         name: 'Room',
-        items: allRoomsList,
+        items: allRoomsList.filter(statusMatchesFilter),
         enabled: features.room !== false,
       },
     };
-  }, [allTablesList, allRoomsList, takeAwayOrders, deliveryOrders, walkInOrders, features, getOrderByTableId]);
+  }, [allTablesList, allRoomsList, takeAwayOrders, deliveryOrders, walkInOrders, features, getOrderByTableId, activeStatuses]);
 
   // === Status-Based Layout Data (USE_STATUS_VIEW feature flag) ===
   const statusData = useMemo(() => {
@@ -928,8 +954,12 @@ const DashboardPage = () => {
           setActiveView={setActiveView}
           dashboardView={dashboardView}
           setDashboardView={setDashboardView}
-          hiddenColumns={hiddenColumns}
-          onRestoreColumns={() => setHiddenColumns([])}
+          hiddenChannels={hiddenChannels}
+          hiddenStatuses={hiddenStatuses}
+          onRestoreHidden={() => {
+            setHiddenChannels([]);
+            setHiddenStatuses([]);
+          }}
           activeFirst={activeFirst}
           setActiveFirst={setActiveFirst}
           searchQuery={searchQuery}
@@ -945,8 +975,8 @@ const DashboardPage = () => {
               <ChannelColumnsLayout
                 channels={
                   dashboardView === 'status' && statusData
-                    ? Object.values(statusData).filter(c => c.items?.length > 0 && !hiddenColumns.includes(c.id))
-                    : Object.values(channelData).filter(c => c.enabled && !hiddenColumns.includes(c.id))
+                    ? Object.values(statusData).filter(c => c.items?.length > 0 && !hiddenStatuses.includes(c.id))
+                    : Object.values(channelData).filter(c => c.enabled && !hiddenChannels.includes(c.id))
                 }
                 viewType={activeView === 'table' ? 'table' : 'order'}
                 activeFirst={activeFirst}
@@ -966,7 +996,14 @@ const DashboardPage = () => {
                 isTableEngaged={isTableEngaged}
                 searchQuery={searchQuery}
                 matchingIds={matchingTableIds}
-                onHideColumn={(columnId) => setHiddenColumns(prev => [...prev, columnId])}
+                onHideColumn={(columnId) => {
+                  // Hide column AND corresponding filter based on current view
+                  if (dashboardView === 'status') {
+                    setHiddenStatuses(prev => [...prev, columnId]);
+                  } else {
+                    setHiddenChannels(prev => [...prev, columnId]);
+                  }
+                }}
               />
             )}
 

@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect } from "react";
-import { PlusSquare, Grid3X3, Bike, ShoppingBag, Utensils, DoorOpen, List, LayoutGrid, Search, X, ChevronRight, Columns, BarChart3 } from "lucide-react";
+import { PlusSquare, Grid3X3, Bike, ShoppingBag, Utensils, DoorOpen, List, Search, X, ChevronRight, Columns, BarChart3 } from "lucide-react";
 import { COLORS, LOGO_URL, USE_STATUS_VIEW } from "../../constants";
 import { useRestaurant } from "../../contexts";
 
 // Multi-selectable channel IDs (includes Room now - same behavior as tables)
 const MULTI_CHANNEL_IDS = ["delivery", "takeAway", "dineIn", "room"];
 
-// Order Type channels with icons and short labels
+// Order Type channels with icons and short labels (for Status View filters)
 const channels = [
   { id: "delivery", label: "Del", fullLabel: "Delivery", icon: Bike },
   { id: "takeAway", label: "Take", fullLabel: "TakeAway", icon: ShoppingBag },
@@ -14,13 +14,18 @@ const channels = [
   { id: "room", label: "Room", fullLabel: "Room", icon: DoorOpen },
 ];
 
-// Order Status filters (same for all channels including Room)
-const orderStatuses = [
-  { id: "confirm", label: "Confirm" },
-  { id: "cooking", label: "Cooking" },
-  { id: "ready", label: "Ready" },
-  { id: "running", label: "Running" },
-  { id: "schedule", label: "Schedule" },
+// All 9 Order Status filters (for Channel View filters)
+// Maps to fOrderStatus values from API
+const allStatusFilters = [
+  { id: "pending", fOrderStatus: 7, label: "YTC" },           // Yet to Confirm
+  { id: "preparing", fOrderStatus: 1, label: "Preparing" },
+  { id: "ready", fOrderStatus: 2, label: "Ready" },
+  { id: "running", fOrderStatus: 8, label: "Running" },
+  { id: "served", fOrderStatus: 5, label: "Served" },
+  { id: "pendingPayment", fOrderStatus: 9, label: "Pending Pay" },
+  { id: "paid", fOrderStatus: 6, label: "Paid" },
+  { id: "cancelled", fOrderStatus: 3, label: "Cancelled" },
+  { id: "reserved", fOrderStatus: 10, label: "Reserved" },
 ];
 
 // Header Component
@@ -36,8 +41,9 @@ const Header = ({
   setActiveView,
   dashboardView = 'channel',
   setDashboardView,
-  hiddenColumns = [],
-  onRestoreColumns,
+  hiddenChannels = [],
+  hiddenStatuses = [],
+  onRestoreHidden,
   activeFirst, 
   setActiveFirst,
   searchQuery,
@@ -105,8 +111,14 @@ const Header = ({
   // Determine which statuses to show based on view (same for all channels including Room)
   const isTableView = activeView === "table";
   
-  // Show all 5 status filters for both views
-  const statuses = orderStatuses;
+  // Get visible status filters (exclude hidden statuses) for Channel View
+  const visibleStatusFilters = allStatusFilters.filter(s => !hiddenStatuses.includes(s.id));
+  
+  // Get visible channel filters (exclude hidden channels) for Status View  
+  const visibleChannelFilters = visibleChannels.filter(c => !hiddenChannels.includes(c.id));
+  
+  // Calculate total hidden count for restore button
+  const totalHidden = hiddenChannels.length + hiddenStatuses.length;
 
   // Dynamic search placeholder based on selected channels
   const getSearchPlaceholder = () => {
@@ -169,7 +181,7 @@ const Header = ({
       style={{ backgroundColor: COLORS.lightBg, borderBottom: `1px solid ${COLORS.borderGray}` }}
     >
       <div className="flex items-center justify-between">
-        {/* Left Section - Logo + Order Types */}
+        {/* Left Section - Logo + Filters */}
         <div className="flex items-center gap-4">
           {/* Logo */}
           <div data-testid="logo" className="flex items-center">
@@ -180,46 +192,62 @@ const Header = ({
             />
           </div>
 
-          {/* Order Type Pills - Multi-select with All */}
+          {/* Filter Pills - Swap based on dashboardView */}
+          {/* Status View → Channel filters | Channel View → Status filters */}
           <nav className="flex items-center gap-1 ml-4">
-            {/* All pill */}
-            <button
-              data-testid="channel-all"
-              onClick={() => handleChannelToggle("all")}
-              className="flex items-center gap-1.5 py-3 px-3 rounded-lg transition-colors"
-              style={{
-                backgroundColor: isAllChannels ? COLORS.primaryOrange : "transparent",
-                color: isAllChannels ? "white" : COLORS.grayText,
-              }}
-              title="All Channels"
-            >
-              <LayoutGrid className="w-4 h-4" />
-              <span className="text-sm font-medium">All</span>
-            </button>
-            {visibleChannels.map((channel) => {
-              const Icon = channel.icon;
-              const isActive = !isAllChannels && activeChannels.includes(channel.id);
-              return (
-                <button
-                  key={channel.id}
-                  data-testid={`channel-${channel.id}`}
-                  onClick={() => handleChannelToggle(channel.id)}
-                  className="flex items-center gap-1.5 py-3 px-3 rounded-lg transition-colors"
-                  style={{
-                    backgroundColor: isActive ? COLORS.primaryOrange : "transparent",
-                    color: isActive ? "white" : COLORS.grayText,
-                  }}
-                  title={channel.fullLabel}
-                >
-                  <Icon className="w-4 h-4" />
-                  <span className="text-sm font-medium">{channel.label}</span>
-                </button>
-              );
-            })}
+            {dashboardView === 'status' ? (
+              /* Channel Filter Pills (for Status View - filter within status columns) */
+              visibleChannelFilters.map((channel) => {
+                const Icon = channel.icon;
+                const isActive = activeChannels.includes(channel.id);
+                return (
+                  <button
+                    key={channel.id}
+                    data-testid={`filter-channel-${channel.id}`}
+                    onClick={() => {
+                      if (isActive) {
+                        const next = activeChannels.filter(c => c !== channel.id);
+                        if (next.length > 0) setActiveChannels(next);
+                      } else {
+                        setActiveChannels([...activeChannels, channel.id]);
+                      }
+                    }}
+                    className="flex items-center gap-1.5 py-2.5 px-3 rounded-lg transition-colors"
+                    style={{
+                      backgroundColor: isActive ? COLORS.primaryOrange : "transparent",
+                      color: isActive ? "white" : COLORS.grayText,
+                    }}
+                    title={channel.fullLabel}
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span className="text-sm font-medium">{channel.label}</span>
+                  </button>
+                );
+              })
+            ) : (
+              /* Status Filter Pills (for Channel View - filter within channel columns) */
+              visibleStatusFilters.map((status) => {
+                const isActive = activeStatuses.includes(status.id);
+                return (
+                  <button
+                    key={status.id}
+                    data-testid={`filter-status-${status.id}`}
+                    onClick={() => handleStatusToggle(status.id)}
+                    className="py-2.5 px-3 rounded-lg text-sm font-medium transition-colors"
+                    style={{
+                      backgroundColor: isActive ? COLORS.primaryOrange : "transparent",
+                      color: isActive ? "white" : COLORS.grayText,
+                    }}
+                  >
+                    {status.label}
+                  </button>
+                );
+              })
+            )}
           </nav>
         </div>
 
-        {/* Right Section - Search + Status Filters + Actions */}
+        {/* Right Section - Search + Actions + View Toggles */}
         <div className="flex items-center gap-3">
           {/* Search Input with Dropdown */}
           <div className="relative">
@@ -509,74 +537,6 @@ const Header = ({
           {/* Divider */}
           <div className="w-px h-6" style={{ backgroundColor: COLORS.borderGray }} />
 
-          {/* Filter Pills - Swap based on dashboardView */}
-          {/* When viewing by Channel → show Status filters */}
-          {/* When viewing by Status → show Channel filters */}
-          {dashboardView === 'channel' ? (
-            /* Status Filter Pills (filter within channel columns) */
-            <div className="flex items-center gap-2">
-              {statuses.map((status) => {
-                // Table view: exclusive single-select filter
-                const isActive = isTableView
-                  ? tableFilter === status.id
-                  : activeStatuses.includes(status.id);
-                const handleClick = isTableView
-                  ? () => setTableFilter(prev => prev === status.id ? null : status.id)
-                  : () => handleStatusToggle(status.id);
-                return (
-                  <button
-                    key={status.id}
-                    data-testid={`status-${status.id}`}
-                    onClick={handleClick}
-                    className="px-3 py-2.5 rounded-md text-xs font-medium transition-all"
-                    style={{
-                      backgroundColor: isActive ? COLORS.lightBg : "transparent",
-                      color: isActive ? COLORS.primaryOrange : COLORS.grayText,
-                      border: `1px solid ${isActive ? COLORS.primaryOrange : COLORS.borderGray}`,
-                    }}
-                  >
-                    {status.label}
-                  </button>
-                );
-              })}
-            </div>
-          ) : (
-            /* Channel Filter Pills (filter within status columns) */
-            <div className="flex items-center gap-2">
-              {visibleChannels.map((channel) => {
-                const Icon = channel.icon;
-                const isActive = activeChannels.includes(channel.id);
-                return (
-                  <button
-                    key={channel.id}
-                    data-testid={`filter-channel-${channel.id}`}
-                    onClick={() => {
-                      // Toggle channel in activeChannels array
-                      if (isActive) {
-                        const next = activeChannels.filter(c => c !== channel.id);
-                        if (next.length > 0) setActiveChannels(next);
-                      } else {
-                        setActiveChannels([...activeChannels, channel.id]);
-                      }
-                    }}
-                    className="flex items-center gap-1.5 px-3 py-2.5 rounded-md text-xs font-medium transition-all"
-                    style={{
-                      backgroundColor: isActive ? COLORS.lightBg : "transparent",
-                      color: isActive ? COLORS.primaryOrange : COLORS.grayText,
-                      border: `1px solid ${isActive ? COLORS.primaryOrange : COLORS.borderGray}`,
-                    }}
-                  >
-                    <Icon className="w-3.5 h-3.5" />
-                    <span>{channel.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Divider */}
-          <div className="w-px h-6" style={{ backgroundColor: COLORS.borderGray }} />
-
           {/* Add Order Button - Prominent Orange */}
           <button
             data-testid="add-table-btn"
@@ -626,19 +586,19 @@ const Header = ({
             </div>
           )}
 
-          {/* Restore Hidden Columns Button - shows when columns are hidden */}
-          {hiddenColumns.length > 0 && onRestoreColumns && (
+          {/* Restore Hidden Button - shows when columns/filters are hidden */}
+          {totalHidden > 0 && onRestoreHidden && (
             <button
-              data-testid="restore-columns-btn"
-              onClick={onRestoreColumns}
+              data-testid="restore-hidden-btn"
+              onClick={onRestoreHidden}
               className="px-3 py-1.5 rounded-md text-xs font-medium transition-all hover:opacity-80"
               style={{ 
                 backgroundColor: COLORS.primaryOrange,
                 color: 'white',
               }}
-              title={`Restore ${hiddenColumns.length} hidden column(s)`}
+              title={`Restore ${totalHidden} hidden item(s)`}
             >
-              Show Hidden ({hiddenColumns.length})
+              Show Hidden ({totalHidden})
             </button>
           )}
 
