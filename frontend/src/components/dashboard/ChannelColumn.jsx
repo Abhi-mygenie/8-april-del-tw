@@ -8,8 +8,8 @@ import OrderCard from '../cards/OrderCard';
 // Card widths
 const TABLE_CARD_WIDTH = 160;
 const ORDER_CARD_WIDTH = 300;
-const GAP = 12;
-const PADDING = 24;
+const GAP = 8;
+const PADDING = 16;
 
 /**
  * ChannelColumn - Single column for a channel (Dine-In, TakeAway, Delivery, Room)
@@ -25,6 +25,7 @@ const ChannelColumn = ({
   maxColumns,        // Max column setting for this channel
   viewType,          // 'table' | 'order'
   activeFirst,
+  isLast,            // Is this the last visible channel (no border-right)
   hasLeftArrow,      // Show left arrow button
   hasRightArrow,     // Show right arrow button
   onLeftArrowClick,  // Transfer column to left neighbor
@@ -81,6 +82,7 @@ const ChannelColumn = ({
       style={{ 
         width: `${columnWidth}px`,
         minWidth: `${columnWidth}px`,
+        borderRight: isLast ? 'none' : `1px solid ${COLORS.borderGray}`,
       }}
     >
       {/* Column Header with Arrow Buttons */}
@@ -127,7 +129,7 @@ const ChannelColumn = ({
       </div>
 
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto p-3">
+      <div className="flex-1 overflow-y-auto p-2">
         {sortedItems.length === 0 ? (
           <div 
             className="flex items-center justify-center h-32 text-sm"
@@ -137,7 +139,7 @@ const ChannelColumn = ({
           </div>
         ) : (
           <div 
-            className="grid gap-3"
+            className="grid gap-2"
             style={{ 
               gridTemplateColumns: viewType === 'table' 
                 ? `repeat(${actualColumns}, ${TABLE_CARD_WIDTH}px)` 

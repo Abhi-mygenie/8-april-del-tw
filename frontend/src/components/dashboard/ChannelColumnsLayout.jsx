@@ -1,7 +1,6 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { COLORS } from '../../constants';
 import ChannelColumn from './ChannelColumn';
-import ResizeHandle from './ResizeHandle';
 
 // Default max columns per view type (fallback before measurement)
 const getDefaultMaxColumns = (viewType) => {
@@ -13,10 +12,9 @@ const getDefaultMaxColumns = (viewType) => {
 const CHANNEL_ORDER = ['dineIn', 'takeAway', 'delivery', 'room'];
 
 // Card unit sizes (card width + gap)
-const TABLE_CARD_UNIT = 172; // 160px card + 12px gap
-const ORDER_CARD_UNIT = 312; // 300px card + 12px gap
-const CHANNEL_PADDING = 24;  // p-3 = 12px each side
-const RESIZE_HANDLE_WIDTH = 24;
+const TABLE_CARD_UNIT = 168; // 160px card + 8px gap
+const ORDER_CARD_UNIT = 308; // 300px card + 8px gap
+const CHANNEL_PADDING = 16;  // p-2 = 8px each side
 
 // Card widths (for pixel-based column sizing)
 const TABLE_CARD_WIDTH = 168; // 160px + gap
@@ -102,9 +100,8 @@ const ChannelColumnsLayout = ({
       const visibleCount = visibleChannels.length;
       const cardUnit = viewType === 'table' ? TABLE_CARD_UNIT : ORDER_CARD_UNIT;
 
-      const totalHandles = Math.max(0, visibleCount - 1) * RESIZE_HANDLE_WIDTH;
       const totalPadding = visibleCount * CHANNEL_PADDING;
-      const available = containerWidth - totalHandles - totalPadding;
+      const available = containerWidth - totalPadding;
       const perChannel = available / visibleCount;
       const cols = Math.max(1, Math.floor(perChannel / cardUnit));
 
@@ -158,44 +155,8 @@ const ChannelColumnsLayout = ({
     });
   }, []);
 
-  // Handle resize drag (for Phase B - placeholder for now)
-  const handleResize = useCallback((leftChannelId, rightChannelId, deltaX) => {
-    const cardWidth = viewType === 'table' ? TABLE_CARD_WIDTH : ORDER_CARD_WIDTH;
-    const columnsDelta = Math.round(deltaX / cardWidth);
-    
-    if (columnsDelta === 0) return;
-    
-    setMaxColumns(prev => {
-      const leftMax = prev[leftChannelId] ?? 2;
-      const rightMax = prev[rightChannelId] ?? 2;
-      
-      // Positive delta = drag right = left gains, right loses
-      const newLeftMax = Math.max(1, leftMax + columnsDelta);
-      const newRightMax = Math.max(1, rightMax - columnsDelta);
-      
-      return {
-        ...prev,
-        [leftChannelId]: newLeftMax,
-        [rightChannelId]: newRightMax,
-      };
-    });
-  }, [viewType]);
-
-  // Calculate total width needed for layout
-  const channelWidths = useMemo(() => {
-    const cardWidth = viewType === 'table' ? TABLE_CARD_WIDTH : ORDER_CARD_WIDTH;
-    const widths = {};
-    
-    enabledChannels.forEach(channel => {
-      const actualCols = getActualColumns(channel.id, channel.items?.length || 0);
-      // Width = columns * cardWidth + padding (24px)
-      widths[channel.id] = actualCols > 0 ? (actualCols * cardWidth) + 24 : 0;
-    });
-    
-    return widths;
-  }, [enabledChannels, viewType, getActualColumns]);
-
-  // Render columns with resize handles between them
+  // Calculate total width needed for layout (kept for potential future use)
+  // Render columns with border separators
   const renderColumns = () => {
     const elements = [];
     const visibleChannels = enabledChannels.filter(c => {
@@ -219,6 +180,10 @@ const ChannelColumnsLayout = ({
       // Skip channels with 0 actual columns (no orders)
       if (actualColumns === 0) return;
 
+      // Determine if this is the last visible channel
+      const visibleIndex = visibleChannels.findIndex(c => c.id === channel.id);
+      const isLast = visibleIndex === visibleChannels.length - 1;
+
       // Add column
       elements.push(
         <ChannelColumn
@@ -228,6 +193,7 @@ const ChannelColumnsLayout = ({
           maxColumns={channelMax}
           viewType={viewType}
           activeFirst={activeFirst}
+          isLast={isLast}
           hasLeftArrow={true}
           hasRightArrow={true}
           onLeftArrowClick={() => handleArrowClick(channel.id, 'left')}
@@ -249,18 +215,6 @@ const ChannelColumnsLayout = ({
           matchingIds={matchingIds}
         />
       );
-      
-      // Add resize handle between visible columns
-      const nextVisibleIndex = visibleChannels.findIndex(c => c.id === channel.id) + 1;
-      if (nextVisibleIndex < visibleChannels.length) {
-        const nextChannel = visibleChannels[nextVisibleIndex];
-        elements.push(
-          <ResizeHandle
-            key={`resize-${channel.id}-${nextChannel.id}`}
-            onDrag={(deltaX) => handleResize(channel.id, nextChannel.id, deltaX)}
-          />
-        );
-      }
     });
     
     return elements;

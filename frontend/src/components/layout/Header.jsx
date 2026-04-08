@@ -161,7 +161,7 @@ const Header = ({
   return (
     <header
       data-testid="pos-header"
-      className="px-6 py-3"
+      className="px-3 py-2"
       style={{ backgroundColor: COLORS.lightBg, borderBottom: `1px solid ${COLORS.borderGray}` }}
     >
       <div className="flex items-center justify-between">

@@ -846,10 +846,10 @@ const DashboardPage = () => {
           onAddOrder={handleAddOrder}
         />
 
-        <main className="flex-1 p-6 overflow-auto">
+        <main className="flex-1 p-3 overflow-auto">
           <div
             data-testid="content-container"
-            className="rounded-2xl shadow-sm p-6"
+            className="rounded-2xl shadow-sm p-3"
             style={{ backgroundColor: COLORS.lightBg }}
           >
             {/* === NEW: Channel-Based Layout (Feature Flag) === */}
