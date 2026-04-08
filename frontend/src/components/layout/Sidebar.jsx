@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { 
   ChevronDown, User, Home as HomeIcon, ClipboardList, BarChart3, 
   UtensilsCrossed, Users, Wallet, Package, Settings, LogOut, 
-  PanelLeftClose, PanelLeft, RefreshCw, Bell, BellOff 
+  PanelLeftClose, PanelLeft, RefreshCw, Bell, BellOff, Eye 
 } from "lucide-react";
 import { COLORS, GENIE_LOGO_URL } from "../../constants";
 import { useAuth, useRestaurant, useMenu, useTables, useSettings } from "../../contexts";
@@ -69,6 +69,14 @@ const sidebarMenuItems = [
     ],
   },
   {
+    id: "visibility-settings",
+    label: "Visibility Settings",
+    icon: Eye,
+    children: [
+      { id: "status-config", label: "Status Configuration", path: "/visibility/status-config" },
+    ],
+  },
+  {
     id: "employees",
     label: "Employees",
     icon: Users,
@@ -121,7 +129,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isSilentMode, setIsSilentMode, onO
   };
 
   // Only show these sidebar sections (hide the rest)
-  const VISIBLE_SECTIONS = new Set(['dashboard', 'reports', 'menu-management']);
+  const VISIBLE_SECTIONS = new Set(['dashboard', 'reports', 'menu-management', 'visibility-settings']);
 
   // Filter menu items by visibility + permission
   const visibleMenuItems = sidebarMenuItems.filter((item) => {
@@ -184,6 +192,17 @@ const Sidebar = ({ isExpanded, setIsExpanded, isSilentMode, setIsSilentMode, onO
         return;
       }
       // Other report types - coming soon
+      showComingSoon(child.label);
+      return;
+    }
+    
+    // Visibility Settings children - navigate to actual routes
+    if (parentId === 'visibility-settings') {
+      if (child.id === 'status-config') {
+        setActiveItem(child.id);
+        navigate(child.path);
+        return;
+      }
       showComingSoon(child.label);
       return;
     }

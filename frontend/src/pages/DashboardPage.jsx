@@ -165,6 +165,35 @@ const DashboardPage = () => {
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
+  
+  // Read enabled statuses from localStorage (for visibility config)
+  const [enabledStatuses, setEnabledStatuses] = useState(() => {
+    const stored = localStorage.getItem('mygenie_enabled_statuses');
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (e) { /* ignore */ }
+    }
+    return ["pending", "preparing", "ready", "running", "served", "pendingPayment", "paid", "cancelled", "reserved"];
+  });
+  
+  // Listen for localStorage changes (when config page saves)
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'mygenie_enabled_statuses') {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setEnabledStatuses(parsed);
+          }
+        } catch (err) { /* ignore */ }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+  
   const [activeChannels, setActiveChannels] = useState(["delivery", "takeAway", "dineIn", "room"]);
   const [activeStatuses, setActiveStatuses] = useState(["pending", "preparing", "ready", "running", "served", "pendingPayment", "paid", "cancelled", "reserved"]);
   const [tableFilter, setTableFilter] = useState(null); // null | 'confirm' | 'schedule'
@@ -507,19 +536,30 @@ const DashboardPage = () => {
     }
 
     // Group orders by fOrderStatus using STATUS_COLUMNS config
+    // Filter by enabledStatuses (from config page)
     const statusGroups = {};
     STATUS_COLUMNS.forEach(col => {
-      statusGroups[col.id] = {
-        id: col.id,
-        name: col.name,
-        fOrderStatus: col.fOrderStatus,
-        items: allOrders.filter(o => o.fOrderStatus === col.fOrderStatus),
-        enabled: true,
+      // Map fOrderStatus to status ID for enabledStatuses check
+      const statusIdMap = {
+        7: 'pending', 1: 'preparing', 2: 'ready', 8: 'running',
+        5: 'served', 9: 'pendingPayment', 6: 'paid', 3: 'cancelled', 10: 'reserved'
       };
+      const statusId = statusIdMap[col.fOrderStatus];
+      const isEnabled = enabledStatuses.length === 0 || enabledStatuses.includes(statusId);
+      
+      if (isEnabled) {
+        statusGroups[col.id] = {
+          id: col.id,
+          name: col.name,
+          fOrderStatus: col.fOrderStatus,
+          items: allOrders.filter(o => o.fOrderStatus === col.fOrderStatus),
+          enabled: true,
+        };
+      }
     });
 
     return statusGroups;
-  }, [allTablesList, allRoomsList, takeAwayOrders, deliveryOrders, walkInOrders, getOrderByTableId, activeChannels]);
+  }, [allTablesList, allRoomsList, takeAwayOrders, deliveryOrders, walkInOrders, getOrderByTableId, activeChannels, enabledStatuses]);
 
   // View conditions
   const isDineInOnly = activeChannels.length === 1 && activeChannels[0] === "dineIn";
@@ -956,6 +996,7 @@ const DashboardPage = () => {
           setDashboardView={setDashboardView}
           hiddenChannels={hiddenChannels}
           hiddenStatuses={hiddenStatuses}
+          enabledStatuses={enabledStatuses}
           onRestoreHidden={() => {
             setHiddenChannels([]);
             setHiddenStatuses([]);

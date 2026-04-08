@@ -43,6 +43,7 @@ const Header = ({
   setDashboardView,
   hiddenChannels = [],
   hiddenStatuses = [],
+  enabledStatuses = [],
   onRestoreHidden,
   activeFirst, 
   setActiveFirst,
@@ -111,8 +112,10 @@ const Header = ({
   // Determine which statuses to show based on view (same for all channels including Room)
   const isTableView = activeView === "table";
   
-  // Get visible status filters (exclude hidden statuses) for Channel View
-  const visibleStatusFilters = allStatusFilters.filter(s => !hiddenStatuses.includes(s.id));
+  // Get visible status filters: first filter by enabled, then by hidden
+  const visibleStatusFilters = allStatusFilters
+    .filter(s => enabledStatuses.length === 0 || enabledStatuses.includes(s.id))  // Filter by enabled (if configured)
+    .filter(s => !hiddenStatuses.includes(s.id));  // Then filter by hidden
   
   // Get visible channel filters (exclude hidden channels) for Status View  
   const visibleChannelFilters = visibleChannels.filter(c => !hiddenChannels.includes(c.id));
