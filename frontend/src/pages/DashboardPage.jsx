@@ -170,6 +170,7 @@ const DashboardPage = () => {
   const [tableFilter, setTableFilter] = useState(null); // null | 'confirm' | 'schedule'
   const [activeView, setActiveView] = useState("table");
   const [dashboardView, setDashboardView] = useState("channel"); // 'channel' | 'status' - for dual-view toggle
+  const [hiddenColumns, setHiddenColumns] = useState([]); // Array of column IDs to hide
   const [activeFirst, setActiveFirst] = useState(true);
   const [orderEntryTable, setOrderEntryTable] = useState(null);
   const [orderEntryType, setOrderEntryType] = useState(null);
@@ -430,46 +431,54 @@ const DashboardPage = () => {
     // Collect ALL orders from all channels
     const allOrders = [];
     
-    // Dine-In tables with orders
-    allTablesList.filter(t => !t.isRoom && !t.isWalkIn).forEach(table => {
-      const order = getOrderByTableId(table.tableId);
-      if (order) {
-        allOrders.push({
-          ...table,
-          order: order,
-          fOrderStatus: order.fOrderStatus,
-          orderType: 'dineIn',
-        });
-      }
-    });
-    
-    // Walk-in orders
-    walkInOrders.forEach(order => {
-      allOrders.push(adaptOrderForStatus(order, 'walkIn'));
-    });
+    // Dine-In tables with orders (include if dineIn is in activeChannels)
+    if (activeChannels.includes('dineIn')) {
+      allTablesList.filter(t => !t.isRoom && !t.isWalkIn).forEach(table => {
+        const order = getOrderByTableId(table.tableId);
+        if (order) {
+          allOrders.push({
+            ...table,
+            order: order,
+            fOrderStatus: order.fOrderStatus,
+            orderType: 'dineIn',
+          });
+        }
+      });
+      
+      // Walk-in orders (part of dineIn channel)
+      walkInOrders.forEach(order => {
+        allOrders.push(adaptOrderForStatus(order, 'walkIn'));
+      });
+    }
     
     // TakeAway orders
-    takeAwayOrders.forEach(order => {
-      allOrders.push(adaptOrderForStatus(order, 'takeAway'));
-    });
+    if (activeChannels.includes('takeAway')) {
+      takeAwayOrders.forEach(order => {
+        allOrders.push(adaptOrderForStatus(order, 'takeAway'));
+      });
+    }
     
     // Delivery orders
-    deliveryOrders.forEach(order => {
-      allOrders.push(adaptOrderForStatus(order, 'delivery'));
-    });
+    if (activeChannels.includes('delivery')) {
+      deliveryOrders.forEach(order => {
+        allOrders.push(adaptOrderForStatus(order, 'delivery'));
+      });
+    }
     
     // Room orders
-    allRoomsList.forEach(room => {
-      const order = getOrderByTableId(room.tableId);
-      if (order) {
-        allOrders.push({
-          ...room,
-          order: order,
-          fOrderStatus: order.fOrderStatus,
-          orderType: 'room',
-        });
-      }
-    });
+    if (activeChannels.includes('room')) {
+      allRoomsList.forEach(room => {
+        const order = getOrderByTableId(room.tableId);
+        if (order) {
+          allOrders.push({
+            ...room,
+            order: order,
+            fOrderStatus: order.fOrderStatus,
+            orderType: 'room',
+          });
+        }
+      });
+    }
 
     // Group orders by fOrderStatus using STATUS_COLUMNS config
     const statusGroups = {};
@@ -484,7 +493,7 @@ const DashboardPage = () => {
     });
 
     return statusGroups;
-  }, [allTablesList, allRoomsList, takeAwayOrders, deliveryOrders, walkInOrders, getOrderByTableId]);
+  }, [allTablesList, allRoomsList, takeAwayOrders, deliveryOrders, walkInOrders, getOrderByTableId, activeChannels]);
 
   // View conditions
   const isDineInOnly = activeChannels.length === 1 && activeChannels[0] === "dineIn";
@@ -919,6 +928,8 @@ const DashboardPage = () => {
           setActiveView={setActiveView}
           dashboardView={dashboardView}
           setDashboardView={setDashboardView}
+          hiddenColumns={hiddenColumns}
+          onRestoreColumns={() => setHiddenColumns([])}
           activeFirst={activeFirst}
           setActiveFirst={setActiveFirst}
           searchQuery={searchQuery}
@@ -934,8 +945,8 @@ const DashboardPage = () => {
               <ChannelColumnsLayout
                 channels={
                   dashboardView === 'status' && statusData
-                    ? Object.values(statusData).filter(c => c.items?.length > 0)
-                    : Object.values(channelData).filter(c => c.enabled)
+                    ? Object.values(statusData).filter(c => c.items?.length > 0 && !hiddenColumns.includes(c.id))
+                    : Object.values(channelData).filter(c => c.enabled && !hiddenColumns.includes(c.id))
                 }
                 viewType={activeView === 'table' ? 'table' : 'order'}
                 activeFirst={activeFirst}
@@ -954,6 +965,7 @@ const DashboardPage = () => {
                 isTableEngaged={isTableEngaged}
                 searchQuery={searchQuery}
                 matchingIds={matchingTableIds}
+                onHideColumn={(columnId) => setHiddenColumns(prev => [...prev, columnId])}
               />
             )}
 

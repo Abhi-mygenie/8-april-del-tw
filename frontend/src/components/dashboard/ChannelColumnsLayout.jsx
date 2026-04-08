@@ -53,6 +53,7 @@ const ChannelColumnsLayout = ({
   isTableEngaged,
   searchQuery,
   matchingIds,
+  onHideColumn,      // Handler to hide a column
 }) => {
   const containerRef = useRef(null);
   
@@ -213,6 +214,7 @@ const ChannelColumnsLayout = ({
           isTableEngaged={isTableEngaged}
           searchQuery={searchQuery}
           matchingIds={matchingIds}
+          onHideColumn={onHideColumn}
         />
       );
     });

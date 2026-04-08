@@ -36,6 +36,8 @@ const Header = ({
   setActiveView,
   dashboardView = 'channel',
   setDashboardView,
+  hiddenColumns = [],
+  onRestoreColumns,
   activeFirst, 
   setActiveFirst,
   searchQuery,
@@ -622,6 +624,22 @@ const Header = ({
                 <BarChart3 className="w-5 h-5" />
               </button>
             </div>
+          )}
+
+          {/* Restore Hidden Columns Button - shows when columns are hidden */}
+          {hiddenColumns.length > 0 && onRestoreColumns && (
+            <button
+              data-testid="restore-columns-btn"
+              onClick={onRestoreColumns}
+              className="px-3 py-1.5 rounded-md text-xs font-medium transition-all hover:opacity-80"
+              style={{ 
+                backgroundColor: COLORS.primaryOrange,
+                color: 'white',
+              }}
+              title={`Restore ${hiddenColumns.length} hidden column(s)`}
+            >
+              Show Hidden ({hiddenColumns.length})
+            </button>
           )}
 
           {/* Active First Toggle - Show for all channels */}

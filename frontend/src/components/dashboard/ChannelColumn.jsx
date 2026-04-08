@@ -48,6 +48,7 @@ const ChannelColumn = ({
   isTableEngaged,
   searchQuery,
   matchingIds,
+  onHideColumn,      // Handler to hide this column
 }) => {
   // Filter by search if applicable
   const filteredItems = useMemo(() => {
@@ -101,20 +102,32 @@ const ChannelColumn = ({
           <ChevronLeft className="w-5 h-5" style={{ color: COLORS.grayText }} />
         </button>
 
-        {/* Channel Name & Count */}
-        <div className="flex items-center gap-2">
-          <span className="font-semibold text-sm" style={{ color: COLORS.darkText }}>
-            {channel.name}
-          </span>
-          <span 
-            className="text-xs px-2 py-0.5 rounded-full"
-            style={{ 
-              backgroundColor: activeCount > 0 ? COLORS.primaryOrange : COLORS.borderGray,
-              color: activeCount > 0 ? 'white' : COLORS.grayText,
-            }}
-          >
-            {viewType === 'table' ? `${activeCount}/${totalCount}` : activeCount}
-          </span>
+        {/* Channel Name, Count & Hide Link */}
+        <div className="flex flex-col items-center">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-sm" style={{ color: COLORS.darkText }}>
+              {channel.name}
+            </span>
+            <span 
+              className="text-xs px-2 py-0.5 rounded-full"
+              style={{ 
+                backgroundColor: activeCount > 0 ? COLORS.primaryOrange : COLORS.borderGray,
+                color: activeCount > 0 ? 'white' : COLORS.grayText,
+              }}
+            >
+              {viewType === 'table' ? `${activeCount}/${totalCount}` : activeCount}
+            </span>
+          </div>
+          {onHideColumn && (
+            <button
+              data-testid={`hide-column-${channel.id}`}
+              onClick={() => onHideColumn(channel.id)}
+              className="text-xs hover:underline mt-0.5"
+              style={{ color: COLORS.grayText }}
+            >
+              Hide
+            </button>
+          )}
         </div>
 
         {/* Right Arrow - INCREASE this channel's columns */}
