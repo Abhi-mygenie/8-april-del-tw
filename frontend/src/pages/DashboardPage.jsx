@@ -846,12 +846,7 @@ const DashboardPage = () => {
           onAddOrder={handleAddOrder}
         />
 
-        <main className="flex-1 p-3 overflow-auto">
-          <div
-            data-testid="content-container"
-            className="rounded-2xl shadow-sm p-3"
-            style={{ backgroundColor: COLORS.lightBg }}
-          >
+        <main className="flex-1 p-2 overflow-auto">
             {/* === NEW: Channel-Based Layout (Feature Flag) === */}
             {USE_CHANNEL_LAYOUT && channelData && (
               <ChannelColumnsLayout
@@ -1062,7 +1057,6 @@ const DashboardPage = () => {
             {/* Room View - Rooms now render in the unified grid above */}
               </>
             )}
-          </div>
         </main>
 
         {orderEntryType && (
