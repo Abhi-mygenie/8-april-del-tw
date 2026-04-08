@@ -37,36 +37,40 @@ Frontend .env:
 - **Feature flag:** `USE_CHANNEL_LAYOUT = true` in `/app/frontend/src/constants/featureFlags.js` for safe rollout.
 - **Smart defaults:** On mount, measure container width, count visible channels, calculate `floor(availablePerChannel / cardUnit)` as default maxColumns.
 
-## Current Status (Apr 7, 2026)
+## Current Status (Apr 8, 2026)
 
 ### What's Working
 - Phase A (Arrow Functionality) — arrows work independently per channel, tested 100% pass rate
 - Smart default calculation — measures container, distributes width among visible channels
 - View-type aware defaults — table view starts at 2 cols, order view at 1 col (static fallback)
 - Feature flag toggle between old area-based and new channel-based layout
+- **Dashboard Dual-View System — FULLY IMPLEMENTED:**
+  - Toggle between "By Channel" and "By Status" views
+  - Filter swap: Channel View → 9 Status filters, Status View → 4 Channel filters
+  - Hide column → Also hides corresponding filter (linked across views)
+  - Restore hidden button in Header
+  - All 9 status filters working (YTC, Preparing, Ready, Running, Served, Pending Pay, Paid, Cancelled, Reserved)
+- **Food Transfer — FIXED:** onFoodTransfer prop now threaded through entire component chain
 
 ### Known Issues (Active)
 1. **`enabledChannels` ReferenceError** — intermittent crash "Cannot access 'enabledChannels' before initialization". Root cause: useEffect ordering or cached JS bundle.
-2. **Grey space on right** — channel container uses fixed pixel width (`flex-shrink: 0`). When cards don't perfectly divide container width, leftover pixels appear as grey space. Root cause: pixel-based width model.
-3. **Fix required:** Switch from fixed pixel widths to flex-proportional container sizing. Channels use `flex: maxColumns`, grid inside uses `repeat(auto-fill, 160px)`.
+2. **Item-level spinner missing** — Ready/Serve buttons don't show loading state during API call
 
 ### What's Parked
 - Phase B: Drag-to-Resize via ResizeHandle (non-functional, parked)
-- Remove channel filter buttons from Header.jsx
 
 ## Backlog (P0 → P2)
 
 ### P0 (Critical)
-- Fix `enabledChannels` crash
-- Fix grey space: switch channel containers to flex-proportional sizing
-- Verify smart defaults work correctly on all screen sizes
+- Add `setTableEngaged` to `handleItemStatusChange` (item-level spinner)
 
 ### P1 (Important)
+- Fix `handleTableClick` type mismatch (String vs Number comparison)
+- Remove BUG-216 free→engage workaround
 - Phase B: Drag-to-Resize via ResizeHandle between channels
-- Remove old channel filter buttons from Header.jsx
-- Verify Search & Status filter integration with channel layout
 
 ### P2 (Future)
+- Wire `onMergeOrder`/`onTableShift` in Channel Layout
 - Clean up deprecated area-based components (TableSection.jsx) after full approval
 - Implement `clear_payment` functionality
 - Implement `serve` button functionality (API integration)
@@ -111,42 +115,44 @@ When the active view switches, the **header filter pills swap** accordingly.
 
 ---
 
-### View 2: By Status (New — To Be Implemented)
+### View 2: By Status (IMPLEMENTED ✅)
 
 #### Status Column Definition
 
-Every `fOrderStatus` value (1–10) gets its **own independent column**, displayed in `fOrderStatus` numerical order. No grouping — each status is a separate column.
+Every `fOrderStatus` value (1–10) gets its **own independent column**, displayed in priority order. Columns with 0 orders are auto-hidden.
 
-| Column | fOrderStatus | Label | In Codebase? | Notes |
-|--------|-------------|-------|-------------|-------|
-| 1 | 1 | Preparing | ✅ Yes | |
-| 2 | 2 | Ready | ✅ Yes | |
-| 3 | 3 | Cancelled | ✅ Yes | User can hide |
-| 4 | 4 | (Future — Reserved) | ❌ Not mapped | Empty for now, hidden by default |
-| 5 | 5 | Served | ✅ Yes | |
-| 6 | 6 | Paid / Bill Ready | ✅ Yes | Bill Ready = Paid = fOrderStatus 6 |
-| 7 | 7 | Yet to Confirm | ✅ Yes | Currently mapped as `pending` in codebase |
-| 8 | 8 | Running | ✅ Yes | |
-| 9 | 9 | Pending Payment | ✅ Yes | |
-| 10 | 10 | Reserved | ❌ NEW | Must add to `F_ORDER_STATUS` in `constants.js` |
+| Column | fOrderStatus | Label | Status |
+|--------|-------------|-------|--------|
+| 1 | 7 | Yet to Confirm (YTC) | ✅ Implemented |
+| 2 | 1 | Preparing | ✅ Implemented |
+| 3 | 2 | Ready | ✅ Implemented |
+| 4 | 8 | Running | ✅ Implemented |
+| 5 | 5 | Served | ✅ Implemented |
+| 6 | 9 | Pending Payment | ✅ Implemented |
+| 7 | 6 | Paid | ✅ Implemented |
+| 8 | 3 | Cancelled | ✅ Implemented |
+| 9 | 10 | Reserved | ✅ Implemented (NEW) |
 
 **Scheduled:** NOT a `fOrderStatus` value. Comes from the `order_status` field. No separate column. Scheduled orders appear based on their `fOrderStatus`. User must relogin/refresh context for scheduled order updates.
 
 **Bill Ready:** Same as Paid = `fOrderStatus: 6`. Not a separate status.
 
-#### Header Filters in By Status View
+#### Header Filters in By Status View (IMPLEMENTED ✅)
 
-Channel pills: Dine-In | TakeAway | Delivery | Room
+Channel pills: Del | Take | Dine | Room
 - Clicking a channel filter → shows only that channel's orders across all status columns
 - Multi-select supported (toggle individual channels)
+- No "All" button — just toggle individual channels
 
-#### Hide Feature
+#### Hide Feature (IMPLEMENTED ✅)
 
-- Each column header has a **"Hide" link/button**
+- Each column header has a **"Hide" link**
 - Clicking "Hide" **completely removes** the column from view — even if it has orders
+- **Linked hiding:** Hide a channel column → Also hides that channel's filter pill in Status View (and vice versa)
 - Use case: Cook hides Served/Paid. Manager sees everything.
 - Hidden state **resets on login** (no persistence)
-- **Restore mechanism needed:** A button/dropdown in the header to show hidden columns again (e.g., "Show: Cancelled, Paid" pills for hidden columns)
+- **Restore button:** "Show Hidden (N)" button appears in Header when items are hidden
+- Clicking restore shows all hidden columns and filters
 
 ---
 

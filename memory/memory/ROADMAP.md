@@ -1,12 +1,32 @@
 # Roadmap
 
-## P0 — Must Fix Now
+## Completed ✅
 
-### 1. Wire `onFoodTransfer` in Channel Layout (GAP 2)
-- **What:** Food transfer icon does nothing in new channel layout
-- **Why:** Prop not threaded through ChannelColumnsLayout → ChannelColumn → OrderCard
-- **Fix:** Thread `onFoodTransfer` prop through 3 files
-- **Files:** `DashboardPage.jsx`, `ChannelColumnsLayout.jsx`, `ChannelColumn.jsx`
+### 1. Wire `onFoodTransfer` in Channel Layout (GAP 2) ✅
+- **Status:** DONE (April 2026)
+- **What:** Food transfer icon was not working in channel layout
+- **Fix:** Threaded `onFoodTransfer` prop through DashboardPage → ChannelColumnsLayout → ChannelColumn → OrderCard
+- **Files Modified:** `DashboardPage.jsx`, `ChannelColumnsLayout.jsx`, `ChannelColumn.jsx`
+
+### 3. Dashboard Dual-View System ("By Status" View) ✅
+- **Status:** DONE (April 2026)
+- **What:** Dashboard can now toggle between "By Channel" and "By Status" views
+- **Features Implemented:**
+  - Toggle buttons in Header (Columns icon = Channel, BarChart icon = Status)
+  - Filter swap: Channel View → 9 Status filters, Status View → Channel filters
+  - Hide column feature with linked filter hiding
+  - Restore hidden button
+  - All 9 status filters (YTC, Preparing, Ready, Running, Served, Pending Pay, Paid, Cancelled, Reserved)
+- **Files Modified:** `constants.js`, `featureFlags.js`, `DashboardPage.jsx`, `ChannelColumnsLayout.jsx`, `ChannelColumn.jsx`, `Header.jsx`
+
+### 6. Remove Channel Filter Buttons from Header ✅
+- **Status:** DONE (April 2026) - Merged into Dual-View implementation
+- **What:** Removed redundant "All/Del/Take/Dine/Room" static pills from left side of Header
+- **Now:** Single filter section that swaps based on view (Status filters for Channel view, Channel filters for Status view)
+
+---
+
+## P0 — Must Fix Now
 
 ### 2. Add `setTableEngaged` to `handleItemStatusChange` (GAP 1)
 - **What:** Item-level Ready/Serve has no table spinner during API call
@@ -18,16 +38,6 @@
 
 ## P1 — Important Features
 
-### 3. Dashboard Dual-View System ("By Status" View)
-- **What:** New dashboard view where columns are grouped by `fOrderStatus` (1–10)
-- **Phases:**
-  - Phase 1: Data layer — `statusData` memo, add fOrderStatus 10 (reserved)
-  - Phase 2: View toggle button in Header
-  - Phase 3: Filter swap (channel view → status filters, status view → channel filters)
-  - Phase 4: Hide feature per column
-- **Files:** `constants.js`, `DashboardPage.jsx`, `ChannelColumnsLayout.jsx`, `ChannelColumn.jsx`, `Header.jsx`
-- **See:** PRD.md "Dashboard Dual-View System" section for full spec
-
 ### 4. Fix `handleTableClick` Type Mismatch (GAP 4)
 - **What:** Block-click on engaged table checks String vs Number → never matches
 - **Fix:** `Number(tableEntry.tableId || tableEntry.id)` in comparison
@@ -38,12 +48,6 @@
 - **Prerequisite:** GAP 1 must be fixed first
 - **Fix:** Let `free` genuinely free the table in `handleUpdateTable`
 - **Files:** `socketHandlers.js`
-
-### 6. Remove Channel Filter Buttons from Header
-- **What:** Header still shows All/Del/Take/Dine/Room filter buttons
-- **Why:** Redundant when "By Channel" view shows channels as columns
-- **Guard:** Only hide when `USE_CHANNEL_LAYOUT = true`
-- **File:** `Header.jsx`
 
 ---
 
@@ -84,5 +88,10 @@
 4. **Smart defaults:** Measure container width, count visible channels, divide equally. Calculate `floor(availablePerChannel / cardUnit)`.
 5. **Don't touch card sizes:** Table card = 160px, Order card = 300px. These are fixed. Recover space from padding layers instead.
 6. **Spacing plan:** Removed content-container wrapper, tightened main/header/channel padding, removed ResizeHandle bars. Max 7 table cards on 1440px without changing cards.
-7. **Filter behavior:** Current status filters (Confirm, Cooking, Ready, Running, Schedule) are mostly UI-only dummies. Only Confirm and Schedule filter in old table view via `tableFilter`. New channel layout has NO filter integration yet.
-8. **fOrderStatus mapping:** 1=preparing, 2=ready, 3=cancelled, 4=future, 5=served, 6=paid/billReady, 7=YTC, 8=running, 9=pendingPayment, 10=reserved(NEW). Scheduled is from `order_status` field, not `fOrderStatus`.
+7. **Dual-View Filter Logic:** 
+   - Channel View (columns = channels) → Show Status filters (all 9)
+   - Status View (columns = statuses) → Show Channel filters (Del, Take, Dine, Room)
+   - Hide column → Also hides corresponding filter in other view
+8. **fOrderStatus mapping:** 1=preparing, 2=ready, 3=cancelled, 4=future, 5=served, 6=paid/billReady, 7=YTC, 8=running, 9=pendingPayment, 10=reserved. 
+9. **Status Filter IDs:** pending (7), preparing (1), ready (2), running (8), served (5), pendingPayment (9), paid (6), cancelled (3), reserved (10)
+10. **Cards are independent:** All state is managed via Context (OrderContext, TableContext). View layer just groups and filters - no data modification.

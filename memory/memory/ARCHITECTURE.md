@@ -792,10 +792,89 @@ DashboardPage.jsx
 - Real-time updates via `useSocketEvents()`
 - Opens `OrderEntry` on table/card click
 - Filter by section, search by table number
-- Filter pills: Confirm, Cooking, Ready, Running, Schedule
+- Filter pills: Dynamic based on view (see Dual-View System below)
 - View toggle: Table grid ↔ Order list (single icon)
+- Dashboard view toggle: Channel ↔ Status (Dual-View System)
 - Permission-gated OrderCard buttons (cancel, merge, shift, transfer)
 - Cancellation settings enforced (time window + post-ready flag)
+
+### 9.4 Dashboard Dual-View System
+
+**Feature Flag:** `USE_STATUS_VIEW` (in `featureFlags.js`)
+
+The dashboard supports two different grouping views:
+
+#### View Types
+| View | Columns | Filter Pills | Toggle Icon |
+|------|---------|--------------|-------------|
+| **Channel View** | Dine-In, TakeAway, Delivery, Room | 9 Status filters | Columns icon |
+| **Status View** | Preparing, Ready, Served, Paid, etc. | 4 Channel filters | BarChart icon |
+
+#### Architecture Flow
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    DashboardPage.jsx                             │
+├─────────────────────────────────────────────────────────────────┤
+│  State:                                                          │
+│  ├── dashboardView: 'channel' | 'status'                        │
+│  ├── activeChannels: ['delivery', 'takeAway', 'dineIn', 'room'] │
+│  ├── activeStatuses: ['preparing', 'ready', 'served', ...]      │
+│  ├── hiddenChannels: []  (linked to column hiding)              │
+│  └── hiddenStatuses: []  (linked to column hiding)              │
+├─────────────────────────────────────────────────────────────────┤
+│  Memos:                                                          │
+│  ├── channelData: Groups orders by channel (dineIn, delivery...)│
+│  │   └── Filters by activeStatuses                              │
+│  └── statusData: Groups orders by fOrderStatus (1-10)           │
+│      └── Filters by activeChannels                              │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    ChannelColumnsLayout                          │
+│  Receives: channels[] (either channelData or statusData)        │
+│  Renders: ChannelColumn for each visible column                 │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    Header.jsx                                    │
+│  Renders filter pills based on dashboardView:                   │
+│  ├── Channel View → Status filters (YTC, Preparing, Ready...)  │
+│  └── Status View → Channel filters (Del, Take, Dine, Room)     │
+│  Hide column → Also hides corresponding filter                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### Status Filter Mapping
+| fOrderStatus | Filter ID | Label |
+|--------------|-----------|-------|
+| 7 | pending | YTC |
+| 1 | preparing | Preparing |
+| 2 | ready | Ready |
+| 8 | running | Running |
+| 5 | served | Served |
+| 9 | pendingPayment | Pending Pay |
+| 6 | paid | Paid |
+| 3 | cancelled | Cancelled |
+| 10 | reserved | Reserved |
+
+#### Hide Column ↔ Hide Filter (Linked)
+When a column is hidden:
+- The column disappears from the grid
+- The corresponding filter pill is also hidden (in the other view)
+- "Show Hidden (N)" button appears in Header
+- Clicking restore shows all hidden columns and filters
+
+#### Key Files
+| File | Purpose |
+|------|---------|
+| `featureFlags.js` | `USE_STATUS_VIEW` flag |
+| `constants.js` | `STATUS_COLUMNS`, `F_ORDER_STATUS` mappings |
+| `DashboardPage.jsx` | State management, `channelData` and `statusData` memos |
+| `Header.jsx` | Filter pills, view toggles, restore button |
+| `ChannelColumnsLayout.jsx` | Renders columns (generic for both views) |
+| `ChannelColumn.jsx` | Individual column with Hide link |
 
 ---
 

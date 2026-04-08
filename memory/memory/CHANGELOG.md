@@ -1,5 +1,36 @@
 # Changelog
 
+## Apr 8, 2026 — Session 3 (Dual-View System)
+
+### Dashboard Dual-View System — COMPLETE ✅
+- **Feature Flag**: Added `USE_STATUS_VIEW` to `featureFlags.js`
+- **Constants**: Added `STATUS_COLUMNS` with all 9 status definitions, `fOrderStatus: 10 (reserved)`
+- **State**: Added `dashboardView` ('channel' | 'status'), `hiddenChannels`, `hiddenStatuses`
+- **Data Layer**: Added `statusData` memo that groups orders by fOrderStatus (1-10)
+- **Filter Swap**: 
+  - Channel View → 9 Status filters (YTC, Preparing, Ready, Running, Served, Pending Pay, Paid, Cancelled, Reserved)
+  - Status View → 4 Channel filters (Del, Take, Dine, Room)
+- **Filtering**: Filters now work within columns (status filters in channel view, channel filters in status view)
+- **Hide Feature**: Hide link on column headers, linked to filter hiding across views
+- **Restore**: "Show Hidden (N)" button in Header
+
+### Header Redesign
+- Removed static "All/Del/Take/Dine/Room" channel pills
+- Single filter section that swaps based on dashboardView
+- Layout: Filters → Search → View Toggles
+- Added Channel/Status view toggle buttons (Columns icon, BarChart icon)
+
+### Food Transfer Fix — P0 COMPLETE ✅
+- Threaded `onFoodTransfer` prop through DashboardPage → ChannelColumnsLayout → ChannelColumn → OrderCard
+- Food transfer icon now correctly opens transfer modal
+
+### Documentation Updated
+- ROADMAP.md: Marked items #1, #3, #6 as complete
+- ARCHITECTURE.md: Added section 9.4 "Dashboard Dual-View System"
+- PRD.md: Updated status, marked Dual-View features as implemented
+
+---
+
 ## Apr 7, 2026 — Session 2 (Fork)
 
 ### Smart Default Column Calculation
