@@ -19,6 +19,23 @@
  */
 export const USE_CHANNEL_LAYOUT = true;
 
+/**
+ * USE_STATUS_VIEW
+ * 
+ * When TRUE:
+ *  - Dashboard can toggle between "By Channel" and "By Status" views
+ *  - "By Status" groups orders by fOrderStatus (Preparing, Ready, Served, etc.)
+ *  - Header shows view toggle buttons
+ *  - Filter pills swap based on active view
+ * 
+ * When FALSE:
+ *  - Only "By Channel" view is available
+ *  - No status view toggle shown
+ * 
+ * Rollback: Set to false to hide status view feature
+ */
+export const USE_STATUS_VIEW = true;
+
 // Future feature flags can be added here
 // export const USE_NEW_PAYMENT_FLOW = false;
 // export const USE_ADVANCED_SEARCH = false;

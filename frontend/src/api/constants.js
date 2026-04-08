@@ -112,13 +112,28 @@ export const F_ORDER_STATUS = {
   1: 'preparing',
   2: 'ready',
   3: 'cancelled',
-  // 4: TBD — needs team clarification
+  // 4: reserved for future development
   5: 'served',
   6: 'paid',
   7: 'pending',
   8: 'running',
   9: 'pendingPayment',
+  10: 'reserved',
 };
+
+// Status columns for "By Status" dashboard view
+// Order determines column display order
+export const STATUS_COLUMNS = [
+  { id: 7, fOrderStatus: 7, name: 'Yet to Confirm', key: 'pending' },
+  { id: 1, fOrderStatus: 1, name: 'Preparing', key: 'preparing' },
+  { id: 2, fOrderStatus: 2, name: 'Ready', key: 'ready' },
+  { id: 8, fOrderStatus: 8, name: 'Running', key: 'running' },
+  { id: 5, fOrderStatus: 5, name: 'Served', key: 'served' },
+  { id: 9, fOrderStatus: 9, name: 'Pending Payment', key: 'pendingPayment' },
+  { id: 6, fOrderStatus: 6, name: 'Paid', key: 'paid' },
+  { id: 3, fOrderStatus: 3, name: 'Cancelled', key: 'cancelled' },
+  { id: 10, fOrderStatus: 10, name: 'Reserved', key: 'reserved' },
+];
 
 // Frontend status → table card status (for enriching table grid)
 export const ORDER_TO_TABLE_STATUS = {
@@ -130,6 +145,7 @@ export const ORDER_TO_TABLE_STATUS = {
   paid: 'available',
   cancelled: 'available',
   pendingPayment: 'occupied',
+  reserved: 'reserved',
 };
 
 // Order type values from API

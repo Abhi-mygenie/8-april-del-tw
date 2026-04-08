@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { RefreshCw } from "lucide-react";
-import { COLORS, USE_CHANNEL_LAYOUT } from "../constants";
+import { COLORS, USE_CHANNEL_LAYOUT, USE_STATUS_VIEW } from "../constants";
 import { Sidebar, Header } from "../components/layout";
 import { TableSection } from "../components/sections";
 import { DineInCard, DeliveryCard, OrderCard } from "../components/cards";
@@ -16,7 +16,7 @@ import RoomCheckInModal from "../components/modals/RoomCheckInModal";
 import CancelOrderModal from "../components/order-entry/CancelOrderModal";
 import { useSocketEvents } from "../api/socket";
 import api from "../api/axios";
-import { API_ENDPOINTS } from "../api/constants";
+import { API_ENDPOINTS, STATUS_COLUMNS } from "../api/constants";
 import { toAPI as orderToAPI } from "../api/transforms/orderTransform";
 import { updateOrderStatus } from "../api/services/orderService";
 import { ChannelColumnsLayout } from "../components/dashboard";
@@ -169,6 +169,7 @@ const DashboardPage = () => {
   const [activeStatuses, setActiveStatuses] = useState(["confirm", "cooking", "ready", "running", "schedule"]);
   const [tableFilter, setTableFilter] = useState(null); // null | 'confirm' | 'schedule'
   const [activeView, setActiveView] = useState("table");
+  const [dashboardView, setDashboardView] = useState("channel"); // 'channel' | 'status' - for dual-view toggle
   const [activeFirst, setActiveFirst] = useState(true);
   const [orderEntryTable, setOrderEntryTable] = useState(null);
   const [orderEntryType, setOrderEntryType] = useState(null);
@@ -405,6 +406,85 @@ const DashboardPage = () => {
       },
     };
   }, [allTablesList, allRoomsList, takeAwayOrders, deliveryOrders, walkInOrders, features, getOrderByTableId]);
+
+  // === Status-Based Layout Data (USE_STATUS_VIEW feature flag) ===
+  const statusData = useMemo(() => {
+    if (!USE_STATUS_VIEW || !USE_CHANNEL_LAYOUT) return null;
+
+    // Helper to adapt any order into a table-like entry for the grid
+    const adaptOrderForStatus = (order, orderType) => ({
+      id: `${orderType}-${order.orderId}`,
+      label: order.customer || order.tableNumber || orderType.toUpperCase().slice(0, 3),
+      status: order.tableStatus,
+      tableId: order.tableId || 0,
+      amount: order.amount,
+      time: order.time,
+      orderNumber: order.orderNumber,
+      orderId: order.orderId,
+      orderType: orderType,
+      fOrderStatus: order.fOrderStatus,
+      waiter: order.waiter || '',
+      order: order, // Keep full order for OrderCard
+    });
+
+    // Collect ALL orders from all channels
+    const allOrders = [];
+    
+    // Dine-In tables with orders
+    allTablesList.filter(t => !t.isRoom && !t.isWalkIn).forEach(table => {
+      const order = getOrderByTableId(table.tableId);
+      if (order) {
+        allOrders.push({
+          ...table,
+          order: order,
+          fOrderStatus: order.fOrderStatus,
+          orderType: 'dineIn',
+        });
+      }
+    });
+    
+    // Walk-in orders
+    walkInOrders.forEach(order => {
+      allOrders.push(adaptOrderForStatus(order, 'walkIn'));
+    });
+    
+    // TakeAway orders
+    takeAwayOrders.forEach(order => {
+      allOrders.push(adaptOrderForStatus(order, 'takeAway'));
+    });
+    
+    // Delivery orders
+    deliveryOrders.forEach(order => {
+      allOrders.push(adaptOrderForStatus(order, 'delivery'));
+    });
+    
+    // Room orders
+    allRoomsList.forEach(room => {
+      const order = getOrderByTableId(room.tableId);
+      if (order) {
+        allOrders.push({
+          ...room,
+          order: order,
+          fOrderStatus: order.fOrderStatus,
+          orderType: 'room',
+        });
+      }
+    });
+
+    // Group orders by fOrderStatus using STATUS_COLUMNS config
+    const statusGroups = {};
+    STATUS_COLUMNS.forEach(col => {
+      statusGroups[col.id] = {
+        id: col.id,
+        name: col.name,
+        fOrderStatus: col.fOrderStatus,
+        items: allOrders.filter(o => o.fOrderStatus === col.fOrderStatus),
+        enabled: true,
+      };
+    });
+
+    return statusGroups;
+  }, [allTablesList, allRoomsList, takeAwayOrders, deliveryOrders, walkInOrders, getOrderByTableId]);
 
   // View conditions
   const isDineInOnly = activeChannels.length === 1 && activeChannels[0] === "dineIn";
@@ -837,6 +917,8 @@ const DashboardPage = () => {
           setTableFilter={setTableFilter}
           activeView={activeView}
           setActiveView={setActiveView}
+          dashboardView={dashboardView}
+          setDashboardView={setDashboardView}
           activeFirst={activeFirst}
           setActiveFirst={setActiveFirst}
           searchQuery={searchQuery}
@@ -847,10 +929,14 @@ const DashboardPage = () => {
         />
 
         <main className="flex-1 p-2 overflow-auto">
-            {/* === NEW: Channel-Based Layout (Feature Flag) === */}
+            {/* === NEW: Channel/Status-Based Layout (Feature Flags) === */}
             {USE_CHANNEL_LAYOUT && channelData && (
               <ChannelColumnsLayout
-                channels={Object.values(channelData).filter(c => c.enabled)}
+                channels={
+                  dashboardView === 'status' && statusData
+                    ? Object.values(statusData).filter(c => c.items?.length > 0)
+                    : Object.values(channelData).filter(c => c.enabled)
+                }
                 viewType={activeView === 'table' ? 'table' : 'order'}
                 activeFirst={activeFirst}
                 onItemClick={handleTableClick}

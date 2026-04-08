@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import { PlusSquare, Grid3X3, Bike, ShoppingBag, Utensils, DoorOpen, List, LayoutGrid, Search, X, ChevronRight } from "lucide-react";
-import { COLORS, LOGO_URL } from "../../constants";
+import { PlusSquare, Grid3X3, Bike, ShoppingBag, Utensils, DoorOpen, List, LayoutGrid, Search, X, ChevronRight, Columns, BarChart3 } from "lucide-react";
+import { COLORS, LOGO_URL, USE_STATUS_VIEW } from "../../constants";
 import { useRestaurant } from "../../contexts";
 
 // Multi-selectable channel IDs (includes Room now - same behavior as tables)
@@ -33,7 +33,9 @@ const Header = ({
   tableFilter,
   setTableFilter,
   activeView, 
-  setActiveView, 
+  setActiveView,
+  dashboardView = 'channel',
+  setDashboardView,
   activeFirst, 
   setActiveFirst,
   searchQuery,
@@ -505,33 +507,70 @@ const Header = ({
           {/* Divider */}
           <div className="w-px h-6" style={{ backgroundColor: COLORS.borderGray }} />
 
-          {/* Status Filter Pills */}
-          <div className="flex items-center gap-2">
-            {statuses.map((status) => {
-              // Table view: exclusive single-select filter
-              const isActive = isTableView
-                ? tableFilter === status.id
-                : activeStatuses.includes(status.id);
-              const handleClick = isTableView
-                ? () => setTableFilter(prev => prev === status.id ? null : status.id)
-                : () => handleStatusToggle(status.id);
-              return (
-                <button
-                  key={status.id}
-                  data-testid={`status-${status.id}`}
-                  onClick={handleClick}
-                  className="px-3 py-2.5 rounded-md text-xs font-medium transition-all"
-                  style={{
-                    backgroundColor: isActive ? COLORS.lightBg : "transparent",
-                    color: isActive ? COLORS.primaryOrange : COLORS.grayText,
-                    border: `1px solid ${isActive ? COLORS.primaryOrange : COLORS.borderGray}`,
-                  }}
-                >
-                  {status.label}
-                </button>
-              );
-            })}
-          </div>
+          {/* Filter Pills - Swap based on dashboardView */}
+          {/* When viewing by Channel → show Status filters */}
+          {/* When viewing by Status → show Channel filters */}
+          {dashboardView === 'channel' ? (
+            /* Status Filter Pills (filter within channel columns) */
+            <div className="flex items-center gap-2">
+              {statuses.map((status) => {
+                // Table view: exclusive single-select filter
+                const isActive = isTableView
+                  ? tableFilter === status.id
+                  : activeStatuses.includes(status.id);
+                const handleClick = isTableView
+                  ? () => setTableFilter(prev => prev === status.id ? null : status.id)
+                  : () => handleStatusToggle(status.id);
+                return (
+                  <button
+                    key={status.id}
+                    data-testid={`status-${status.id}`}
+                    onClick={handleClick}
+                    className="px-3 py-2.5 rounded-md text-xs font-medium transition-all"
+                    style={{
+                      backgroundColor: isActive ? COLORS.lightBg : "transparent",
+                      color: isActive ? COLORS.primaryOrange : COLORS.grayText,
+                      border: `1px solid ${isActive ? COLORS.primaryOrange : COLORS.borderGray}`,
+                    }}
+                  >
+                    {status.label}
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            /* Channel Filter Pills (filter within status columns) */
+            <div className="flex items-center gap-2">
+              {visibleChannels.map((channel) => {
+                const Icon = channel.icon;
+                const isActive = activeChannels.includes(channel.id);
+                return (
+                  <button
+                    key={channel.id}
+                    data-testid={`filter-channel-${channel.id}`}
+                    onClick={() => {
+                      // Toggle channel in activeChannels array
+                      if (isActive) {
+                        const next = activeChannels.filter(c => c !== channel.id);
+                        if (next.length > 0) setActiveChannels(next);
+                      } else {
+                        setActiveChannels([...activeChannels, channel.id]);
+                      }
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-2.5 rounded-md text-xs font-medium transition-all"
+                    style={{
+                      backgroundColor: isActive ? COLORS.lightBg : "transparent",
+                      color: isActive ? COLORS.primaryOrange : COLORS.grayText,
+                      border: `1px solid ${isActive ? COLORS.primaryOrange : COLORS.borderGray}`,
+                    }}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    <span>{channel.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           {/* Divider */}
           <div className="w-px h-6" style={{ backgroundColor: COLORS.borderGray }} />
@@ -560,6 +599,30 @@ const Header = ({
               <Grid3X3 className="w-5 h-5" />
             )}
           </button>
+
+          {/* Dashboard View Toggle - Channel vs Status (only when USE_STATUS_VIEW is enabled) */}
+          {USE_STATUS_VIEW && setDashboardView && (
+            <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+              <button
+                data-testid="dashboard-view-channel"
+                onClick={() => setDashboardView('channel')}
+                className={`p-2 rounded-md transition-colors ${dashboardView === 'channel' ? 'bg-white shadow-sm' : 'hover:bg-gray-200'}`}
+                style={{ color: dashboardView === 'channel' ? COLORS.primaryOrange : COLORS.grayText }}
+                title="View by Channel"
+              >
+                <Columns className="w-5 h-5" />
+              </button>
+              <button
+                data-testid="dashboard-view-status"
+                onClick={() => setDashboardView('status')}
+                className={`p-2 rounded-md transition-colors ${dashboardView === 'status' ? 'bg-white shadow-sm' : 'hover:bg-gray-200'}`}
+                style={{ color: dashboardView === 'status' ? COLORS.primaryOrange : COLORS.grayText }}
+                title="View by Status"
+              >
+                <BarChart3 className="w-5 h-5" />
+              </button>
+            </div>
+          )}
 
           {/* Active First Toggle - Show for all channels */}
           <div
