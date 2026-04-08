@@ -80,3 +80,149 @@ Frontend .env:
 - `/app/frontend/src/pages/DashboardPage.jsx` — orchestrator, channelData memo, handlers
 - `/app/frontend/src/components/cards/OrderCard.jsx` — permission-based actions
 - `/app/frontend/src/api/socket/socketHandlers.js` — table lock workaround
+- `/app/frontend/src/api/constants.js` — `F_ORDER_STATUS` mapping, `ORDER_TO_TABLE_STATUS`
+- `/app/frontend/src/components/layout/Header.jsx` — filters, search, view toggles
+
+---
+
+## Dashboard Dual-View System — Detailed Spec
+
+### Overview
+
+The dashboard supports **two switchable views**, toggled via a button in the header:
+
+1. **"By Channel"** — columns grouped by order channel (Dine-In, TakeAway, Delivery, Room)
+2. **"By Status"** — columns grouped by `fOrderStatus` (Preparing, Ready, Cancelled, Served, etc.)
+
+When the active view switches, the **header filter pills swap** accordingly.
+
+---
+
+### View 1: By Channel (Current Implementation)
+
+| Aspect | Detail |
+|--------|--------|
+| **Columns** | Dine-In, TakeAway, Delivery, Room |
+| **Header filters** | Status pills — filter orders within all channel columns |
+| **Arrows `<` `>`** | Independent per column, decrease/increase, min 1, no max |
+| **Auto-hide** | Column hidden if 0 orders |
+| **Smart defaults** | Measure container, distribute columns among visible channels |
+| **Resets on login** | Yes |
+
+---
+
+### View 2: By Status (New — To Be Implemented)
+
+#### Status Column Definition
+
+Every `fOrderStatus` value (1–10) gets its **own independent column**, displayed in `fOrderStatus` numerical order. No grouping — each status is a separate column.
+
+| Column | fOrderStatus | Label | In Codebase? | Notes |
+|--------|-------------|-------|-------------|-------|
+| 1 | 1 | Preparing | ✅ Yes | |
+| 2 | 2 | Ready | ✅ Yes | |
+| 3 | 3 | Cancelled | ✅ Yes | User can hide |
+| 4 | 4 | (Future — Reserved) | ❌ Not mapped | Empty for now, hidden by default |
+| 5 | 5 | Served | ✅ Yes | |
+| 6 | 6 | Paid / Bill Ready | ✅ Yes | Bill Ready = Paid = fOrderStatus 6 |
+| 7 | 7 | Yet to Confirm | ✅ Yes | Currently mapped as `pending` in codebase |
+| 8 | 8 | Running | ✅ Yes | |
+| 9 | 9 | Pending Payment | ✅ Yes | |
+| 10 | 10 | Reserved | ❌ NEW | Must add to `F_ORDER_STATUS` in `constants.js` |
+
+**Scheduled:** NOT a `fOrderStatus` value. Comes from the `order_status` field. No separate column. Scheduled orders appear based on their `fOrderStatus`. User must relogin/refresh context for scheduled order updates.
+
+**Bill Ready:** Same as Paid = `fOrderStatus: 6`. Not a separate status.
+
+#### Header Filters in By Status View
+
+Channel pills: Dine-In | TakeAway | Delivery | Room
+- Clicking a channel filter → shows only that channel's orders across all status columns
+- Multi-select supported (toggle individual channels)
+
+#### Hide Feature
+
+- Each column header has a **"Hide" link/button**
+- Clicking "Hide" **completely removes** the column from view — even if it has orders
+- Use case: Cook hides Served/Paid. Manager sees everything.
+- Hidden state **resets on login** (no persistence)
+- **Restore mechanism needed:** A button/dropdown in the header to show hidden columns again (e.g., "Show: Cancelled, Paid" pills for hidden columns)
+
+---
+
+### Filter Swap Logic
+
+| Active View | Columns Show | Header Filters Show |
+|-------------|-------------|-------------------|
+| By Channel | 4 channel columns | Status pills (Preparing, Ready, Cancelled, Served, Paid, YTC, Running, Pending Payment, Reserved) |
+| By Status | Up to 10 status columns | Channel pills (Dine-In, TakeAway, Delivery, Room) |
+
+---
+
+### fOrderStatus Complete Mapping (Source of Truth)
+
+Current `F_ORDER_STATUS` in `/app/frontend/src/api/constants.js`:
+
+```javascript
+export const F_ORDER_STATUS = {
+  1: 'preparing',
+  2: 'ready',
+  3: 'cancelled',
+  // 4: reserved for future development
+  5: 'served',
+  6: 'paid',          // Also = "Bill Ready"
+  7: 'pending',        // = "Yet to Confirm"
+  8: 'running',
+  9: 'pendingPayment',
+  // 10: 'reserved'    // NEW — to be added
+};
+```
+
+**Changes needed:**
+- Add `10: 'reserved'` to `F_ORDER_STATUS`
+- Add corresponding `ORDER_TO_TABLE_STATUS` mapping for `reserved`
+- fOrderStatus 4: leave unmapped for now (reserved for future)
+
+---
+
+### Unchanged Behavior (Both Views)
+
+- Arrows `<` `>` — independent per column, decrease/increase, min 1 col, no max limit
+- Smart defaults — measure container width, distribute among visible columns
+- View-type aware — table view default 2 cols, order view default 1 col
+- Layout resets on every login (no localStorage)
+- Horizontal scroll when expanded beyond viewport
+- Table view / Order view card toggle works within both dashboard views
+- Auto-hide columns with 0 orders (unless manually shown)
+
+---
+
+### Implementation Plan for By Status View
+
+#### Phase 1: Data Layer
+1. Add `fOrderStatus: 10 → 'reserved'` to `F_ORDER_STATUS` in `constants.js`
+2. Build `statusData` memo in `DashboardPage.jsx` — group ALL orders by `fOrderStatus` (similar to existing `channelData` memo but keyed by status)
+3. Define `STATUS_COLUMNS` constant: ordered list of `{ id, fOrderStatus, label }` for all 10 statuses
+
+#### Phase 2: View Toggle
+4. Add view toggle state in `DashboardPage.jsx`: `dashboardView: 'channel' | 'status'`
+5. Add toggle button/icon in `Header.jsx`
+6. Conditionally render `ChannelColumnsLayout` with `channelData` OR `statusData` based on active view
+
+#### Phase 3: Filter Swap
+7. When `dashboardView === 'channel'` → Header shows status filter pills
+8. When `dashboardView === 'status'` → Header shows channel filter pills
+9. Filter logic: selected filters reduce the items shown within each column
+
+#### Phase 4: Hide Feature
+10. Add `hiddenColumns` state (Set) in layout component
+11. Add "Hide" link in each column header
+12. Add "Show hidden" restore mechanism in Header
+13. Hidden state resets on login
+
+#### Files to Modify
+- `/app/frontend/src/api/constants.js` — add fOrderStatus 10
+- `/app/frontend/src/pages/DashboardPage.jsx` — statusData memo, view toggle state, filter swap
+- `/app/frontend/src/components/dashboard/ChannelColumnsLayout.jsx` — accept generic columns data (works for both channel and status views)
+- `/app/frontend/src/components/dashboard/ChannelColumn.jsx` — add "Hide" link in header
+- `/app/frontend/src/components/layout/Header.jsx` — view toggle button, swap filter pills, show hidden columns restore
