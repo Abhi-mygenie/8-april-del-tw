@@ -80,7 +80,6 @@ const ResizeHandle = ({ onDrag, onDragStart, onDragEnd }) => {
       style={{
         width: '24px',
         cursor: 'col-resize',
-        zIndex: 100,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
