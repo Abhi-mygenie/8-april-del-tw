@@ -24,6 +24,18 @@
 - **What:** Removed redundant "All/Del/Take/Dine/Room" static pills from left side of Header
 - **Now:** Single filter section that swaps based on view (Status filters for Channel view, Channel filters for Status view)
 
+### Header UX Improvement — Option A (Labeled Dropdowns) ✅
+- **Status:** DONE (April 2026)
+- **What:** Replaced confusing icon-only toggles with clear labeled dropdown buttons
+- **Changes:**
+  - `[+]` icon → `[+ Add]` labeled button
+  - Grid/List icon toggle → `[Table ▾]` dropdown (Table View / Order View)
+  - Columns/BarChart icon toggle pair → `[Channel ▾]` / `[Status ▾]` dropdown (By Channel / By Status)
+  - Dropdown labels dynamically reflect current selection
+  - Only one dropdown open at a time; closes on outside click
+- **Files Modified:** `Header.jsx`
+- **Testing:** 18/18 tests passed (100%)
+
 ### Status Configuration Page (Visibility Settings) ✅
 - **Status:** DONE (April 2026)
 - **What:** New page to configure which statuses are visible on the dashboard
@@ -111,3 +123,4 @@
 8. **fOrderStatus mapping:** 1=preparing, 2=ready, 3=cancelled, 4=future, 5=served, 6=paid/billReady, 7=YTC, 8=running, 9=pendingPayment, 10=reserved. 
 9. **Status Filter IDs:** pending (7), preparing (1), ready (2), running (8), served (5), pendingPayment (9), paid (6), cancelled (3), reserved (10)
 10. **Cards are independent:** All state is managed via Context (OrderContext, TableContext). View layer just groups and filters - no data modification.
+11. **Header UX (Option A):** Icon toggles are confusing when clustered. Labeled dropdowns (`[Table ▾]`, `[Channel ▾]`) with dynamic labels and checkmarks are much clearer. Only one dropdown open at a time. Close on outside click.

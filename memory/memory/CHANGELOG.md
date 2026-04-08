@@ -1,5 +1,20 @@
 # Changelog
 
+## Apr 8, 2026 — Session 4 (Header UX — Option A Labeled Dropdowns)
+
+### Header UX Improvement — COMPLETE ✅
+- **Problem**: Too many clustered orange icons on the right side of the header. Two toggle groups (Grid/List and Columns/BarChart) looked similar and had no labels, causing confusion.
+- **Solution**: Option A — Replaced icon toggles with labeled dropdown buttons:
+  - `[+ Add]` — labeled add order button (was icon-only `+`)
+  - `[Table ▾]` dropdown → options: "Table View", "Order View" (was Grid/List icon toggle)
+  - `[Channel ▾]` / `[Status ▾]` dropdown → options: "By Channel", "By Status" (was Columns/BarChart icon toggle pair)
+  - `[●]` online indicator retained
+- **Behavior**: Dropdown labels dynamically reflect current selection. Only one dropdown open at a time. Closes on outside click. Checkmark on active option.
+- **Files Modified**: `Header.jsx`
+- **Testing**: 18/18 tests passed (100% success rate)
+
+---
+
 ## Apr 8, 2026 — Session 3 (Dual-View System + Visibility Settings)
 
 ### Status Configuration Page — COMPLETE ✅
@@ -34,8 +49,8 @@
 ### Header Redesign
 - Removed static "All/Del/Take/Dine/Room" channel pills
 - Single filter section that swaps based on dashboardView
-- Layout: Filters → Search → View Toggles
-- Added Channel/Status view toggle buttons (Columns icon, BarChart icon)
+- Layout: Filters → Search → [+ Add] → [Table ▾] → [Channel ▾] → [●]
+- Icon toggles replaced with labeled dropdowns in Session 4 (see above)
 
 ### Food Transfer Fix — P0 COMPLETE ✅
 - Threaded `onFoodTransfer` prop through DashboardPage → ChannelColumnsLayout → ChannelColumn → OrderCard

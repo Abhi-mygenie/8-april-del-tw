@@ -1,7 +1,7 @@
 # MyGenie POS Frontend - Complete Architecture Document
 
-**Version:** 3.0 (Permissions & Cancellation Architecture Added)
-**Last Updated:** April 7, 2026  
+**Version:** 3.1 (Header UX Labeled Dropdowns)
+**Last Updated:** April 8, 2026  
 **Audience:** New developers, maintainers, and technical leads
 
 ---
@@ -793,8 +793,8 @@ DashboardPage.jsx
 - Opens `OrderEntry` on table/card click
 - Filter by section, search by table number
 - Filter pills: Dynamic based on view (see Dual-View System below)
-- View toggle: Table grid ↔ Order list (single icon)
-- Dashboard view toggle: Channel ↔ Status (Dual-View System)
+- View switch: `[Table ▾]` / `[Order ▾]` labeled dropdown
+- Dashboard view switch: `[Channel ▾]` / `[Status ▾]` labeled dropdown (Dual-View System)
 - Permission-gated OrderCard buttons (cancel, merge, shift, transfer)
 - Cancellation settings enforced (time window + post-ready flag)
 
@@ -805,10 +805,10 @@ DashboardPage.jsx
 The dashboard supports two different grouping views:
 
 #### View Types
-| View | Columns | Filter Pills | Toggle Icon |
-|------|---------|--------------|-------------|
-| **Channel View** | Dine-In, TakeAway, Delivery, Room | 9 Status filters | Columns icon |
-| **Status View** | Preparing, Ready, Served, Paid, etc. | 4 Channel filters | BarChart icon |
+| View | Columns | Filter Pills | Dropdown Label |
+|------|---------|--------------|----------------|
+| **Channel View** | Dine-In, TakeAway, Delivery, Room | 9 Status filters | "Channel ▾" |
+| **Status View** | Preparing, Ready, Served, Paid, etc. | 4 Channel filters | "Status ▾" |
 
 #### Architecture Flow
 ```
@@ -842,6 +842,11 @@ The dashboard supports two different grouping views:
 │  Renders filter pills based on dashboardView:                   │
 │  ├── Channel View → Status filters (YTC, Preparing, Ready...)  │
 │  └── Status View → Channel filters (Del, Take, Dine, Room)     │
+│  Labeled Dropdowns (Option A UX):                               │
+│  ├── [+ Add] — labeled add order button                         │
+│  ├── [Table ▾] / [Order ▾] — view dropdown (Table/Order View)  │
+│  ├── [Channel ▾] / [Status ▾] — dashboard view dropdown        │
+│  └── [●] — online status indicator                              │
 │  Hide column → Also hides corresponding filter                  │
 └─────────────────────────────────────────────────────────────────┘
 ```
