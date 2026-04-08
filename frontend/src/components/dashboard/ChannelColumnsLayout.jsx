@@ -208,6 +208,7 @@ const ChannelColumnsLayout = ({
           onToggleSnooze={onToggleSnooze}
           onConfirmOrder={onConfirmOrder}
           onUpdateStatus={onUpdateStatus}
+          onFoodTransfer={onFoodTransfer}
           hasPermission={hasPermission}
           snoozedOrders={snoozedOrders}
           currencySymbol={currencySymbol}

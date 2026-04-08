@@ -40,6 +40,7 @@ const ChannelColumn = ({
   onToggleSnooze,
   onConfirmOrder,
   onUpdateStatus,
+  onFoodTransfer,    // Handler for food transfer
   // Permissions
   hasPermission,
   // Other
@@ -207,6 +208,7 @@ const ChannelColumn = ({
                   onBillClick={() => onBillClick?.(item)}
                   onCancelOrder={onCancelOrder}
                   onItemStatusChange={onItemStatusChange}
+                  onFoodTransfer={onFoodTransfer ? (order, foodItem) => onFoodTransfer(order, foodItem, item) : undefined}
                 />
               );
             })}

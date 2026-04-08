@@ -959,6 +959,7 @@ const DashboardPage = () => {
                 onToggleSnooze={toggleSnooze}
                 onConfirmOrder={handleConfirmOrder}
                 onUpdateStatus={handleUpdateTableStatus}
+                onFoodTransfer={handleFoodTransfer}
                 hasPermission={hasPermission}
                 snoozedOrders={snoozedOrders}
                 currencySymbol={currencySymbol}
