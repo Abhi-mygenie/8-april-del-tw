@@ -201,7 +201,6 @@ const DashboardPage = () => {
   const [dashboardView, setDashboardView] = useState("channel"); // 'channel' | 'status' - for dual-view toggle
   const [hiddenChannels, setHiddenChannels] = useState([]); // Hidden channel IDs (dineIn, delivery, etc.)
   const [hiddenStatuses, setHiddenStatuses] = useState([]); // Hidden status IDs (preparing, ready, etc.)
-  const [activeFirst, setActiveFirst] = useState(true);
   const [orderEntryTable, setOrderEntryTable] = useState(null);
   const [orderEntryType, setOrderEntryType] = useState(null);
   const [initialShowPayment, setInitialShowPayment] = useState(false);
@@ -1001,8 +1000,6 @@ const DashboardPage = () => {
             setHiddenChannels([]);
             setHiddenStatuses([]);
           }}
-          activeFirst={activeFirst}
-          setActiveFirst={setActiveFirst}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           searchResults={searchResults}
@@ -1020,7 +1017,6 @@ const DashboardPage = () => {
                     : Object.values(channelData).filter(c => c.enabled && !hiddenChannels.includes(c.id))
                 }
                 viewType={activeView === 'table' ? 'table' : 'order'}
-                activeFirst={activeFirst}
                 onItemClick={handleTableClick}
                 onMarkReady={handleMarkReady}
                 onMarkServed={handleMarkServed}
@@ -1053,7 +1049,7 @@ const DashboardPage = () => {
               <>
             {/* Grid View - Unified for all channels */}
             {showGridView && (
-              isDineInOnly && hasAreas && !activeFirst ? (
+              isDineInOnly && hasAreas ? (
                 <div className="flex gap-8 overflow-x-auto">
                   {Object.entries(tables).map(([key, section], index) => (
                     <div key={key} className="contents">
@@ -1068,7 +1064,6 @@ const DashboardPage = () => {
                         onBillClick={handleBillClick}
                         onConfirmOrder={handleConfirmOrder}
                         onCancelOrder={handleCancelOrder}
-                        activeFirst={activeFirst}
                         searchQuery={searchQuery}
                         matchingTableIds={matchingTableIds}
                         snoozedOrders={snoozedOrders}
@@ -1090,8 +1085,7 @@ const DashboardPage = () => {
                   <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, 160px)' }}>
                     {sortByActiveFirst(
                       filteredGridItems.filter(t => matchingGridIds === null || matchingGridIds.has(t.id)),
-                      TABLE_STATUS_PRIORITY,
-                      activeFirst
+                      TABLE_STATUS_PRIORITY
                     ).map((item) => (
                       <TableCard
                         key={item.id}

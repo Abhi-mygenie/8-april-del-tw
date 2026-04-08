@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { PlusSquare, Grid3X3, Bike, ShoppingBag, Utensils, DoorOpen, List, Search, X, ChevronRight, Columns, BarChart3 } from "lucide-react";
+import { PlusSquare, Bike, ShoppingBag, Utensils, DoorOpen, Search, X, ChevronRight, ChevronDown, Check } from "lucide-react";
 import { COLORS, LOGO_URL, USE_STATUS_VIEW } from "../../constants";
 import { useRestaurant } from "../../contexts";
 
@@ -45,8 +45,6 @@ const Header = ({
   hiddenStatuses = [],
   enabledStatuses = [],
   onRestoreHidden,
-  activeFirst, 
-  setActiveFirst,
   searchQuery,
   setSearchQuery,
   searchResults,
@@ -54,8 +52,12 @@ const Header = ({
   onAddOrder
 }) => {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [viewDropdownOpen, setViewDropdownOpen] = useState(false);
+  const [dashDropdownOpen, setDashDropdownOpen] = useState(false);
   const searchRef = useRef(null);
   const dropdownRef = useRef(null);
+  const viewDropdownRef = useRef(null);
+  const dashDropdownRef = useRef(null);
 
   // Filter channels based on restaurant features
   const { features } = useRestaurant();
@@ -78,6 +80,12 @@ const Header = ({
         !dropdownRef.current.contains(event.target)
       ) {
         setIsSearchFocused(false);
+      }
+      if (viewDropdownRef.current && !viewDropdownRef.current.contains(event.target)) {
+        setViewDropdownOpen(false);
+      }
+      if (dashDropdownRef.current && !dashDropdownRef.current.contains(event.target)) {
+        setDashDropdownOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -540,52 +548,94 @@ const Header = ({
           {/* Divider */}
           <div className="w-px h-6" style={{ backgroundColor: COLORS.borderGray }} />
 
-          {/* Add Order Button - Prominent Orange */}
+          {/* Add Order Button - Labeled */}
           <button
             data-testid="add-table-btn"
-            className="p-3 rounded-lg transition-colors hover:opacity-80"
+            className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg transition-colors hover:opacity-80"
             style={{ backgroundColor: COLORS.primaryOrange, color: "white" }}
             onClick={onAddOrder}
           >
-            <PlusSquare className="w-5 h-5" />
+            <PlusSquare className="w-4 h-4" />
+            <span className="text-sm font-medium">Add</span>
           </button>
           
-          {/* View Toggle - Single icon showing alternate view */}
-          <button
-            data-testid="view-toggle-btn"
-            className="p-2.5 rounded-lg transition-colors bg-gray-100 hover:bg-gray-200"
-            style={{ color: activeView === "table" ? COLORS.primaryOrange : COLORS.primaryOrange }}
-            onClick={() => setActiveView(activeView === "table" ? "order" : "table")}
-            title={activeView === "table" ? "Switch to Order View" : "Switch to Table View"}
-          >
-            {activeView === "table" ? (
-              <List className="w-5 h-5" />
-            ) : (
-              <Grid3X3 className="w-5 h-5" />
+          {/* View Dropdown - Table / Order */}
+          <div className="relative" ref={viewDropdownRef}>
+            <button
+              data-testid="view-dropdown-btn"
+              className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg transition-colors bg-gray-100 hover:bg-gray-200"
+              style={{ color: COLORS.darkText }}
+              onClick={() => { setViewDropdownOpen(!viewDropdownOpen); setDashDropdownOpen(false); }}
+            >
+              <span className="text-sm font-medium">{activeView === "table" ? "Table" : "Order"}</span>
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${viewDropdownOpen ? "rotate-180" : ""}`} style={{ color: COLORS.grayText }} />
+            </button>
+            {viewDropdownOpen && (
+              <div 
+                data-testid="view-dropdown-menu"
+                className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border z-50 overflow-hidden"
+                style={{ borderColor: COLORS.borderGray }}
+              >
+                <button
+                  data-testid="view-option-table"
+                  className="w-full flex items-center justify-between px-3 py-2.5 text-sm hover:bg-gray-50 transition-colors"
+                  style={{ color: activeView === "table" ? COLORS.primaryOrange : COLORS.darkText }}
+                  onClick={() => { setActiveView("table"); setViewDropdownOpen(false); }}
+                >
+                  <span>Table View</span>
+                  {activeView === "table" && <Check className="w-4 h-4" />}
+                </button>
+                <button
+                  data-testid="view-option-order"
+                  className="w-full flex items-center justify-between px-3 py-2.5 text-sm hover:bg-gray-50 transition-colors"
+                  style={{ color: activeView === "order" ? COLORS.primaryOrange : COLORS.darkText }}
+                  onClick={() => { setActiveView("order"); setViewDropdownOpen(false); }}
+                >
+                  <span>Order View</span>
+                  {activeView === "order" && <Check className="w-4 h-4" />}
+                </button>
+              </div>
             )}
-          </button>
+          </div>
 
-          {/* Dashboard View Toggle - Channel vs Status (only when USE_STATUS_VIEW is enabled) */}
+          {/* Dashboard View Dropdown - Channel / Status (only when USE_STATUS_VIEW is enabled) */}
           {USE_STATUS_VIEW && setDashboardView && (
-            <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+            <div className="relative" ref={dashDropdownRef}>
               <button
-                data-testid="dashboard-view-channel"
-                onClick={() => setDashboardView('channel')}
-                className={`p-2 rounded-md transition-colors ${dashboardView === 'channel' ? 'bg-white shadow-sm' : 'hover:bg-gray-200'}`}
-                style={{ color: dashboardView === 'channel' ? COLORS.primaryOrange : COLORS.grayText }}
-                title="View by Channel"
+                data-testid="dash-view-dropdown-btn"
+                className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg transition-colors bg-gray-100 hover:bg-gray-200"
+                style={{ color: COLORS.darkText }}
+                onClick={() => { setDashDropdownOpen(!dashDropdownOpen); setViewDropdownOpen(false); }}
               >
-                <Columns className="w-5 h-5" />
+                <span className="text-sm font-medium">{dashboardView === "channel" ? "Channel" : "Status"}</span>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${dashDropdownOpen ? "rotate-180" : ""}`} style={{ color: COLORS.grayText }} />
               </button>
-              <button
-                data-testid="dashboard-view-status"
-                onClick={() => setDashboardView('status')}
-                className={`p-2 rounded-md transition-colors ${dashboardView === 'status' ? 'bg-white shadow-sm' : 'hover:bg-gray-200'}`}
-                style={{ color: dashboardView === 'status' ? COLORS.primaryOrange : COLORS.grayText }}
-                title="View by Status"
-              >
-                <BarChart3 className="w-5 h-5" />
-              </button>
+              {dashDropdownOpen && (
+                <div 
+                  data-testid="dash-view-dropdown-menu"
+                  className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border z-50 overflow-hidden"
+                  style={{ borderColor: COLORS.borderGray }}
+                >
+                  <button
+                    data-testid="dash-option-channel"
+                    className="w-full flex items-center justify-between px-3 py-2.5 text-sm hover:bg-gray-50 transition-colors"
+                    style={{ color: dashboardView === "channel" ? COLORS.primaryOrange : COLORS.darkText }}
+                    onClick={() => { setDashboardView("channel"); setDashDropdownOpen(false); }}
+                  >
+                    <span>By Channel</span>
+                    {dashboardView === "channel" && <Check className="w-4 h-4" />}
+                  </button>
+                  <button
+                    data-testid="dash-option-status"
+                    className="w-full flex items-center justify-between px-3 py-2.5 text-sm hover:bg-gray-50 transition-colors"
+                    style={{ color: dashboardView === "status" ? COLORS.primaryOrange : COLORS.darkText }}
+                    onClick={() => { setDashboardView("status"); setDashDropdownOpen(false); }}
+                  >
+                    <span>By Status</span>
+                    {dashboardView === "status" && <Check className="w-4 h-4" />}
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -604,19 +654,6 @@ const Header = ({
               Show Hidden ({totalHidden})
             </button>
           )}
-
-          {/* Active First Toggle - Show for all channels */}
-          <div
-            data-testid="active-first-toggle"
-            className="w-8 h-4 rounded-full relative cursor-pointer transition-colors"
-            style={{ backgroundColor: activeFirst ? COLORS.primaryGreen : COLORS.borderGray }}
-            onClick={() => setActiveFirst(!activeFirst)}
-          >
-            <div 
-              className="absolute top-0.5 w-3 h-3 bg-white rounded-full shadow-sm transition-all"
-              style={activeFirst ? { right: "2px" } : { left: "2px" }}
-            />
-          </div>
 
           {/* Online/Offline Status - Just circle indicator */}
           <div

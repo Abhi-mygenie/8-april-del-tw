@@ -18,13 +18,13 @@ const PADDING = 16;
  * - actualColumns determines grid width (not percentage)
  * - Arrow buttons to transfer columns to adjacent channels
  * - Auto-hides when 0 orders (handled by parent)
+ * - Always sorts by priority: 7→5→2→1→10→8→9→available(last)
  */
 const ChannelColumn = ({
   channel,           // { id, name, items, enabled }
   actualColumns,     // Current column count based on order count
   maxColumns,        // Max column setting for this channel
   viewType,          // 'table' | 'order'
-  activeFirst,
   isLast,            // Is this the last visible channel (no border-right)
   hasLeftArrow,      // Show left arrow button
   hasRightArrow,     // Show right arrow button
@@ -58,11 +58,11 @@ const ChannelColumn = ({
     return channel.items.filter(item => matchingIds.has(item.id || `${channel.id}-${item.orderId}`));
   }, [channel.items, matchingIds, channel.id]);
 
-  // Sort items: active first if enabled
+  // Sort items by priority: 7→5→2→1→10→8→9→available(last)
+  // Always applies - no toggle
   const sortedItems = useMemo(() => {
-    if (!activeFirst) return filteredItems;
-    return sortByActiveFirst(filteredItems, TABLE_STATUS_PRIORITY, activeFirst);
-  }, [filteredItems, activeFirst]);
+    return sortByActiveFirst(filteredItems, TABLE_STATUS_PRIORITY);
+  }, [filteredItems]);
 
   // Count active orders (non-available, non-reserved)
   const activeCount = useMemo(() => {

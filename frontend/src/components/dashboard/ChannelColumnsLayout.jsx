@@ -33,7 +33,6 @@ const ORDER_CARD_WIDTH = 320; // Wider for order cards
 const ChannelColumnsLayout = ({
   channels,          // Array of { id, name, items, enabled }
   viewType,          // 'table' | 'order'
-  activeFirst,
   onItemClick,
   // Card handlers passed through
   onMarkReady,
@@ -193,7 +192,6 @@ const ChannelColumnsLayout = ({
           actualColumns={actualColumns}
           maxColumns={channelMax}
           viewType={viewType}
-          activeFirst={activeFirst}
           isLast={isLast}
           hasLeftArrow={true}
           hasRightArrow={true}
