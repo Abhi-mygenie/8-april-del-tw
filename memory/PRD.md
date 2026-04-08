@@ -53,6 +53,15 @@ ENABLE_HEALTH_CHECK=false
 - [x] **Restore Button**: "Show Hidden (N)" button to restore all hidden items
 - [x] **Removed**: Static "All/Del/Take/Dine/Room" channel pills from Header
 
+### Header UX Improvements (Option A - Labeled Dropdowns) ✅
+- [x] Replaced icon-only `[+]` button with labeled `[+ Add]` button
+- [x] Replaced Grid/List icon toggle with `[Table ▾]` labeled dropdown (options: Table View, Order View)
+- [x] Replaced Columns/BarChart icon toggle pair with `[Channel ▾]` labeled dropdown (options: By Channel, By Status)
+- [x] Dropdown labels dynamically reflect current selection (e.g., "Status ▾" when Status View active)
+- [x] Only one dropdown open at a time; closes on outside click
+- [x] Removed confusing icon-only toggles — header is now clean and intuitive
+- [x] Testing: 18/18 tests passed (100% success rate)
+
 ### Status Configuration Page (Visibility Settings) ✅
 - [x] **New Page**: `StatusConfigPage.jsx` at `/visibility/status-config`
 - [x] **Sidebar Menu**: Added "Visibility Settings" → "Status Configuration" to Sidebar
@@ -82,7 +91,7 @@ ENABLE_HEALTH_CHECK=false
 | `featureFlags.js` | Added `USE_STATUS_VIEW` flag |
 | `constants.js` | Added `STATUS_COLUMNS`, `fOrderStatus: 10`, `ORDER_TO_TABLE_STATUS.reserved` |
 | `DashboardPage.jsx` | Added `dashboardView`, `hiddenChannels`, `hiddenStatuses`, `enabledStatuses` states, `statusData` memo, localStorage read |
-| `Header.jsx` | Rewrote filter section (swap logic), added restore button, removed static channel pills, added view toggle buttons, filter by `enabledStatuses` |
+| `Header.jsx` | Rewrote filter section (swap logic), replaced icon toggles with labeled dropdowns (Table ▾, Channel ▾), added restore button, removed static channel pills, filter by `enabledStatuses` |
 | `ChannelColumnsLayout.jsx` | Added `onHideColumn`, `onFoodTransfer` props |
 | `ChannelColumn.jsx` | Added "Hide" link, `onHideColumn`, `onFoodTransfer` props |
 | `Sidebar.jsx` | Added "Visibility Settings" menu with "Status Configuration" sub-item |
