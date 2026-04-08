@@ -24,6 +24,22 @@
 - **What:** Removed redundant "All/Del/Take/Dine/Room" static pills from left side of Header
 - **Now:** Single filter section that swaps based on view (Status filters for Channel view, Channel filters for Status view)
 
+### Status Configuration Page (Visibility Settings) ✅
+- **Status:** DONE (April 2026)
+- **What:** New page to configure which statuses are visible on the dashboard
+- **Location:** Sidebar → Visibility Settings → Status Configuration
+- **Features:**
+  - Grid of 9 status cards with enable/disable toggle
+  - Enable All / Disable All buttons
+  - Reset to Default button
+  - Save Configuration (persists to localStorage)
+  - Unsaved changes indicator with "Save Now" toast
+  - Affects both Channel View (filters) and Status View (columns)
+- **Files Created:** `StatusConfigPage.jsx`
+- **Files Modified:** `Sidebar.jsx`, `App.js`, `DashboardPage.jsx`, `Header.jsx`
+- **Storage:** localStorage (`mygenie_enabled_statuses`)
+- **Future:** Will be replaced by role-based permissions from backend
+
 ---
 
 ## P0 — Must Fix Now

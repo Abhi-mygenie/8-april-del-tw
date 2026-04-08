@@ -1,6 +1,23 @@
 # Changelog
 
-## Apr 8, 2026 — Session 3 (Dual-View System)
+## Apr 8, 2026 — Session 3 (Dual-View System + Visibility Settings)
+
+### Status Configuration Page — COMPLETE ✅
+- **New Page**: `/visibility/status-config` — Configure which statuses are visible on dashboard
+- **Sidebar**: Added "Visibility Settings" menu with "Status Configuration" sub-item
+- **Features**:
+  - Grid of 9 status cards with enable/disable toggle
+  - Enable All / Disable All quick action buttons
+  - Reset to Default button
+  - Save Configuration (persists to localStorage)
+  - Unsaved changes indicator with "Save Now" toast
+- **Storage**: localStorage key `mygenie_enabled_statuses`
+- **Effect**: Disabled statuses are hidden from both:
+  - Channel View: Status filter pills
+  - Status View: Status columns
+- **Files Created**: `StatusConfigPage.jsx`
+- **Files Modified**: `Sidebar.jsx`, `App.js`, `DashboardPage.jsx`, `Header.jsx`
+- **Future**: Will be replaced by role-based permissions from backend
 
 ### Dashboard Dual-View System — COMPLETE ✅
 - **Feature Flag**: Added `USE_STATUS_VIEW` to `featureFlags.js`
@@ -25,9 +42,10 @@
 - Food transfer icon now correctly opens transfer modal
 
 ### Documentation Updated
-- ROADMAP.md: Marked items #1, #3, #6 as complete
-- ARCHITECTURE.md: Added section 9.4 "Dashboard Dual-View System"
-- PRD.md: Updated status, marked Dual-View features as implemented
+- ROADMAP.md: Marked items #1, #3, #6 as complete, added Status Configuration
+- ARCHITECTURE.md: Added sections 9.4 "Dashboard Dual-View System" and 9.5 "Status Configuration"
+- PRD.md: Updated status, marked all features as implemented
+- CHANGELOG.md: This entry
 
 ---
 

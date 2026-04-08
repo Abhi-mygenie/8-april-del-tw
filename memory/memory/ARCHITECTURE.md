@@ -876,6 +876,76 @@ When a column is hidden:
 | `ChannelColumnsLayout.jsx` | Renders columns (generic for both views) |
 | `ChannelColumn.jsx` | Individual column with Hide link |
 
+### 9.5 Status Configuration (Visibility Settings)
+
+**Location:** Sidebar → Visibility Settings → Status Configuration
+
+**Route:** `/visibility/status-config`
+
+**Purpose:** Configure which statuses are visible on the dashboard. In future, this will be controlled by role-based permissions.
+
+#### Architecture Flow
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                StatusConfigPage.jsx                              │
+│  ├── enabledStatuses: string[] (e.g., ['pending', 'preparing']) │
+│  ├── Load from localStorage on mount                            │
+│  └── Save to localStorage on "Save Configuration"               │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼ localStorage
+┌─────────────────────────────────────────────────────────────────┐
+│                mygenie_enabled_statuses                          │
+│  JSON array: ["pending", "preparing", "ready", ...]             │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼ Read on mount
+┌─────────────────────────────────────────────────────────────────┐
+│                DashboardPage.jsx                                 │
+│  ├── enabledStatuses state (loaded from localStorage)           │
+│  ├── Listens for storage changes (cross-tab sync)               │
+│  └── Passes to Header.jsx                                       │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  Header.jsx                                                      │
+│  visibleStatusFilters = allStatusFilters                        │
+│    .filter(enabled)   ← Only show enabled statuses              │
+│    .filter(!hidden)   ← Then remove user-hidden                 │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  statusData memo                                                 │
+│  Only creates columns for enabledStatuses                       │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### Visibility Layers
+| Layer | Scope | Persistence | Controls |
+|-------|-------|-------------|----------|
+| **Enabled (Config)** | Role-based (future) / Config page (now) | localStorage | Master list of allowed statuses |
+| **Hidden (User)** | Session-based (hide button) | None (resets on login) | User hides from enabled list |
+
+**Visible = Enabled − Hidden**
+
+#### Key Files
+| File | Purpose |
+|------|---------|
+| `StatusConfigPage.jsx` | Configuration UI with 9 status cards |
+| `Sidebar.jsx` | "Visibility Settings" menu section |
+| `App.js` | Route `/visibility/status-config` |
+| `DashboardPage.jsx` | Reads `enabledStatuses` from localStorage |
+| `Header.jsx` | Filters status pills by `enabledStatuses` |
+
+#### localStorage Key
+```javascript
+// Key: mygenie_enabled_statuses
+// Value: JSON array of status IDs
+["pending", "preparing", "ready", "running", "served", "pendingPayment", "paid", "cancelled", "reserved"]
+```
+
 ---
 
 ## 10. Key Data Flows

@@ -53,6 +53,22 @@ ENABLE_HEALTH_CHECK=false
 - [x] **Restore Button**: "Show Hidden (N)" button to restore all hidden items
 - [x] **Removed**: Static "All/Del/Take/Dine/Room" channel pills from Header
 
+### Status Configuration Page (Visibility Settings) ✅
+- [x] **New Page**: `StatusConfigPage.jsx` at `/visibility/status-config`
+- [x] **Sidebar Menu**: Added "Visibility Settings" → "Status Configuration" to Sidebar
+- [x] **UI Features**:
+  - Grid of 9 status cards with enable/disable toggle
+  - Enable All / Disable All quick action buttons
+  - Reset to Default button
+  - Save Configuration with toast notification
+  - Unsaved changes indicator with "Save Now" button
+- [x] **Storage**: localStorage (`mygenie_enabled_statuses`)
+- [x] **Dashboard Integration**: 
+  - `enabledStatuses` state reads from localStorage
+  - Header filters only show enabled statuses
+  - Status View columns only show enabled statuses
+- [x] **Future**: Will be replaced by role-based permissions from backend
+
 ### Food Transfer Fix ✅
 - [x] Wired `onFoodTransfer` prop through DashboardPage → ChannelColumnsLayout → ChannelColumn → OrderCard
 - [x] Food transfer icon now correctly opens transfer modal
@@ -65,10 +81,13 @@ ENABLE_HEALTH_CHECK=false
 |------|---------|
 | `featureFlags.js` | Added `USE_STATUS_VIEW` flag |
 | `constants.js` | Added `STATUS_COLUMNS`, `fOrderStatus: 10`, `ORDER_TO_TABLE_STATUS.reserved` |
-| `DashboardPage.jsx` | Added `dashboardView`, `hiddenChannels`, `hiddenStatuses` states, `statusData` memo, updated Header/Layout props |
-| `Header.jsx` | Rewrote filter section (swap logic), added restore button, removed static channel pills, added view toggle buttons |
+| `DashboardPage.jsx` | Added `dashboardView`, `hiddenChannels`, `hiddenStatuses`, `enabledStatuses` states, `statusData` memo, localStorage read |
+| `Header.jsx` | Rewrote filter section (swap logic), added restore button, removed static channel pills, added view toggle buttons, filter by `enabledStatuses` |
 | `ChannelColumnsLayout.jsx` | Added `onHideColumn`, `onFoodTransfer` props |
 | `ChannelColumn.jsx` | Added "Hide" link, `onHideColumn`, `onFoodTransfer` props |
+| `Sidebar.jsx` | Added "Visibility Settings" menu with "Status Configuration" sub-item |
+| `App.js` | Added route `/visibility/status-config` |
+| `StatusConfigPage.jsx` | **NEW** - Status configuration page with 9 status cards |
 
 ---
 
@@ -76,9 +95,10 @@ ENABLE_HEALTH_CHECK=false
 
 | Document | Changes |
 |----------|---------|
-| `ROADMAP.md` | Marked items #1, #3, #6 as complete. Updated lessons learned. |
-| `ARCHITECTURE.md` | Added "Dashboard Dual-View System" section (9.4) |
-| `PRD.md` | Updated status, marked View 2 and Hide Feature as implemented |
+| `ROADMAP.md` | Marked items #1, #3, #6 as complete. Added Status Configuration feature. |
+| `ARCHITECTURE.md` | Added sections 9.4 "Dashboard Dual-View System" and 9.5 "Status Configuration" |
+| `CHANGELOG.md` | Added April 8, 2026 entry with all features |
+| `PRD.md` | Updated status, marked all features as implemented |
 
 ---
 
